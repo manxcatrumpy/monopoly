@@ -49,28 +49,13 @@ body {
     "PingFang TC", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1400px 900px at 85% -10%, rgba(183, 148, 246, 0.28), transparent 55%),
-    radial-gradient(1000px 800px at -10% 110%, rgba(52, 211, 153, 0.18), transparent 55%),
-    radial-gradient(800px 600px at 30% 50%, rgba(244, 114, 182, 0.12), transparent 55%),
-    linear-gradient(160deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+    radial-gradient(1200px 800px at 85% -10%, rgba(183, 148, 246, 0.22), transparent 60%),
+    linear-gradient(160deg, var(--bg-0), var(--bg-1) 50%, var(--bg-2));
   background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   padding-bottom: env(safe-area-inset-bottom);
   overflow-x: hidden;
-}
-
-/* Subtle moving background sheen */
-body::before {
-  content: "";
-  position: fixed; inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04), transparent 60%);
-  pointer-events: none;
-  animation: drift 22s ease-in-out infinite;
-}
-@keyframes drift {
-  0%, 100% { transform: translate(0, 0); }
-  50%      { transform: translate(-3%, 2%); }
 }
 
 /* ───────────── Top bar ───────────── */
@@ -81,9 +66,7 @@ body::before {
   align-items: center;
   gap: 24px;
   padding: 18px 28px;
-  background: rgba(13, 10, 38, 0.72);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgba(13, 10, 38, 0.92);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 50;
 }
@@ -199,16 +182,8 @@ body::before {
   background: linear-gradient(90deg, var(--civ), var(--fortune));
   border-radius: 999px;
   transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 24px rgba(244, 114, 182, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
-  position: relative;
-  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
 }
-.civ-bar-fill::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: shimmer 2.4s linear infinite;
-}
-@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 .civ-progress-label {
   font-size: 12px; color: var(--text-mute);
   text-align: center; margin-top: 8px; letter-spacing: 2px;
@@ -281,59 +256,30 @@ body::before {
 
 .player-card {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
-    var(--surface);
+  background: rgba(30, 22, 70, 0.55);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px 18px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-md);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-  overflow: hidden;
-}
-.player-card::before {
-  content: "";
-  position: absolute; inset: -1px;
-  background: linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.08));
-  border-radius: inherit; pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .player-card.graduated {
-  border-color: rgba(251, 191, 36, 0.5);
-  box-shadow:
-    0 0 0 1px rgba(251, 191, 36, 0.35),
-    0 24px 60px rgba(251, 191, 36, 0.18),
-    inset 0 1px 0 rgba(255,255,255,0.15);
-  background:
-    linear-gradient(180deg, rgba(251, 191, 36, 0.12), rgba(251, 191, 36, 0.02)),
-    var(--surface);
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+  background: rgba(60, 42, 30, 0.55);
 }
-.player-card.graduated::after {
-  content: "";
-  position: absolute; inset: -2px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, transparent, rgba(251, 191, 36, 0.18), transparent 60%);
-  pointer-events: none;
-  animation: glow 3s ease-in-out infinite;
-}
-@keyframes glow {
-  0%, 100% { opacity: 0.5; }
-  50%      { opacity: 1;   }
-}
-
-.player-card.pulse { animation: cardPulse 1.4s ease-out; }
-.player-card.grad  { animation: gradPulse 1.4s ease-out; }
+.player-card.pulse { animation: cardPulse 1.2s ease-out; }
+.player-card.grad  { animation: gradPulse 1.2s ease-out; }
 @keyframes cardPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.55); }
-  100% { box-shadow: 0 0 0 24px rgba(244, 114, 182, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.55), 0 6px 18px rgba(0,0,0,0.25); }
+  100% { box-shadow: 0 0 0 16px rgba(244, 114, 182, 0), 0 6px 18px rgba(0,0,0,0.25); }
 }
 @keyframes gradPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
-  100% { box-shadow: 0 0 0 32px rgba(251, 191, 36, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7), 0 6px 18px rgba(0,0,0,0.25); }
+  100% { box-shadow: 0 0 0 22px rgba(251, 191, 36, 0), 0 6px 18px rgba(0,0,0,0.25); }
 }
 
 /* Player card header */
@@ -529,15 +475,11 @@ body::before {
 .tools { display: flex; flex-direction: column; gap: 16px; }
 
 .tool-card {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
-    var(--surface);
+  background: rgba(30, 22, 70, 0.55);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px 18px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
 }
 .tool-card h3 { margin: 0 0 4px; font-size: 15px; letter-spacing: 1px; }
 .tool-hint { margin: 0 0 12px; font-size: 12px; color: var(--text-mute); line-height: 1.5; }
@@ -603,17 +545,13 @@ body::before {
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;
-  background: rgba(10, 6, 30, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 6, 30, 0.85);
 }
 .modal-panel {
   position: relative;
   width: min(780px, 100%);
   max-height: calc(100vh - 40px);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
-    linear-gradient(180deg, #2a1f55, #1c1542);
+  background: linear-gradient(180deg, #2a1f55, #1c1542);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
