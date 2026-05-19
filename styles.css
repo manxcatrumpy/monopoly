@@ -309,7 +309,6 @@ body {
 }
 .player-card.graduated .pc-hat {
   opacity: 1; transform: scale(1);
-  filter: drop-shadow(0 4px 10px rgba(251, 191, 36, 0.6));
 }
 
 .pc-total {
@@ -320,7 +319,6 @@ body {
 .pc-total strong {
   font-size: 26px; color: var(--text);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 12px rgba(183, 148, 246, 0.5);
 }
 
 /* Stat row */
@@ -363,9 +361,9 @@ body {
 .stat-row .stat-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .stat-row .stat-num:focus { background: var(--surface-strong); outline: 1px solid var(--border-strong); }
 
-.stat-row.stat-fortune .stat-num { color: #ffe0a0; text-shadow: 0 2px 16px rgba(251, 191, 36, 0.4); }
-.stat-row.stat-wisdom  .stat-num { color: #a8f0d3; text-shadow: 0 2px 16px rgba(52, 211, 153, 0.4); }
-.stat-row.stat-civ     .stat-num { color: #ffb9d8; text-shadow: 0 2px 16px rgba(244, 114, 182, 0.4); }
+.stat-row.stat-fortune .stat-num { color: #ffe0a0; }
+.stat-row.stat-wisdom  .stat-num { color: #a8f0d3; }
+.stat-row.stat-civ     .stat-num { color: #ffb9d8; }
 
 .stat-row .stat-bar {
   height: 8px; background: rgba(255,255,255,0.06);
@@ -489,16 +487,13 @@ body {
   margin-top: 12px;
   font-size: 38px; font-weight: 800; text-align: center;
   font-variant-numeric: tabular-nums;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 70%),
-    var(--surface-strong);
+  background: var(--surface-strong);
   border-radius: var(--radius-sm);
   padding: 16px;
   min-height: 72px;
   display: grid; place-items: center;
   border: 1px solid var(--border);
   letter-spacing: 1px;
-  text-shadow: 0 4px 18px rgba(183, 148, 246, 0.4);
 }
 
 .civ-dice-result {

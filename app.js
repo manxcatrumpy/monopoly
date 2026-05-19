@@ -362,8 +362,43 @@ function setStat(playerId, stat, value) {
   p[stat] = Math.max(0, value | 0);
   if (stat !== 'civ') processStatChange(p, stat, old, p[stat]);
   save();
-  renderPlayers();
+  updatePlayerCard(p);
   updateTopbar();
+}
+
+function updatePlayerCard(p) {
+  const card = document.querySelector(`[data-player-id="${p.id}"]`);
+  if (!card) { renderPlayers(); return; }
+
+  card.classList.toggle('graduated', !!p.graduated);
+  card.querySelector('.pc-total strong').textContent = comprehensiveScore(p);
+
+  STATS.forEach(stat => {
+    const row = card.querySelector(`.stat-${stat}`);
+    if (!row) return;
+    const v = p[stat];
+    const max = stat === 'civ' ? Math.max(20, state.civGoal) : 60;
+    const pct = Math.min(100, (v / max) * 100);
+    const numEl = row.querySelector('.stat-num');
+    if (document.activeElement !== numEl) numEl.value = v;
+    row.querySelector('.stat-bar-fill').style.width = pct + '%';
+    row.querySelectorAll('.stat-mark').forEach(mark => {
+      mark.classList.toggle('reached', v >= +mark.dataset.mark);
+    });
+  });
+
+  card.querySelector('.pc-status').textContent =
+    p.graduated ? '✓ 已畢業 · 持續共好' : statusHint(p);
+
+  const existingFlag = card.querySelector('.milestone-flag');
+  const flagText = nextActiveMilestone(p);
+  if (existingFlag) existingFlag.remove();
+  if (flagText) {
+    const div = document.createElement('div');
+    div.className = 'milestone-flag';
+    div.textContent = flagText;
+    card.insertBefore(div, card.firstChild);
+  }
 }
 
 function removePlayer(id) {

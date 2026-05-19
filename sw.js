@@ -1,4 +1,4 @@
-const CACHE = 'fuhui-dashboard-v1';
+const CACHE = 'fuhui-dashboard-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -22,19 +22,17 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// Network-first: always try fresh; fall back to cache only when offline.
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   e.respondWith(
-    caches.match(req).then((cached) => {
-      const network = fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
