@@ -1,0 +1,20 @@
+{
+  "name": "福慧大富翁 Dashboard",
+  "short_name": "福慧大富翁",
+  "description": "《福慧大富翁》主持人控制台：玩家積分、計時、骰子、里程提醒。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a1444",
+  "theme_color": "#2d1b69",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

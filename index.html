@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2d1b69" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="福慧大富翁" />
+  <title>福慧大富翁 Dashboard</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">☸</span>
+      <div class="brand-text">
+        <div class="title">福慧大富翁</div>
+        <div class="subtitle">主持人 Dashboard</div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="meta-item">
+        <label>局數</label>
+        <div class="meta-value">第 <strong id="round-num">1</strong> 局</div>
+      </div>
+      <div class="meta-item">
+        <label>文明高度</label>
+        <div class="meta-value">
+          <strong id="civ-total">0</strong>
+          <span class="meta-sep">/</span>
+          <strong id="civ-goal">30</strong>
+        </div>
+      </div>
+      <div class="meta-item timer-item">
+        <label>遊戲時間</label>
+        <div class="meta-value timer">
+          <strong id="timer">00:00</strong>
+          <span class="meta-cap">/ 100:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">▶ 開始</button>
+      <button id="btn-next-round" class="btn" title="進入下一局">下一局</button>
+      <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定">⚙ 設定</button>
+    </div>
+  </header>
+
+  <section class="civ-progress">
+    <div class="civ-bar"><div id="civ-bar-fill" class="civ-bar-fill"></div></div>
+    <div class="civ-progress-label">集體文明積分總和 — 達標即勝利</div>
+  </section>
+
+  <main class="dashboard">
+    <section class="players-wrap">
+      <div class="section-head">
+        <h2>玩家積分</h2>
+        <div class="legend">
+          <span class="dot dot-fortune"></span>福報
+          <span class="dot dot-wisdom"></span>智慧
+          <span class="dot dot-civ"></span>文明
+        </div>
+      </div>
+      <div id="players" class="players-grid" aria-live="polite"></div>
+    </section>
+
+    <aside class="tools">
+      <div class="tool-card">
+        <h3>🎲 共用骰</h3>
+        <p class="tool-hint">遊戲中移動或裁定用</p>
+        <div class="dice-row">
+          <button class="btn btn-dice" data-dice="d6">擲 d6</button>
+          <button class="btn btn-dice" data-dice="d10">擲 d10</button>
+          <button class="btn btn-dice" data-dice="2d6">擲 2d6</button>
+        </div>
+        <div class="dice-result" id="shared-dice-result">—</div>
+      </div>
+
+      <div class="tool-card">
+        <h3>⚪⚫ 文明高度骰</h3>
+        <p class="tool-hint">起始福慧最高者擲，白 × 黑（不足 30 以 30 計）</p>
+        <div class="dice-row">
+          <button class="btn btn-dice" id="roll-white">擲白骰</button>
+          <button class="btn btn-dice" id="roll-black">擲黑骰</button>
+        </div>
+        <div class="civ-dice-result">
+          <span>白 <strong id="white-result">—</strong></span>
+          <span>黑 <strong id="black-result">—</strong></span>
+          <span>= <strong id="civ-product">—</strong></span>
+        </div>
+        <button class="btn btn-secondary btn-block" id="apply-civ-goal">套用為本局文明高度</button>
+      </div>
+
+      <div class="tool-card">
+        <h3>📜 里程提醒</h3>
+        <p class="tool-hint">25 / 35 / 45 抽里程際遇卡 · 50 觸發畢業條件</p>
+        <ul class="milestone-log" id="milestone-log">
+          <li class="empty">尚無觸發</li>
+        </ul>
+      </div>
+
+      <div class="tool-card danger-card">
+        <h3>⚠ 危險區</h3>
+        <button class="btn btn-warn btn-block" id="btn-reset-game">重置整個遊戲狀態</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Setup modal -->
+  <div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h2 id="setup-title">開新局 — 啟程準備</h2>
+        <button class="icon-btn" id="setup-close" aria-label="關閉">✕</button>
+      </header>
+
+      <div class="modal-body">
+        <fieldset class="setup-section">
+          <legend>① 玩家人數（4–6）</legend>
+          <div class="player-count-pick">
+            <button class="chip" data-count="4">4 人</button>
+            <button class="chip" data-count="5">5 人</button>
+            <button class="chip" data-count="6">6 人</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="setup-section">
+          <legend>② 玩家資料 — 擲十面骰決定初始福慧</legend>
+          <div id="setup-players" class="setup-players"></div>
+          <p class="hint">點「擲」隨機產生 1–10 點；也可直接輸入。</p>
+        </fieldset>
+
+        <fieldset class="setup-section">
+          <legend>③ 文明高度 — 起始福慧最高者擲白 × 黑</legend>
+          <div class="setup-civ">
+            <div class="setup-civ-info">
+              本局最高者：<strong id="setup-top-player">—</strong>
+              （福+慧 <strong id="setup-top-score">—</strong>）
+            </div>
+            <div class="dice-row">
+              <button class="btn btn-dice" id="setup-roll-white">擲白骰</button>
+              <button class="btn btn-dice" id="setup-roll-black">擲黑骰</button>
+            </div>
+            <div class="civ-dice-result">
+              <span>白 <strong id="setup-white">—</strong></span>
+              <span>黑 <strong id="setup-black">—</strong></span>
+              <span>高度 = <strong id="setup-civ-goal">—</strong></span>
+            </div>
+            <p class="hint">乘積若小於 30 以 30 為下限。</p>
+          </div>
+        </fieldset>
+
+        <fieldset class="setup-section">
+          <legend>④ 其他</legend>
+          <label class="row">
+            <span>第幾局？</span>
+            <input type="number" id="setup-round" min="1" value="1" />
+          </label>
+        </fieldset>
+      </div>
+
+      <footer class="modal-foot">
+        <button class="btn btn-ghost" id="setup-cancel">取消</button>
+        <button class="btn btn-primary" id="setup-start">開始本局</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
