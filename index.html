@@ -83,8 +83,12 @@
       </div>
 
       <div class="tool-card">
-        <h3>⚪⚫ 文明高度骰</h3>
-        <p class="tool-hint">起始福慧最高者擲，白 × 黑（不足 30 以 30 計）</p>
+        <h3>⚪⚫ 文明高度</h3>
+        <label class="row">
+          <span>目標</span>
+          <input type="number" id="civ-goal-input" min="1" />
+        </label>
+        <p class="tool-hint" style="margin-top:10px">可直接輸入；或擲白×黑由系統寫入</p>
         <div class="dice-row">
           <button class="btn btn-dice" id="roll-white">擲白骰</button>
           <button class="btn btn-dice" id="roll-black">擲黑骰</button>
@@ -94,7 +98,6 @@
           <span>黑 <strong id="black-result">—</strong></span>
           <span>= <strong id="civ-product">—</strong></span>
         </div>
-        <button class="btn btn-secondary btn-block" id="apply-civ-goal">套用為本局文明高度</button>
       </div>
 
       <div class="tool-card">
@@ -138,12 +141,17 @@
         </fieldset>
 
         <fieldset class="setup-section">
-          <legend>③ 文明高度 — 起始福慧最高者擲白 × 黑</legend>
+          <legend>③ 文明高度</legend>
           <div class="setup-civ">
             <div class="setup-civ-info">
               本局最高者：<strong id="setup-top-player">—</strong>
               （福+慧 <strong id="setup-top-score">—</strong>）
             </div>
+            <label class="row civ-input-row">
+              <span>文明高度</span>
+              <input type="number" id="setup-civ-goal-input" min="1" value="30" />
+              <span class="hint inline">直接輸入；或下方擲骰決定</span>
+            </label>
             <div class="dice-row">
               <button class="btn btn-dice" id="setup-roll-white">擲白骰</button>
               <button class="btn btn-dice" id="setup-roll-black">擲黑骰</button>
@@ -151,9 +159,9 @@
             <div class="civ-dice-result">
               <span>白 <strong id="setup-white">—</strong></span>
               <span>黑 <strong id="setup-black">—</strong></span>
-              <span>高度 = <strong id="setup-civ-goal">—</strong></span>
+              <span>白×黑 = <strong id="setup-dice-product">—</strong></span>
             </div>
-            <p class="hint">乘積若小於 30 以 30 為下限。</p>
+            <p class="hint">建議由起始福慧最高者擲白 × 黑（最低 30），擲完將寫入上方欄位。</p>
           </div>
         </fieldset>
 

@@ -423,6 +423,7 @@ function openSetup(opts = {}) {
   setupTmp.white = state.whiteRoll;
   setupTmp.black = state.blackRoll;
   $('#setup-round').value = state.roundNum;
+  $('#setup-civ-goal-input').value = state.civGoal || 30;
   renderSetup();
   $('#setup-modal').classList.remove('hidden');
 }
@@ -501,8 +502,13 @@ function renderSetupCivResult() {
   $('#setup-white').textContent = setupTmp.white ?? '—';
   $('#setup-black').textContent = setupTmp.black ?? '—';
   const product = (setupTmp.white && setupTmp.black) ? setupTmp.white * setupTmp.black : null;
-  const goal = product ? Math.max(30, product) : null;
-  $('#setup-civ-goal').textContent = goal ?? '—';
+  $('#setup-dice-product').textContent = product ?? '—';
+}
+
+function maybeFillSetupGoal() {
+  if (setupTmp.white && setupTmp.black) {
+    $('#setup-civ-goal-input').value = Math.max(30, setupTmp.white * setupTmp.black);
+  }
 }
 
 function applySetup() {
@@ -522,13 +528,13 @@ function applySetup() {
     });
     if (p.fortune >= GRAD_THRESHOLD && p.wisdom >= GRAD_THRESHOLD) p.graduated = true;
   });
+  const inputGoal = parseInt($('#setup-civ-goal-input').value, 10);
+  if (Number.isFinite(inputGoal) && inputGoal > 0) {
+    state.civGoal = inputGoal;
+  }
   if (setupTmp.white && setupTmp.black) {
     state.whiteRoll = setupTmp.white;
     state.blackRoll = setupTmp.black;
-    state.civGoal = Math.max(30, setupTmp.white * setupTmp.black);
-    $('#white-result').textContent = setupTmp.white;
-    $('#black-result').textContent = setupTmp.black;
-    $('#civ-product').textContent = state.civGoal;
   }
   resetTimer();
   state._timeUpNoticed = false;
@@ -568,12 +574,12 @@ function bindEvents() {
   $('#setup-roll-white').addEventListener('click', () => {
     const v = roll(6);
     animateNumber($('#setup-white'), v, 300);
-    setTimeout(() => { setupTmp.white = v; renderSetupCivResult(); }, 320);
+    setTimeout(() => { setupTmp.white = v; renderSetupCivResult(); maybeFillSetupGoal(); }, 320);
   });
   $('#setup-roll-black').addEventListener('click', () => {
     const v = roll(6);
     animateNumber($('#setup-black'), v, 300);
-    setTimeout(() => { setupTmp.black = v; renderSetupCivResult(); }, 320);
+    setTimeout(() => { setupTmp.black = v; renderSetupCivResult(); maybeFillSetupGoal(); }, 320);
   });
 
   // Sidebar dice
@@ -590,21 +596,24 @@ function bindEvents() {
   $('#roll-white').addEventListener('click', () => {
     const v = roll(6);
     animateNumber($('#white-result'), v, 320);
-    setTimeout(() => { state.whiteRoll = v; refreshCivProduct(); save(); }, 340);
+    setTimeout(() => { state.whiteRoll = v; refreshCivProduct(); maybeApplyCivGoalFromDice(); save(); }, 340);
   });
   $('#roll-black').addEventListener('click', () => {
     const v = roll(6);
     animateNumber($('#black-result'), v, 320);
-    setTimeout(() => { state.blackRoll = v; refreshCivProduct(); save(); }, 340);
+    setTimeout(() => { state.blackRoll = v; refreshCivProduct(); maybeApplyCivGoalFromDice(); save(); }, 340);
   });
-  $('#apply-civ-goal').addEventListener('click', () => {
-    if (state.whiteRoll && state.blackRoll) {
-      state.civGoal = Math.max(30, state.whiteRoll * state.blackRoll);
+
+  const civInput = $('#civ-goal-input');
+  civInput.addEventListener('change', () => {
+    const v = parseInt(civInput.value, 10);
+    if (Number.isFinite(v) && v > 0) {
+      state.civGoal = v;
       save();
       updateTopbar();
-      toast(`本局文明高度設為 ${state.civGoal}`, 'grad');
+      toast(`文明高度設為 ${v}`);
     } else {
-      toast('請先擲白骰與黑骰');
+      civInput.value = state.civGoal;
     }
   });
 
@@ -621,7 +630,18 @@ function refreshCivProduct() {
   $('#white-result').textContent = state.whiteRoll ?? '—';
   $('#black-result').textContent = state.blackRoll ?? '—';
   $('#civ-product').textContent = (state.whiteRoll && state.blackRoll)
-    ? Math.max(30, state.whiteRoll * state.blackRoll) : '—';
+    ? state.whiteRoll * state.blackRoll : '—';
+  const ci = $('#civ-goal-input');
+  if (ci && document.activeElement !== ci) ci.value = state.civGoal ?? '';
+}
+
+function maybeApplyCivGoalFromDice() {
+  if (state.whiteRoll && state.blackRoll) {
+    state.civGoal = Math.max(30, state.whiteRoll * state.blackRoll);
+    $('#civ-goal-input').value = state.civGoal;
+    updateTopbar();
+    toast(`白×黑 = ${state.whiteRoll * state.blackRoll} ➜ 文明高度 ${state.civGoal}`);
+  }
 }
 
 // ─────────── Render all ───────────
