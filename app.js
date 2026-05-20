@@ -549,17 +549,6 @@ function bindEvents() {
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
 
-  // Sidebar dice (d6 / d10 / 2d6 for in-game moves; civ-height uses physical dice)
-  $$('[data-dice]').forEach(b => b.addEventListener('click', () => {
-    const kind = b.dataset.dice;
-    const out = $('#shared-dice-result');
-    let v;
-    if (kind === 'd6') v = roll(6);
-    else if (kind === 'd10') v = roll(10);
-    else if (kind === '2d6') v = roll(6) + roll(6);
-    animateNumber(out, v, 360);
-  }));
-
   const civInput = $('#civ-goal-input');
   civInput.addEventListener('change', () => {
     const v = parseInt(civInput.value, 10);
