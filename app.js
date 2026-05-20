@@ -163,8 +163,8 @@ function processStatChange(player, stat, oldVal, newVal) {
     if (oldVal < m && newVal >= m && !player.notified[k]) {
       player.notified[k] = true;
       const msg = m === 50
-        ? `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 50 ➜ 抽卡 · 可宣告畢業`
-        : `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m} ➜ 抽里程際遇卡`;
+        ? `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 50　抽卡、可宣告畢業`
+        : `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽里程際遇卡`;
       toast(msg, m === 50 ? 'grad' : '');
       logEvent(msg, m === 50 ? 'grad' : 'milestone');
       flashCard(player.id);
@@ -180,7 +180,7 @@ function checkGraduation(player) {
   const meets = player.fortune >= GRAD_THRESHOLD && player.wisdom >= GRAD_THRESHOLD;
   if (meets && !player.graduated) {
     player.graduated = true;
-    const msg = `🎓 ${player.name || '玩家'} 完成福慧雙修畢業！`;
+    const msg = `${player.name || '玩家'} 完成福慧雙修、畢業`;
     toast(msg, 'grad');
     logEvent(msg, 'grad');
     flashCard(player.id, 'grad');
@@ -218,12 +218,12 @@ function updateTopbar() {
   timerEl.classList.toggle('over', sec >= MAX_GAME_SECONDS);
 
   const btn = $('#btn-toggle-timer');
-  btn.textContent = state.timer.running ? '⏸ 暫停' : '▶ 開始';
+  btn.textContent = state.timer.running ? '暫停' : '開始';
 
   if (sec >= MAX_GAME_SECONDS && !state._timeUpNoticed) {
     state._timeUpNoticed = true;
     pauseTimer();
-    toast('⏰ 100 分鐘到，請進行最終結算', 'grad');
+    toast('100 分鐘到、請進行最終結算', 'grad');
     logEvent('時間到 — 進行最終結算', 'grad');
   }
 }
@@ -236,9 +236,9 @@ function renderPlayers() {
   if (!state.players.length) {
     grid.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">☸</div>
+        <div class="empty-icon">○</div>
         <h3>尚未開局</h3>
-        <p>點右上「⚙ 設定」開始新一局《福慧大富翁》。</p>
+        <p>點右上「設定」開始新一局《福慧大富翁》。</p>
         <button class="btn btn-primary" id="empty-setup-btn">開新局</button>
       </div>`;
     $('#empty-setup-btn').addEventListener('click', openSetup);
@@ -259,7 +259,7 @@ function buildPlayerCard(p) {
     ${milestoneAlert ? `<div class="milestone-flag">${milestoneAlert}</div>` : ''}
     <header class="pc-head">
       <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="玩家名稱" maxlength="10" />
-      <span class="pc-hat" title="已畢業">🎓</span>
+      <span class="pc-hat" title="已畢業">畢業</span>
       <div class="pc-total">
         <span>綜合</span>
         <strong>${total}</strong>
@@ -269,7 +269,7 @@ function buildPlayerCard(p) {
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
     <footer class="pc-foot">
-      <span class="pc-status">${p.graduated ? '✓ 已畢業 · 持續共好' : statusHint(p)}</span>
+      <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
       <button class="pc-remove" data-act="remove">移除</button>
     </footer>
   `;
@@ -312,7 +312,7 @@ function nextActiveMilestone(p) {
     for (const m of [25, 35, 45]) {
       const k = key(stat, m);
       if (p[stat] >= m && p[stat] < m + 5 && p.notified[k]) {
-        return `${STAT_LABEL[stat]} ${m} ➜ 抽卡`;
+        return `${STAT_LABEL[stat]} ${m}　抽卡`;
       }
     }
   }
@@ -320,7 +320,7 @@ function nextActiveMilestone(p) {
 }
 
 function statusHint(p) {
-  if (p.fortune >= 45 && p.wisdom >= 45) return '即將畢業 ✨';
+  if (p.fortune >= 45 && p.wisdom >= 45) return '即將畢業';
   if (p.fortune >= 35 || p.wisdom >= 35) return '中段修煉';
   return '修煉中';
 }
@@ -386,7 +386,7 @@ function updatePlayerCard(p) {
   });
 
   card.querySelector('.pc-status').textContent =
-    p.graduated ? '✓ 已畢業 · 持續共好' : statusHint(p);
+    p.graduated ? '已畢業　持續共好' : statusHint(p);
 
   const existingFlag = card.querySelector('.milestone-flag');
   const flagText = nextActiveMilestone(p);
@@ -604,7 +604,7 @@ function refreshUndoButton() {
   if (!btn) return;
   if (state.previousRound) {
     btn.hidden = false;
-    btn.textContent = `↩ 回第 ${state.previousRound.roundNum} 局`;
+    btn.textContent = `回第 ${state.previousRound.roundNum} 局`;
   } else {
     btn.hidden = true;
   }

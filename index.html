@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#2d1b69" />
+  <meta name="theme-color" content="#F7F5F0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="福慧大富翁" />
@@ -19,7 +19,7 @@
       <span class="logo" aria-hidden="true">☸</span>
       <div class="brand-text">
         <div class="title">福慧大富翁</div>
-        <div class="subtitle">主持人 Dashboard</div>
+        <div class="subtitle">Host Dashboard</div>
       </div>
     </div>
 
@@ -46,10 +46,10 @@
     </div>
 
     <div class="actions">
-      <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">▶ 開始</button>
+      <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">開始</button>
       <button id="btn-next-round" class="btn" title="進入下一局">下一局</button>
-      <button id="btn-undo-round" class="btn btn-ghost" title="回到上一局（一層 undo）" hidden>↩ 回上一局</button>
-      <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定">⚙ 設定</button>
+      <button id="btn-undo-round" class="btn btn-ghost" title="回到上一局（一層 undo）" hidden>回上一局</button>
+      <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定">設定</button>
     </div>
   </header>
 
@@ -73,15 +73,15 @@
 
     <aside class="tools">
       <div class="tool-card">
-        <h3>📜 里程提醒</h3>
-        <p class="tool-hint">25 / 35 / 45 抽里程際遇卡 · 50 觸發畢業條件</p>
+        <h3>里程提醒</h3>
+        <p class="tool-hint">25 / 35 / 45　抽里程際遇卡<br />50　觸發畢業條件</p>
         <ul class="milestone-log" id="milestone-log">
           <li class="empty">尚無觸發</li>
         </ul>
       </div>
 
       <div class="tool-card danger-card">
-        <h3>⚠ 危險區</h3>
+        <h3>危險區</h3>
         <button class="btn btn-warn btn-block" id="btn-reset-game">重置整個遊戲狀態</button>
       </div>
     </aside>
