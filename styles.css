@@ -628,20 +628,6 @@ body {
 .civ-input-row { margin-bottom: 10px; }
 .civ-input-row input[type="number"] { width: 110px; font-size: 16px; font-weight: 700; }
 
-.civ-goal-readout {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 10px 14px;
-  background: var(--surface-strong);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-.civ-goal-readout > span {
-  font-size: 13px; color: var(--text-dim); letter-spacing: 1px;
-}
-.civ-goal-readout > strong {
-  font-size: 30px; font-weight: 800; color: var(--fortune);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ───────────── Toast ───────────── */
 

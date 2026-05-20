@@ -558,17 +558,11 @@ function bindEvents() {
   });
 }
 
-function syncCivGoalDisplay() {
-  const el = $('#civ-goal-display');
-  if (el) el.textContent = state.civGoal ?? '—';
-}
-
 // ─────────── Render all ───────────
 function renderAll() {
   updateTopbar();
   renderPlayers();
   renderLog();
-  syncCivGoalDisplay();
 }
 
 // ─────────── Timer loop ───────────
