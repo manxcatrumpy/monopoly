@@ -496,16 +496,6 @@ body {
   letter-spacing: 1px;
 }
 
-.civ-dice-result {
-  display: flex; gap: 8px; justify-content: space-around; align-items: center;
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--surface-strong);
-  border-radius: var(--radius-sm); border: 1px solid var(--border);
-  font-size: 13px;
-}
-.civ-dice-result strong { font-size: 20px; font-variant-numeric: tabular-nums; }
-
 .milestone-log {
   list-style: none; padding: 0; margin: 0;
   max-height: 260px; overflow-y: auto;
