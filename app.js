@@ -21,6 +21,7 @@ const defaultState = () => ({
   timer: { accumulated: 0, lastStartedAt: null, running: false },
   players: [],
   log: [],
+  history: [],
 });
 
 let state = defaultState();
@@ -35,6 +36,12 @@ function load() {
     const parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.players)) return false;
     state = Object.assign(defaultState(), parsed);
+    // Migrate v1 single-snapshot undo to v2 history array
+    if (!Array.isArray(state.history)) state.history = [];
+    if (state.previousRound) {
+      state.history.push(state.previousRound);
+      delete state.previousRound;
+    }
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
@@ -516,7 +523,7 @@ function applySetup() {
   }
   resetTimer();
   state._timeUpNoticed = false;
-  state.previousRound = null;
+  state.history = [];
   state.log = [];
   logEvent(`第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
   save();
@@ -528,7 +535,8 @@ function applySetup() {
 function bindEvents() {
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', nextRound);
-  $('#btn-undo-round').addEventListener('click', undoNextRound);
+  $('#btn-history').addEventListener('click', openHistory);
+  $('#history-close').addEventListener('click', closeHistory);
   $('#btn-setup').addEventListener('click', openSetup);
   $('#setup-close').addEventListener('click', closeSetup);
   $('#setup-cancel').addEventListener('click', closeSetup);
@@ -546,7 +554,7 @@ function bindEvents() {
   });
 }
 
-// ─────────── Round navigation (with one-level undo) ───────────
+// ─────────── Round navigation (history archive + restore) ───────────
 function snapshotRound() {
   return JSON.parse(JSON.stringify({
     roundNum: state.roundNum,
@@ -558,12 +566,14 @@ function snapshotRound() {
 }
 
 function nextRound() {
-  const msg = `進入第 ${state.roundNum + 1} 局？\n所有玩家積分將歸零、計時器重置、紀錄清空。\n（按錯可用「↩ 回上一局」復原）`;
+  const msg = `進入第 ${state.roundNum + 1} 局？\n所有玩家積分將歸零、計時器重置、紀錄清空。\n（可從右上「歷史紀錄」復原任一過往局）`;
   if (!confirm(msg)) return;
 
   // Pause first so accumulated elapsed time is finalized in the snapshot
   if (state.timer.running) pauseTimer();
-  state.previousRound = snapshotRound();
+  const snap = snapshotRound();
+  snap.completedAt = Date.now();
+  state.history.push(snap);
 
   state.roundNum += 1;
   state.players.forEach(p => {
@@ -579,35 +589,91 @@ function nextRound() {
   logEvent(`進入第 ${state.roundNum} 局（積分歸零）`, 'grad');
   save();
   renderAll();
-  toast(`已進入第 ${state.roundNum} 局 — 可按「↩ 回上一局」復原`);
+  toast(`已進入第 ${state.roundNum} 局 — 上一局已存入歷史紀錄`);
 }
 
-function undoNextRound() {
-  if (!state.previousRound) return;
-  const prev = state.previousRound;
-  if (!confirm(`回到第 ${prev.roundNum} 局？\n當前第 ${state.roundNum} 局的所有變更將遺失。`)) return;
+function restoreRound(idx) {
+  if (!state.history || !state.history[idx]) return;
+  const entry = state.history[idx];
+  const tail = state.history.length - idx - 1;
+  const tailNote = tail > 0 ? `，第 ${entry.roundNum} 局之後的 ${tail} 局歷史也會一併丟失` : '';
+  if (!confirm(`復原到第 ${entry.roundNum} 局？\n當前第 ${state.roundNum} 局所有變更將遺失${tailNote}。`)) return;
 
-  state.roundNum = prev.roundNum;
-  state.civGoal = prev.civGoal;
-  state.timer = prev.timer;
-  state.players = prev.players;
-  state.log = prev.log;
-  state.previousRound = null;
+  state.roundNum = entry.roundNum;
+  state.civGoal = entry.civGoal;
+  state.timer = entry.timer;
+  state.players = entry.players;
+  state.log = entry.log;
+  state.history = state.history.slice(0, idx);
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
   save();
   renderAll();
-  toast(`已回到第 ${state.roundNum} 局`, 'grad');
+  closeHistory();
+  toast(`已復原至第 ${state.roundNum} 局`, 'grad');
 }
 
-function refreshUndoButton() {
-  const btn = document.getElementById('btn-undo-round');
+function refreshHistoryButton() {
+  const btn = document.getElementById('btn-history');
   if (!btn) return;
-  if (state.previousRound) {
+  const n = (state.history || []).length;
+  if (n > 0) {
     btn.hidden = false;
-    btn.textContent = `回第 ${state.previousRound.roundNum} 局`;
+    btn.textContent = `歷史 · ${n}`;
   } else {
     btn.hidden = true;
   }
+}
+
+function openHistory() {
+  renderHistoryList();
+  $('#history-modal').classList.remove('hidden');
+}
+function closeHistory() {
+  $('#history-modal').classList.add('hidden');
+}
+
+function renderHistoryList() {
+  const ul = $('#history-list');
+  if (!state.history || !state.history.length) {
+    ul.innerHTML = `<li class="history-empty">尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。</li>`;
+    return;
+  }
+  // Newest first
+  const html = state.history.map((entry, idx) => ({ entry, idx }))
+    .reverse()
+    .map(({ entry, idx }) => {
+      const dur = fmt(entry.timer && entry.timer.accumulated || 0);
+      const when = entry.completedAt
+        ? new Date(entry.completedAt).toLocaleString('zh-TW', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false,
+          })
+        : '—';
+      const players = entry.players.map(p => `
+        <div class="hi-player ${p.graduated ? 'graduated' : ''}">
+          <div class="hp-name">${escapeHtml(p.name || '玩家')}</div>
+          <div class="hp-scores">福 ${p.fortune} · 慧 ${p.wisdom} · 文明 ${p.civ}</div>
+          <div class="hp-total">綜合 <strong>${comprehensiveScore(p)}</strong></div>
+        </div>
+      `).join('');
+      return `
+        <li class="history-item">
+          <div class="hi-head">
+            <div class="hi-title">第 ${entry.roundNum} 局 · 文明高度 ${entry.civGoal}</div>
+            <div class="hi-time">${when} · 時長 ${dur}</div>
+          </div>
+          <div class="hi-players">${players}</div>
+          <div class="hi-actions">
+            <button class="btn btn-ghost" data-restore="${idx}">復原到此局</button>
+          </div>
+        </li>
+      `;
+    }).join('');
+  ul.innerHTML = html;
+
+  $$('button[data-restore]', ul).forEach(b => {
+    b.addEventListener('click', () => restoreRound(+b.dataset.restore));
+  });
 }
 
 // ─────────── Render all ───────────
@@ -615,7 +681,7 @@ function renderAll() {
   updateTopbar();
   renderPlayers();
   renderLog();
-  refreshUndoButton();
+  refreshHistoryButton();
 }
 
 // ─────────── Timer loop ───────────

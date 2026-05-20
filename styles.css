@@ -723,6 +723,102 @@ button { font-family: inherit; }
 .civ-input-row { margin-bottom: 8px; }
 .civ-input-row input[type="number"] { width: 110px; font-size: 15px; font-weight: 500; }
 
+/* ───────────── History list ───────────── */
+
+.history-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.history-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--ink-mute);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+.history-item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: var(--surface-soft);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.history-item .hi-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; flex-wrap: wrap;
+}
+.history-item .hi-title {
+  font-size: 14px; font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.history-item .hi-time {
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+.history-item .hi-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+.history-item .hi-player {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column; gap: 4px;
+  position: relative;
+}
+.history-item .hi-player.graduated {
+  border-color: var(--ink);
+}
+.history-item .hi-player .hp-name {
+  font-size: 13px; font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.history-item .hi-player.graduated .hp-name::after {
+  content: "畢業";
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  border: 1px solid var(--ink);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+.history-item .hi-player .hp-scores {
+  font-size: 11px;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.history-item .hi-player .hp-total {
+  font-size: 10px;
+  color: var(--ink-mute);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.history-item .hi-player .hp-total strong {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+.history-item .hi-actions {
+  display: flex; justify-content: flex-end;
+}
+
 /* ───────────── Toast ───────────── */
 
 .toast {
