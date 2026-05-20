@@ -549,19 +549,6 @@ function bindEvents() {
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
 
-  const civInput = $('#civ-goal-input');
-  civInput.addEventListener('change', () => {
-    const v = parseInt(civInput.value, 10);
-    if (Number.isFinite(v) && v > 0) {
-      state.civGoal = v;
-      save();
-      updateTopbar();
-      toast(`文明高度設為 ${v}`);
-    } else {
-      civInput.value = state.civGoal;
-    }
-  });
-
   $('#btn-reset-game').addEventListener('click', () => {
     if (!confirm('重置所有積分、計時與設定，確定？')) return;
     state = defaultState();
@@ -571,9 +558,9 @@ function bindEvents() {
   });
 }
 
-function syncCivGoalInput() {
-  const ci = $('#civ-goal-input');
-  if (ci && document.activeElement !== ci) ci.value = state.civGoal ?? '';
+function syncCivGoalDisplay() {
+  const el = $('#civ-goal-display');
+  if (el) el.textContent = state.civGoal ?? '—';
 }
 
 // ─────────── Render all ───────────
@@ -581,7 +568,7 @@ function renderAll() {
   updateTopbar();
   renderPlayers();
   renderLog();
-  syncCivGoalInput();
+  syncCivGoalDisplay();
 }
 
 // ─────────── Timer loop ───────────
