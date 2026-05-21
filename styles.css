@@ -105,8 +105,8 @@ button { font-family: inherit; }
 }
 .meta-item {
   display: flex; flex-direction: column; align-items: center;
-  min-width: 120px;
-  padding: 0 28px;
+  min-width: 96px;
+  padding: 0 20px;
   border-left: 1px solid var(--line);
 }
 .meta-item:first-child { border-left: none; }
@@ -116,6 +116,12 @@ button { font-family: inherit; }
   letter-spacing: 0.32em;
   text-transform: uppercase;
   margin-bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.meta-item label .dot {
+  width: 6px; height: 6px; margin-right: 6px;
 }
 .meta-value {
   font-size: 22px;

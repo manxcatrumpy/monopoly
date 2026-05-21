@@ -66,6 +66,12 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
 function totalCiv() {
   return state.players.reduce((s, p) => s + (p.civ || 0), 0);
 }
+function totalFortune() {
+  return state.players.reduce((s, p) => s + (p.fortune || 0), 0);
+}
+function totalWisdom() {
+  return state.players.reduce((s, p) => s + (p.wisdom || 0), 0);
+}
 function comprehensiveScore(p) {
   return (p.fortune || 0) + (p.wisdom || 0) + (p.civ || 0) * 2;
 }
@@ -217,6 +223,9 @@ function updateTopbar() {
 
   const pct = Math.min(100, (total / Math.max(1, state.civGoal)) * 100);
   $('#civ-bar-fill').style.width = pct + '%';
+
+  $('#fortune-total').textContent = totalFortune();
+  $('#wisdom-total').textContent = totalWisdom();
 
   const sec = elapsedSeconds();
   $('#timer').textContent = fmt(sec);
