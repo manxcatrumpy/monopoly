@@ -8,8 +8,14 @@ const STORAGE_KEY = 'fuhui-dashboard-state-v1';
 const MAX_GAME_SECONDS = 100 * 60;
 const GRAD_THRESHOLD = 50;
 const MILESTONES = [25, 35, 45, 50];
+const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
+const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福慧雙達者
 const STATS = ['fortune', 'wisdom', 'civ'];
 const STAT_LABEL = { fortune: '福報', wisdom: '智慧', civ: '文明' };
+
+function emptyNavClaim() {
+  return NAV_THRESHOLDS.reduce((o, n) => (o[n] = null, o), {});
+}
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -22,6 +28,7 @@ const defaultState = () => ({
   players: [],
   log: [],
   history: [],
+  navigatorClaimed: emptyNavClaim(),
 });
 
 let state = defaultState();
@@ -42,6 +49,8 @@ function load() {
       state.history.push(state.previousRound);
       delete state.previousRound;
     }
+    // Ensure navigatorClaimed shape (older saves predate this field)
+    state.navigatorClaimed = Object.assign(emptyNavClaim(), state.navigatorClaimed || {});
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
@@ -187,6 +196,36 @@ function processStatChange(player, stat, oldVal, newVal) {
     }
   }
   checkGraduation(player);
+}
+
+// Dual-stat milestones (福 AND 慧 both ≥ N)
+function checkDualMilestones(player) {
+  const both = Math.min(player.fortune || 0, player.wisdom || 0);
+
+  // 領航者際遇 — first player in the round to satisfy each threshold claims it
+  for (const n of NAV_THRESHOLDS) {
+    if (both >= n && state.navigatorClaimed[n] == null) {
+      state.navigatorClaimed[n] = player.id;
+      const msg = `領航者際遇　${player.name || '玩家'} 率先 福慧雙達 ${n}　抽 1 張`;
+      toast(msg, 'grad');
+      logEvent(msg, 'grad');
+      flashCard(player.id, 'grad');
+    }
+  }
+
+  // 自我突破際遇 — every player who crosses; can re-fire after dropping below
+  for (const n of SELF_THRESHOLDS) {
+    const k = 'self' + n;
+    if (both >= n && !player.notified[k]) {
+      player.notified[k] = true;
+      const msg = `自我突破際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`;
+      toast(msg);
+      logEvent(msg, 'milestone');
+      flashCard(player.id);
+    } else if (both < n && player.notified[k]) {
+      player.notified[k] = false;
+    }
+  }
 }
 
 function checkGraduation(player) {
@@ -374,7 +413,10 @@ function setStat(playerId, stat, value) {
   const p = getPlayer(playerId); if (!p) return;
   const old = p[stat] || 0;
   p[stat] = Math.max(0, value | 0);
-  if (stat !== 'civ') processStatChange(p, stat, old, p[stat]);
+  if (stat !== 'civ') {
+    processStatChange(p, stat, old, p[stat]);
+    checkDualMilestones(p);
+  }
   save();
   updatePlayerCard(p);
   updateTopbar();
@@ -524,6 +566,10 @@ function applySetup() {
     ['fortune', 'wisdom'].forEach(stat => {
       MILESTONES.forEach(m => { if (p[stat] >= m) p.notified[key(stat, m)] = true; });
     });
+    // Self-Breakthrough: silent pre-mark for any player starting above dual threshold
+    SELF_THRESHOLDS.forEach(n => {
+      if (Math.min(p.fortune, p.wisdom) >= n) p.notified['self' + n] = true;
+    });
     if (p.fortune >= GRAD_THRESHOLD && p.wisdom >= GRAD_THRESHOLD) p.graduated = true;
   });
   const inputGoal = parseInt($('#setup-civ-goal-input').value, 10);
@@ -533,6 +579,12 @@ function applySetup() {
   resetTimer();
   state._timeUpNoticed = false;
   state.history = [];
+  state.navigatorClaimed = emptyNavClaim();
+  // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
+  NAV_THRESHOLDS.forEach(n => {
+    const first = state.players.find(p => Math.min(p.fortune, p.wisdom) >= n);
+    if (first) state.navigatorClaimed[n] = first.id;
+  });
   state.log = [];
   logEvent(`第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
   save();
@@ -571,6 +623,7 @@ function snapshotRound() {
     timer: state.timer,
     players: state.players,
     log: state.log,
+    navigatorClaimed: state.navigatorClaimed,
   }));
 }
 
@@ -594,6 +647,7 @@ function nextRound() {
   });
   resetTimer();
   state._timeUpNoticed = false;
+  state.navigatorClaimed = emptyNavClaim();
   state.log = [];
   logEvent(`進入第 ${state.roundNum} 局（積分歸零）`, 'grad');
   save();
@@ -613,6 +667,7 @@ function restoreRound(idx) {
   state.timer = entry.timer;
   state.players = entry.players;
   state.log = entry.log;
+  state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
   state.history = state.history.slice(0, idx);
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
   save();
