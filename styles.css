@@ -944,8 +944,28 @@ button { font-family: inherit; }
   to   { transform: translate(-50%, 0);    opacity: 1; }
 }
 
-/* ───────────── iPad-specific tweaks ───────────── */
+/* ─────────────────────────────────────────────────────────────────
+   Responsive layers
+   ─────────────────────────────────────────────────────────────────
+   Desktop/laptop (default, ≥ 1025px) : sidebar visible, players grid
+   uses --cols from JS (2 for ≤4 players, 3 for 5–6).
 
+   iPad Pro 12.9" landscape (≥ 1300px) : bump key font sizes.
+
+   Tablet portrait (768–1024px, portrait) : stack sidebar below, 2-col
+   players, tools become 2-col with danger-card spanning row 2.
+
+   Generic ≤ 1024px (incl. landscape phones up) : stack sidebar.
+
+   Small (≤ 720px) : compact action buttons, tighter meta items.
+
+   Phone (≤ 640px) : 2-row topbar (brand+actions / meta), 1-col
+   history, modals padding shrunk, single-stat-card hint hidden.
+
+   Ultra-small (≤ 380px) : iPhone SE class — pull everything closer.
+   ───────────────────────────────────────────────────────────────── */
+
+/* iPad Pro 12.9" landscape — bigger glyphs */
 @media (min-width: 1300px) and (orientation: landscape) {
   .meta-value { font-size: 24px; }
   .pc-name    { font-size: 20px; }
@@ -953,6 +973,7 @@ button { font-family: inherit; }
   .pc-total strong { font-size: 24px; }
 }
 
+/* Tablet portrait */
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
   .dashboard { grid-template-columns: 1fr; }
   .players-grid { grid-template-columns: repeat(2, 1fr); }
@@ -962,28 +983,100 @@ button { font-family: inherit; }
   .tool-card.danger-card { grid-column: 1 / -1; }
 }
 
-@media (max-width: 640px) {
-  .topbar {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 14px 18px;
+/* Small tablet / landscape phone */
+@media (max-width: 720px) {
+  .meta { gap: 0; }
+  .meta-item { min-width: 0; padding: 0 14px; }
+  .actions .btn {
+    padding: 9px 14px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    min-height: 38px;
   }
-  .meta-item { border-left: none; padding: 0 12px; min-width: 80px; }
-  .meta-value { font-size: 18px; }
-  .actions { justify-content: center; flex-wrap: wrap; }
-  .stat-row {
-    grid-template-columns: 56px 1fr 36px 60px 36px;
-    gap: 8px;
-  }
-  .stat-row .stat-num { font-size: 22px; }
-  .pc-name { font-size: 16px; }
-  .setup-player-row { grid-template-columns: 1fr; }
-  .civ-progress { padding: 16px 18px 0; }
-  .dashboard { padding: 16px; }
+  .dashboard { padding: 18px 20px 32px; gap: 18px; }
+  .topbar { padding: 14px 20px; gap: 16px; }
 }
 
-/* Prevent iOS auto-zoom on number inputs */
-input[type="number"], input[type="text"] { font-size: 16px; }
+/* Phone — 2-row topbar, compact everything */
+@media (max-width: 640px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand actions"
+      "meta  meta";
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .brand   { grid-area: brand; gap: 10px; }
+  .actions { grid-area: actions; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .meta    { grid-area: meta; justify-content: space-between; }
+
+  .logo { width: 36px; height: 36px; font-size: 18px; }
+  .brand-text .title    { font-size: 16px; letter-spacing: 0.06em; }
+  .brand-text .subtitle { display: none; }
+
+  .meta-item { border-left: none; padding: 0 4px; min-width: 0; flex: 1; }
+  .meta-item label { font-size: 9px; letter-spacing: 0.24em; margin-bottom: 2px; }
+  .meta-value { font-size: 16px; }
+  .meta-cap   { display: none; }
+
+  .actions .btn {
+    padding: 8px 12px;
+    min-height: 36px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  .civ-progress { padding: 14px 16px 0; max-width: none; }
+  .dashboard    { padding: 14px 16px 24px; gap: 16px; }
+  .section-head { flex-wrap: wrap; gap: 8px; }
+
+  .stat-row { grid-template-columns: 52px 1fr 36px 56px 36px; gap: 8px; }
+  .stat-row .stat-num { font-size: 22px; min-width: 56px; }
+  .pc-name { font-size: 16px; }
+  .player-card { padding: 16px 16px 12px; }
+
+  .setup-player-row { grid-template-columns: 1fr; }
+  .empty-state { padding: 48px 20px; }
+
+  /* Modals: shrink chrome on phone, let card content breathe */
+  .modal { padding: 12px; }
+  .modal-head, .modal-foot { padding: 14px 18px; }
+  .modal-body { padding: 16px 18px; }
+  .modal-head h2 { font-size: 14px; letter-spacing: 0.14em; }
+
+  .card-display { padding: 20px 18px; }
+  .card-name { font-size: 20px; margin-bottom: 12px; padding-bottom: 12px; letter-spacing: 0.08em; }
+  .card-desc, .card-section-text { font-size: 13.5px; line-height: 1.75; }
+
+  /* History list — players become single column inside each entry */
+  .history-item { padding: 14px 16px; }
+  .history-item .hi-players { grid-template-columns: 1fr; }
+  .history-item .hi-head { gap: 6px; }
+  .history-item .hi-time { font-size: 10px; }
+}
+
+/* Ultra-small (iPhone SE class) */
+@media (max-width: 380px) {
+  .topbar { padding: 10px 12px; }
+  .actions .btn { padding: 7px 10px; font-size: 11px; min-height: 34px; }
+  .meta-value { font-size: 15px; }
+  .meta-item label { font-size: 8.5px; }
+  .stat-row { grid-template-columns: 48px 1fr 32px 50px 32px; gap: 6px; }
+  .tap { width: 32px; height: 32px; font-size: 18px; }
+  .stat-row .stat-num { font-size: 20px; min-width: 50px; }
+  .pc-head { gap: 6px; }
+  .pc-name { font-size: 15px; }
+  .player-card { padding: 14px 14px 10px; }
+  .modal { padding: 8px; }
+  .modal-head, .modal-foot, .modal-body { padding: 12px 14px; }
+  .card-display { padding: 18px 14px; }
+  .card-name { font-size: 18px; }
+  .card-reward { font-size: 11px; padding: 7px 12px; }
+}
+
+/* Prevent iOS auto-zoom on form inputs (keeps text ≥ 16px in CSS pixels) */
+input[type="number"], input[type="text"], select { font-size: 16px; }
 @media (min-width: 768px) {
   .stat-row .stat-num { font-size: 28px; }
 }
