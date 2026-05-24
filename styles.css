@@ -763,6 +763,21 @@ button { font-family: inherit; }
   margin: 0 0 16px;
   letter-spacing: 0.02em;
 }
+.card-section { margin-bottom: 14px; }
+.card-section-label {
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.card-section-text {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
 .card-side {
   font-size: 12px;
   line-height: 1.7;

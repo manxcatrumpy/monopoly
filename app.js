@@ -72,15 +72,56 @@ function buildActionPool() {
   const pool = [];
   Object.entries(ACTION_DECK).forEach(([cat, data]) => {
     data.cards.forEach(c => pool.push({
+      type: 'action',
       category: cat,
       name: c.name,
       desc: c.desc,
       side: c.side || '',
-      reward: c.reward || data.reward,             // per-card override allowed
-      rewardText: c.rewardText || data.rewardText, // per-card override allowed
+      reward: c.reward || data.reward,
+      rewardText: c.rewardText || data.rewardText,
     }));
   });
   return pool;
+}
+
+// ─────────── Boost deck (共好加速卡) ───────────
+// Each card stands alone (no categories). 「即時行動」 + 「福慧覺察」 sections.
+const BOOST_DECK = [
+  { name: '能量補給站',   reward: { fortune: 1, wisdom: 0, civ: 1 }, rewardText: '福報 +1 · 文明 +1',
+    action: '與上一家擊掌，並互相對彼此大聲說一句：「有你在這一起，真好」。',
+    insight: '無畏布施，給予他人心靈的支持與力量。' },
+  { name: '隨手微服務',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
+    action: '主動為上一家做一件微小的服務（例如：幫他倒水、遞一張衛生紙、或幫他把眼前的桌面稍微整理整齊⋯）。',
+    insight: '用行動主動利他。' },
+  { name: '無聲的祝福',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '福報 +1 · 智慧 +1',
+    action: '對上一家露出真誠的燦爛「笑臉」，傳遞無聲的善意。',
+    insight: '善意不需要複雜的包裝，簡單的交流就能傳遞溫暖。' },
+  { name: '點數大共享',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
+    action: '將自己身上的 1 點「福報」或「智慧」贈予上一家，並對他說：「這份好運分給你」。',
+    insight: '慷慨是打破匱乏感的最佳練習。願意分享，福報反而會回流。',
+    side: '自身 -1 福或慧，轉贈上一家' },
+  { name: '感恩的共振',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
+    action: '你與上一家輪流分享一件「今天發生、值得感恩的小事」。',
+    insight: '感恩的心念能瞬間提升周圍的磁場與頻率。' },
+  { name: '正念同頻率',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+    action: '你與上一家一起閉上眼睛，由你喊節拍，兩人同步進行 3 次深呼吸。',
+    insight: '在喧鬧中找回平靜，把注意力收回到自己的身體。' },
+  { name: '情緒資源回收', reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+    action: '與上一家各自說出一個近期的「小煩惱」，說完後，兩人一起「哈哈大笑三聲」把它丟掉。',
+    insight: '幽默感與轉念，是面對無常時最強大的心理韌性。' },
+  { name: '傾聽的修煉',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+    action: '請上一家分享此刻的「心情或感受」，你要全神貫注地看著他的眼睛傾聽，不發一語、不插嘴。',
+    insight: '真正的傾聽必須放下「我執」與「想給建議的衝動」。' },
+  { name: '舒展與覺知',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '智慧 +1 · 福報 +1',
+    action: '由上一家示範一個簡單的「肩頸伸展或伸懶腰動作」，你跟著他一起做 10 秒鐘。',
+    insight: '身體是修行的殿堂。隨時覺察並照顧身體的緊繃。' },
+  { name: '意圖的宣告',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+    action: '你與上一家輪流大聲宣告一個「遊戲結束前要完成的微小目標」（例如：我要多微笑、我要不抱怨）。',
+    insight: '為自己的行為設定清晰的意圖，是有意識生活的開始。' },
+];
+
+function buildBoostPool() {
+  return BOOST_DECK.map(c => ({ type: 'boost', ...c }));
 }
 
 const STORAGE_KEY = 'fuhui-dashboard-state-v1';
@@ -677,7 +718,8 @@ function bindEvents() {
   $('#btn-next-round').addEventListener('click', nextRound);
   $('#btn-history').addEventListener('click', openHistory);
   $('#history-close').addEventListener('click', closeHistory);
-  $('#btn-draw-action').addEventListener('click', openCardDraw);
+  $('#btn-draw-action').addEventListener('click', () => openCardDraw('action'));
+  $('#btn-draw-boost').addEventListener('click', () => openCardDraw('boost'));
   $('#card-close').addEventListener('click', closeCard);
   $('#btn-setup').addEventListener('click', openSetup);
   $('#setup-close').addEventListener('click', closeSetup);
@@ -821,12 +863,19 @@ function renderHistoryList() {
   });
 }
 
-// ─────────── Card draw (行動指令牌) ───────────
-const actionPool = buildActionPool();
+// ─────────── Card draw ───────────
+const DECKS = {
+  action: { title: '行動指令牌', pool: buildActionPool() },
+  boost:  { title: '共好加速卡', pool: buildBoostPool()  },
+};
 let currentCard = null;
+let currentDeckKey = null;
 
-function openCardDraw() {
-  currentCard = drawActionCard();
+function openCardDraw(deckKey) {
+  if (!DECKS[deckKey]) return;
+  currentDeckKey = deckKey;
+  currentCard = drawFromDeck(deckKey);
+  $('#card-title').textContent = DECKS[deckKey].title;
   renderCard();
   $('#card-modal').classList.remove('hidden');
 }
@@ -834,29 +883,22 @@ function closeCard() {
   $('#card-modal').classList.add('hidden');
 }
 
-function drawActionCard() {
-  if (actionPool.length === 0) return null;
-  let pick;
-  let tries = 0;
+function drawFromDeck(deckKey) {
+  const pool = DECKS[deckKey].pool;
+  if (!pool.length) return null;
+  let pick, tries = 0;
   do {
-    pick = actionPool[Math.floor(Math.random() * actionPool.length)];
+    pick = pool[Math.floor(Math.random() * pool.length)];
     tries++;
-  } while (currentCard && actionPool.length > 1 && pick.name === currentCard.name && pick.category === currentCard.category && tries < 8);
+  } while (currentCard && pool.length > 1 && pick.name === currentCard.name && tries < 8);
   return pick;
 }
 
 function renderCard() {
   if (!currentCard) return;
   const c = currentCard;
-  $('#card-body').innerHTML = `
-    <div class="card-display">
-      <div class="card-category">${escapeHtml(c.category)}</div>
-      <h3 class="card-name">${escapeHtml(c.name)}</h3>
-      <p class="card-desc">${escapeHtml(c.desc)}</p>
-      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
-      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
-    </div>
-  `;
+  const bodyHtml = c.type === 'boost' ? renderBoostBody(c) : renderActionBody(c);
+  $('#card-body').innerHTML = bodyHtml;
 
   const playerOpts = state.players.map(p =>
     `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
@@ -878,7 +920,7 @@ function renderCard() {
   `;
 
   $('#card-redraw').addEventListener('click', () => {
-    currentCard = drawActionCard();
+    currentCard = drawFromDeck(currentDeckKey);
     renderCard();
   });
   $('#card-apply').addEventListener('click', () => {
@@ -886,6 +928,37 @@ function renderCard() {
     if (!pid) { toast('請先選擇要套用的玩家'); return; }
     applyCardReward(pid, currentCard);
   });
+}
+
+function renderActionBody(c) {
+  return `
+    <div class="card-display">
+      <div class="card-category">${escapeHtml(c.category)}</div>
+      <h3 class="card-name">${escapeHtml(c.name)}</h3>
+      <p class="card-desc">${escapeHtml(c.desc)}</p>
+      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
+      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
+    </div>
+  `;
+}
+
+function renderBoostBody(c) {
+  return `
+    <div class="card-display">
+      <div class="card-category">共好加速卡</div>
+      <h3 class="card-name">${escapeHtml(c.name)}</h3>
+      <div class="card-section">
+        <div class="card-section-label">即時行動</div>
+        <p class="card-section-text">${escapeHtml(c.action)}</p>
+      </div>
+      <div class="card-section">
+        <div class="card-section-label">福慧覺察</div>
+        <p class="card-section-text">${escapeHtml(c.insight)}</p>
+      </div>
+      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
+      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
+    </div>
+  `;
 }
 
 function applyCardReward(playerId, card) {
