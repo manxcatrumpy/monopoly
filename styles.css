@@ -729,6 +729,79 @@ button { font-family: inherit; }
 .civ-input-row { margin-bottom: 8px; }
 .civ-input-row input[type="number"] { width: 110px; font-size: 15px; font-weight: 500; }
 
+/* ───────────── Card draw ───────────── */
+
+.card-panel { width: min(560px, 100%); }
+
+.card-display {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 28px 30px;
+  background: var(--surface);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.card-category {
+  font-size: 10px;
+  letter-spacing: 0.36em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.card-name {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  margin: 0 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.card-desc {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink);
+  margin: 0 0 16px;
+  letter-spacing: 0.02em;
+}
+.card-side {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: var(--paper-2);
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.04em;
+}
+.card-reward {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.card-actions .row { justify-content: flex-start; }
+.card-actions select {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  min-height: 40px;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+.card-actions select:focus { outline: none; border-color: var(--ink); }
+.card-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+
 /* ───────────── History list ───────────── */
 
 .history-list {

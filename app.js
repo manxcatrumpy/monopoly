@@ -4,6 +4,76 @@
 // 福慧大富翁 Dashboard
 // ─────────────────────────────────────────────────────────────────────────
 
+// ─────────── Card decks ───────────
+// NOTE: 智慧專精 appears identical to 福慧文明聯動 in source; treated as
+// separate decks (effectively doubling those 5 cards in the pool) pending
+// confirmation from the host.
+const ACTION_DECK = {
+  '福慧雙增': {
+    reward: { fortune: 2, wisdom: 2, civ: 0 },
+    rewardText: '福報 +2 · 智慧 +2',
+    cards: [
+      { name: '真誠傾聽', desc: '邀請場上「福報最低」的玩家，請對方分享「一件近期覺得最開心、或有成就感的小事」。你只需專注看著對方的眼睛傾聽，並在最後給予一個真誠的肯定，全程不可打斷，也不可把話題轉回自己身上。' },
+      { name: '經驗傳承', desc: '分享一個你過去在生活或學習中「走過的彎路」或「踩過的小坑」，以及你從中學到的一個實用教訓。坦然正視過去的不足並轉化為經驗，是最高級的「智慧」；將自己跌倒的經驗化為他人的避坑指南，即是累積「福報」。' },
+      { name: '打破成見', desc: '分享一個後來發現是偏頗的日常觀念（例如：刻板印象、誤解），並分享你是如何醒悟的。承認自身的無知並願意打破思維框架，需要極大的「智慧」；接納多元、不再輕易評斷他人，將為你結下廣闊的人際「福報」。' },
+      { name: '情緒覺察', desc: '說出曾出現過的一個「微小負面情緒」（如：不耐煩、小焦慮），並分享你是如何「接納它」或「轉念放下它」。明白情緒沒有對錯，看見並允許它的存在即是「智慧」；能與之和平共處而不去波及周遭的人，即是深厚的「福報」。' },
+      { name: '和解之橋', desc: '回想一次你快要生氣的時刻。向大家分享一個你專屬的「情緒急救小撇步」（例如：喝杯溫水、深呼吸三次）。分享後，邀請全桌玩家跟著你一起做一次這個動作。' },
+      { name: '言辭布施', desc: '觀察目前場上總積分落後，或是剛剛遭遇無常扣分的玩家。用一句溫暖、肯定的話語給予他力量與鼓勵。了解語言的影響力，在他人低潮時給予正向引導是「智慧」；用善語為他人驅散陰霾、給予支持，即是最美好的「福報」。' },
+      { name: '物盡其用', desc: '分享一個你在生活中「延長物品壽命」或「一物多用」的實際小技巧。因為，惜物愛物是培福，巧思應用是長慧。' },
+      { name: '時間布施', desc: '宣告在下一輪輪到你擲骰時，你將放棄自己的移動回合，並把擲骰的點數與機會讓給左邊的玩家。體會無私讓利、成就他人的快樂，將為你帶來無形的「福報」。知道適時成就他人是「智慧」。' },
+      { name: '跨界學習', desc: '向場上任一玩家提出一個你一直想了解的小問題（例如：如何煮好一杯咖啡？如何挑選花材？），請對方用 1 分鐘為你解答。', side: '解答者同獲 +1 福、+1 慧' },
+    ],
+  },
+  '福報專精': {
+    reward: { fortune: 3, wisdom: 0, civ: 1 },
+    rewardText: '福報 +3 · 文明 +1',
+    cards: [
+      { name: '微小善意', desc: '承諾在遊戲結束後的 24 小時內，完成一件的微小付出（如：撿起路邊垃圾、為後方的人擋門），並與全桌擊掌為證。將善意從遊戲桌面延伸到真實的日常生活中，將化為守護社會的真實「福報」。' },
+      { name: '無私分享', desc: '拿出自己的 2 點福報，無條件贈予場上福報最少的玩家。克服匱乏感，明白給予不會讓自己變少，是「智慧」的突破；雪中送炭，主動拉拔落後者，是新文明共好的「福報」實踐。', side: '自身 -2 福報，轉贈場上福報最低者' },
+      { name: '主動承擔', desc: '承諾在本次聚會/遊戲結束後，主動承擔一項清理或收拾的善後工作。看見環境的需要並主動補位，這份敏銳的「智慧」，能為群體帶來和諧，也是最直接累積「福報」的方法。' },
+      { name: '言辭布施', desc: '用一句溫暖、有力量的話，鼓勵目前場上積分落後的玩家。了解語言的影響力，在他人低潮時給予正向引導是「智慧」；用善語為他人驅散陰霾、給予支持，即是最美好的「福報」。' },
+      { name: '感恩回饋', desc: '分享近期生活中，一位默默為你付出，但你尚未向他道謝的人，並現場傳訊息或當面約對方道謝。察到自己擁有的便利皆來自他人的貢獻，是「智慧」的顯現；將感恩化為實際的行動與文字，能啟動源源不絕的「福報」循環。' },
+    ],
+  },
+  '福慧文明聯動': {
+    reward: { fortune: 2, wisdom: 1, civ: 1 },
+    rewardText: '福報 +2 · 智慧 +1 · 文明 +1',
+    cards: [
+      { name: '共好提案', desc: '為現場的空間或接下來的活動提出一個「能讓大家更舒適或更有意義」的微型提案（例如：調整燈光、換個座位、約定不看手機）。經半數同意即刻執行。' },
+      { name: '弱勢關懷', desc: '與目前總積分最低的一名玩家結盟。對方能同步獲得你下一次的福報與智慧點數。' },
+      { name: '知識開源', desc: '向全場分享一個能夠提升生活品質、工作效率或身心健康的實用工具/方法/APP，並說明其價值。' },
+      { name: '世代／跨界對話', desc: '分享一個你從不同年齡層，或是不同領域的人身上，學到最寶貴的一堂課。' },
+      { name: '環保倡議', desc: '提出一項你可以立刻在生活中實踐的減碳／環保行動（如：出門帶環保杯、冷氣調高一度）。', side: '第一個響應者 +1 福報' },
+    ],
+  },
+  '智慧專精': {
+    reward: { fortune: 2, wisdom: 1, civ: 1 },
+    rewardText: '福報 +2 · 智慧 +1 · 文明 +1',
+    cards: [
+      { name: '共好提案', desc: '為現場的空間或接下來的活動提出一個「能讓大家更舒適或更有意義」的微型提案（例如：調整燈光、換個座位、約定不看手機）。經半數同意即刻執行。' },
+      { name: '弱勢關懷', desc: '與目前總積分最低的一名玩家結盟。對方能同步獲得你下一次的福報與智慧點數。' },
+      { name: '知識開源', desc: '向全場分享一個能夠提升生活品質、工作效率或身心健康的實用工具/方法/APP，並說明其價值。' },
+      { name: '世代／跨界對話', desc: '分享一個你從不同年齡層，或是不同領域的人身上，學到最寶貴的一堂課。' },
+      { name: '環保倡議', desc: '提出一項你可以立刻在生活中實踐的減碳／環保行動（如：出門帶環保杯、冷氣調高一度）。', side: '第一個響應者 +1 福報' },
+    ],
+  },
+};
+
+function buildActionPool() {
+  const pool = [];
+  Object.entries(ACTION_DECK).forEach(([cat, data]) => {
+    data.cards.forEach(c => pool.push({
+      category: cat,
+      name: c.name,
+      desc: c.desc,
+      side: c.side || '',
+      reward: data.reward,
+      rewardText: data.rewardText,
+    }));
+  });
+  return pool;
+}
+
 const STORAGE_KEY = 'fuhui-dashboard-state-v1';
 const MAX_GAME_SECONDS = 100 * 60;
 const GRAD_THRESHOLD = 50;
@@ -598,6 +668,8 @@ function bindEvents() {
   $('#btn-next-round').addEventListener('click', nextRound);
   $('#btn-history').addEventListener('click', openHistory);
   $('#history-close').addEventListener('click', closeHistory);
+  $('#btn-draw-action').addEventListener('click', openCardDraw);
+  $('#card-close').addEventListener('click', closeCard);
   $('#btn-setup').addEventListener('click', openSetup);
   $('#setup-close').addEventListener('click', closeSetup);
   $('#setup-cancel').addEventListener('click', closeSetup);
@@ -738,6 +810,86 @@ function renderHistoryList() {
   $$('button[data-restore]', ul).forEach(b => {
     b.addEventListener('click', () => restoreRound(+b.dataset.restore));
   });
+}
+
+// ─────────── Card draw (行動指令牌) ───────────
+const actionPool = buildActionPool();
+let currentCard = null;
+
+function openCardDraw() {
+  currentCard = drawActionCard();
+  renderCard();
+  $('#card-modal').classList.remove('hidden');
+}
+function closeCard() {
+  $('#card-modal').classList.add('hidden');
+}
+
+function drawActionCard() {
+  if (actionPool.length === 0) return null;
+  let pick;
+  let tries = 0;
+  do {
+    pick = actionPool[Math.floor(Math.random() * actionPool.length)];
+    tries++;
+  } while (currentCard && actionPool.length > 1 && pick.name === currentCard.name && pick.category === currentCard.category && tries < 8);
+  return pick;
+}
+
+function renderCard() {
+  if (!currentCard) return;
+  const c = currentCard;
+  $('#card-body').innerHTML = `
+    <div class="card-display">
+      <div class="card-category">${escapeHtml(c.category)}</div>
+      <h3 class="card-name">${escapeHtml(c.name)}</h3>
+      <p class="card-desc">${escapeHtml(c.desc)}</p>
+      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
+      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
+    </div>
+  `;
+
+  const playerOpts = state.players.map(p =>
+    `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
+  ).join('');
+  $('#card-foot').innerHTML = `
+    <div class="card-actions">
+      <label class="row">
+        <span>套用至</span>
+        <select id="card-recipient">
+          <option value="">— 請選擇玩家 —</option>
+          ${playerOpts}
+        </select>
+      </label>
+      <div class="card-buttons">
+        <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
+        <button class="btn btn-primary" id="card-apply">套用獎勵</button>
+      </div>
+    </div>
+  `;
+
+  $('#card-redraw').addEventListener('click', () => {
+    currentCard = drawActionCard();
+    renderCard();
+  });
+  $('#card-apply').addEventListener('click', () => {
+    const pid = $('#card-recipient').value;
+    if (!pid) { toast('請先選擇要套用的玩家'); return; }
+    applyCardReward(pid, currentCard);
+  });
+}
+
+function applyCardReward(playerId, card) {
+  const p = getPlayer(playerId);
+  if (!p || !card) return;
+  const r = card.reward || {};
+  if (r.fortune) setStat(playerId, 'fortune', (p.fortune || 0) + r.fortune);
+  if (r.wisdom)  setStat(playerId, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
+  if (r.civ)     setStat(playerId, 'civ',     (p.civ     || 0) + r.civ);
+  const msg = `${p.name || '玩家'} 完成「${card.name}」　${card.rewardText}`;
+  toast(msg, 'grad');
+  logEvent(msg, 'grad');
+  closeCard();
 }
 
 // ─────────── Render all ───────────

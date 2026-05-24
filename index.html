@@ -81,6 +81,12 @@
 
     <aside class="tools">
       <div class="tool-card">
+        <h3>抽卡</h3>
+        <p class="tool-hint">主持人代抽，會顯示卡牌內容與獎勵，可指派玩家自動套用點數。</p>
+        <button class="btn btn-block" id="btn-draw-action">抽 行動指令牌</button>
+      </div>
+
+      <div class="tool-card">
         <h3>里程提醒</h3>
         <p class="tool-hint">
           單項 25 / 35 / 45　抽里程際遇卡<br />
@@ -153,6 +159,19 @@
         <button class="btn btn-ghost" id="setup-cancel">取消</button>
         <button class="btn btn-primary" id="setup-start">開始本局</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- Card draw modal -->
+  <div id="card-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="card-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel card-panel">
+      <header class="modal-head">
+        <h2 id="card-title">行動指令牌</h2>
+        <button class="icon-btn" id="card-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body" id="card-body"></div>
+      <footer class="modal-foot" id="card-foot"></footer>
     </div>
   </div>
 
