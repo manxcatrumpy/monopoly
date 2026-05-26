@@ -567,8 +567,8 @@ button { font-family: inherit; }
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;
-  background: rgba(26, 26, 25, 0.38);
-  backdrop-filter: blur(2px);
+  background: rgba(26, 26, 25, 0.48);
+  /* No backdrop-filter — scrolling above a blurred backdrop kills GPU on iPad/phone */
 }
 .modal-panel {
   position: relative;
@@ -588,7 +588,13 @@ button { font-family: inherit; }
   font-weight: 500;
   letter-spacing: 0.18em;
 }
-.modal-body { padding: 24px 28px; overflow-y: auto; }
+.modal-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;   /* iOS momentum */
+  overscroll-behavior: contain;        /* don't bounce the page behind */
+  contain: paint;                      /* isolate repaints to this box */
+}
 .modal-foot {
   display: flex; justify-content: flex-end; gap: 10px;
   padding: 16px 28px; border-top: 1px solid var(--line);
