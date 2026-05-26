@@ -720,6 +720,11 @@ function bindEvents() {
   $('#history-close').addEventListener('click', closeHistory);
   $('#btn-draw-action').addEventListener('click', () => openCardDraw('action'));
   $('#btn-draw-boost').addEventListener('click', () => openCardDraw('boost'));
+  $('#btn-browse-cards').addEventListener('click', () => openCatalog('action'));
+  $('#catalog-close').addEventListener('click', closeCatalog);
+  $$('.catalog-tab').forEach(b => {
+    b.addEventListener('click', () => renderCatalog(b.dataset.tab));
+  });
   $('#card-close').addEventListener('click', closeCard);
   $('#btn-setup').addEventListener('click', openSetup);
   $('#setup-close').addEventListener('click', closeSetup);
@@ -958,6 +963,74 @@ function renderBoostBody(c) {
       ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
       <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
     </div>
+  `;
+}
+
+// ─────────── Card catalog (read-only browsing) ───────────
+function openCatalog(deckKey = 'action') {
+  // Update tab labels with current counts
+  $$('.catalog-tab').forEach(b => {
+    const k = b.dataset.tab;
+    const n = DECKS[k] ? DECKS[k].pool.length : 0;
+    b.textContent = `${DECKS[k].title} · ${n}`;
+  });
+  renderCatalog(deckKey);
+  $('#catalog-modal').classList.remove('hidden');
+}
+function closeCatalog() {
+  $('#catalog-modal').classList.add('hidden');
+}
+
+function renderCatalog(deckKey) {
+  $$('.catalog-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === deckKey);
+  });
+  const body = $('#catalog-body');
+  if (deckKey === 'action') {
+    body.innerHTML = Object.entries(ACTION_DECK).map(([cat, data]) => `
+      <section class="catalog-group">
+        <header class="catalog-group-head">
+          <span class="catalog-group-name">${escapeHtml(cat)}</span>
+          <span class="catalog-group-reward">${escapeHtml(data.rewardText)}</span>
+        </header>
+        ${data.cards.map(c => catalogActionCardHtml(c, data)).join('')}
+      </section>
+    `).join('');
+  } else if (deckKey === 'boost') {
+    body.innerHTML = `
+      <section class="catalog-group">
+        ${BOOST_DECK.map(catalogBoostCardHtml).join('')}
+      </section>
+    `;
+  }
+  body.scrollTop = 0;
+}
+
+function catalogActionCardHtml(c, deckData) {
+  const rewardText = c.rewardText || deckData.rewardText;
+  return `
+    <article class="catalog-card">
+      <header class="cc-head">
+        <h4 class="cc-name">${escapeHtml(c.name)}</h4>
+        <span class="cc-reward">${escapeHtml(rewardText)}</span>
+      </header>
+      <p class="cc-desc">${escapeHtml(c.desc)}</p>
+      ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
+    </article>
+  `;
+}
+
+function catalogBoostCardHtml(c) {
+  return `
+    <article class="catalog-card">
+      <header class="cc-head">
+        <h4 class="cc-name">${escapeHtml(c.name)}</h4>
+        <span class="cc-reward">${escapeHtml(c.rewardText)}</span>
+      </header>
+      <p class="cc-line"><span class="cc-section-label">即時行動</span>${escapeHtml(c.action)}</p>
+      <p class="cc-line"><span class="cc-section-label">福慧覺察</span>${escapeHtml(c.insight)}</p>
+      ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
+    </article>
   `;
 }
 

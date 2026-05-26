@@ -817,6 +817,114 @@ button { font-family: inherit; }
 .card-actions select:focus { outline: none; border-color: var(--ink); }
 .card-buttons { display: flex; gap: 10px; justify-content: flex-end; }
 
+/* ───────────── Card catalog ───────────── */
+
+.catalog-panel { width: min(820px, 100%); }
+
+.catalog-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.catalog-tab {
+  flex: 1;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-dim);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  min-height: 44px;
+}
+.catalog-tab:hover { color: var(--ink); background: var(--paper-2); }
+.catalog-tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.catalog-group { margin-bottom: 28px; }
+.catalog-group:last-child { margin-bottom: 0; }
+.catalog-group-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.catalog-group-name { color: var(--ink-dim); }
+.catalog-group-reward {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+
+.catalog-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--surface-soft);
+  margin-bottom: 8px;
+}
+.catalog-card:last-child { margin-bottom: 0; }
+.cc-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.cc-name {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  margin: 0;
+}
+.cc-reward {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  padding: 3px 9px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cc-desc, .cc-line {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 8px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+.cc-line:last-of-type { margin-bottom: 0; }
+.cc-section-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.cc-side {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  background: var(--paper-2);
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.02em;
+}
+
 /* ───────────── History list ───────────── */
 
 .history-list {
@@ -1054,6 +1162,12 @@ button { font-family: inherit; }
   .history-item .hi-players { grid-template-columns: 1fr; }
   .history-item .hi-head { gap: 6px; }
   .history-item .hi-time { font-size: 10px; }
+
+  /* Catalog — tabs & cards shrink */
+  .catalog-tab { padding: 12px 10px; font-size: 12px; letter-spacing: 0.08em; }
+  .catalog-card { padding: 12px 14px; }
+  .cc-name { font-size: 14px; }
+  .catalog-group-head { font-size: 10px; letter-spacing: 0.24em; }
 }
 
 /* Ultra-small (iPhone SE class) */

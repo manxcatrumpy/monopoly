@@ -85,6 +85,7 @@
         <p class="tool-hint">主持人代抽，會顯示卡牌內容與獎勵，可指派玩家自動套用點數。</p>
         <button class="btn btn-block" id="btn-draw-action">抽 行動指令牌</button>
         <button class="btn btn-block" id="btn-draw-boost">抽 共好加速卡</button>
+        <button class="btn btn-block btn-ghost" id="btn-browse-cards">瀏覽全部卡牌</button>
       </div>
 
       <div class="tool-card">
@@ -160,6 +161,22 @@
         <button class="btn btn-ghost" id="setup-cancel">取消</button>
         <button class="btn btn-primary" id="setup-start">開始本局</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- Card catalog modal -->
+  <div id="catalog-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="catalog-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel catalog-panel">
+      <header class="modal-head">
+        <h2 id="catalog-title">卡牌一覽</h2>
+        <button class="icon-btn" id="catalog-close" aria-label="關閉">✕</button>
+      </header>
+      <nav class="catalog-tabs" role="tablist">
+        <button class="catalog-tab active" data-tab="action" role="tab">行動指令牌</button>
+        <button class="catalog-tab" data-tab="boost" role="tab">共好加速卡</button>
+      </nav>
+      <div class="modal-body" id="catalog-body"></div>
     </div>
   </div>
 
