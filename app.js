@@ -8,7 +8,7 @@
 // NOTE: 智慧專精 appears identical to 福慧文明聯動 in source; treated as
 // separate decks (effectively doubling those 5 cards in the pool) pending
 // confirmation from the host.
-const ACTION_DECK = {
+const DEFAULT_ACTION_DECK = {
   '福慧雙增': {
     reward: { fortune: 2, wisdom: 2, civ: 0 },
     rewardText: '福報 +2 · 智慧 +2',
@@ -68,9 +68,16 @@ const ACTION_DECK = {
   },
 };
 
+function getActionDeck() {
+  return (state.customDecks && state.customDecks.action) || DEFAULT_ACTION_DECK;
+}
+function getBoostDeck() {
+  return (state.customDecks && state.customDecks.boost) || DEFAULT_BOOST_DECK;
+}
+
 function buildActionPool() {
   const pool = [];
-  Object.entries(ACTION_DECK).forEach(([cat, data]) => {
+  Object.entries(getActionDeck()).forEach(([cat, data]) => {
     data.cards.forEach(c => pool.push({
       type: 'action',
       category: cat,
@@ -86,7 +93,7 @@ function buildActionPool() {
 
 // ─────────── Boost deck (共好加速卡) ───────────
 // Each card stands alone (no categories). 「即時行動」 + 「福慧覺察」 sections.
-const BOOST_DECK = [
+const DEFAULT_BOOST_DECK = [
   { name: '能量補給站',   reward: { fortune: 1, wisdom: 0, civ: 1 }, rewardText: '福報 +1 · 文明 +1',
     action: '與上一家擊掌，並互相對彼此大聲說一句：「有你在這一起，真好」。',
     insight: '無畏布施，給予他人心靈的支持與力量。' },
@@ -121,7 +128,12 @@ const BOOST_DECK = [
 ];
 
 function buildBoostPool() {
-  return BOOST_DECK.map(c => ({ type: 'boost', ...c }));
+  return getBoostDeck().map(c => ({ type: 'boost', ...c }));
+}
+
+function rebuildDecks() {
+  DECKS.action.pool = buildActionPool();
+  DECKS.boost.pool = buildBoostPool();
 }
 
 const STORAGE_KEY = 'fuhui-dashboard-state-v1';
@@ -149,6 +161,7 @@ const defaultState = () => ({
   log: [],
   history: [],
   navigatorClaimed: emptyNavClaim(),
+  customDecks: { action: null, boost: null },
 });
 
 let state = defaultState();
@@ -171,6 +184,8 @@ function load() {
     }
     // Ensure navigatorClaimed shape (older saves predate this field)
     state.navigatorClaimed = Object.assign(emptyNavClaim(), state.navigatorClaimed || {});
+    // Ensure customDecks shape (older saves predate this field)
+    state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
@@ -725,6 +740,19 @@ function bindEvents() {
   $$('.catalog-tab').forEach(b => {
     b.addEventListener('click', () => renderCatalog(b.dataset.tab));
   });
+
+  // Deck manager
+  $('#btn-deck-manager').addEventListener('click', openDeckManager);
+  $('#dm-close').addEventListener('click', closeDeckManager);
+  $('#dm-export').addEventListener('click', exportDecks);
+  $('#dm-file-btn').addEventListener('click', () => $('#dm-file').click());
+  $('#dm-file').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importDeckFile(f);
+    e.target.value = '';  // allow re-selecting same file
+  });
+  $('#dm-paste-apply').addEventListener('click', importPastedJSON);
+  $('#dm-reset').addEventListener('click', resetDecksToDefault);
   $('#card-close').addEventListener('click', closeCard);
   $('#btn-setup').addEventListener('click', openSetup);
   $('#setup-close').addEventListener('click', closeSetup);
@@ -987,7 +1015,7 @@ function renderCatalog(deckKey) {
   });
   const body = $('#catalog-body');
   if (deckKey === 'action') {
-    body.innerHTML = Object.entries(ACTION_DECK).map(([cat, data]) => `
+    body.innerHTML = Object.entries(getActionDeck()).map(([cat, data]) => `
       <section class="catalog-group">
         <header class="catalog-group-head">
           <span class="catalog-group-name">${escapeHtml(cat)}</span>
@@ -999,7 +1027,7 @@ function renderCatalog(deckKey) {
   } else if (deckKey === 'boost') {
     body.innerHTML = `
       <section class="catalog-group">
-        ${BOOST_DECK.map(catalogBoostCardHtml).join('')}
+        ${getBoostDeck().map(catalogBoostCardHtml).join('')}
       </section>
     `;
   }
@@ -1018,6 +1046,153 @@ function catalogActionCardHtml(c, deckData) {
       ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
     </article>
   `;
+}
+
+// ─────────── Deck manager (import / export custom card data) ───────────
+function openDeckManager() {
+  renderDeckManager();
+  const p = $('#dm-paste'); if (p) p.value = '';
+  $('#deck-manager-modal').classList.remove('hidden');
+}
+function closeDeckManager() {
+  $('#deck-manager-modal').classList.add('hidden');
+}
+
+function deckSourceLabel(side) {
+  const custom = state.customDecks && state.customDecks[side];
+  return custom ? '自訂' : '預設';
+}
+function deckCardCount(side) {
+  if (side === 'action') {
+    return Object.values(getActionDeck()).reduce((s, d) => s + (d.cards ? d.cards.length : 0), 0);
+  }
+  return getBoostDeck().length;
+}
+
+function renderDeckManager() {
+  $('#dm-action-source').textContent = deckSourceLabel('action');
+  $('#dm-action-count').textContent  = deckCardCount('action') + ' 張';
+  $('#dm-boost-source').textContent  = deckSourceLabel('boost');
+  $('#dm-boost-count').textContent   = deckCardCount('boost') + ' 張';
+}
+
+function exportDecks() {
+  const data = {
+    actionDeck: getActionDeck(),
+    boostDeck:  getBoostDeck(),
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fuhui-decks-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+  toast('已下載 JSON');
+}
+
+function importDeckFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyDecksImport(data);
+    } catch (err) {
+      toast('JSON 解析失敗：' + err.message);
+    }
+  };
+  reader.onerror = () => toast('讀檔失敗');
+  reader.readAsText(file, 'utf-8');
+}
+
+function importPastedJSON() {
+  const raw = $('#dm-paste').value.trim();
+  if (!raw) { toast('請先貼上 JSON'); return; }
+  try {
+    const data = JSON.parse(raw);
+    applyDecksImport(data);
+  } catch (err) {
+    toast('JSON 解析失敗：' + err.message);
+  }
+}
+
+function validateImport(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return '需為 JSON 物件';
+  }
+  if (data.actionDeck === undefined && data.boostDeck === undefined) {
+    return '至少需提供 actionDeck 或 boostDeck';
+  }
+
+  if (data.actionDeck !== undefined) {
+    if (typeof data.actionDeck !== 'object' || Array.isArray(data.actionDeck) || data.actionDeck === null) {
+      return 'actionDeck 需為物件（類別 → 卡組）';
+    }
+    for (const [cat, deck] of Object.entries(data.actionDeck)) {
+      if (!deck || typeof deck !== 'object') return `「${cat}」需為物件`;
+      if (!deck.reward || typeof deck.reward !== 'object') return `「${cat}」缺 reward`;
+      if (typeof deck.rewardText !== 'string')             return `「${cat}」缺 rewardText`;
+      if (!Array.isArray(deck.cards))                      return `「${cat}」.cards 需為陣列`;
+      for (const c of deck.cards) {
+        if (!c || typeof c.name !== 'string' || !c.name)   return `「${cat}」內某張卡缺 name`;
+        if (typeof c.desc !== 'string')                    return `「${cat}」「${c.name}」缺 desc`;
+      }
+    }
+  }
+
+  if (data.boostDeck !== undefined) {
+    if (!Array.isArray(data.boostDeck)) return 'boostDeck 需為陣列';
+    for (const c of data.boostDeck) {
+      if (!c || typeof c.name !== 'string' || !c.name) return '共好加速卡某張缺 name';
+      if (typeof c.action !== 'string')   return `「${c.name}」缺 action`;
+      if (typeof c.insight !== 'string')  return `「${c.name}」缺 insight`;
+      if (!c.reward || typeof c.reward !== 'object') return `「${c.name}」缺 reward`;
+      if (typeof c.rewardText !== 'string') return `「${c.name}」缺 rewardText`;
+    }
+  }
+  return null;
+}
+
+function applyDecksImport(data) {
+  const err = validateImport(data);
+  if (err) { toast('匯入失敗：' + err); return; }
+
+  const actionCount = data.actionDeck
+    ? Object.values(data.actionDeck).reduce((s, d) => s + d.cards.length, 0)
+    : null;
+  const boostCount  = data.boostDeck ? data.boostDeck.length : null;
+
+  const parts = [];
+  if (actionCount !== null) parts.push(`行動指令牌 ${actionCount} 張`);
+  if (boostCount  !== null) parts.push(`共好加速卡 ${boostCount} 張`);
+  if (!confirm(`匯入：${parts.join(' · ')}\n當前對應牌組將被覆蓋（其他保留）。確定？`)) return;
+
+  const next = Object.assign({ action: null, boost: null }, state.customDecks || {});
+  if (data.actionDeck) next.action = data.actionDeck;
+  if (data.boostDeck)  next.boost  = data.boostDeck;
+  state.customDecks = next;
+
+  rebuildDecks();
+  save();
+  renderDeckManager();
+  toast('卡牌資料已更新', 'grad');
+}
+
+function resetDecksToDefault() {
+  if (!state.customDecks || (!state.customDecks.action && !state.customDecks.boost)) {
+    toast('目前已是預設牌組');
+    return;
+  }
+  if (!confirm('重置為預設牌組？\n所有自訂卡牌資料會被清除。')) return;
+  state.customDecks = { action: null, boost: null };
+  rebuildDecks();
+  save();
+  renderDeckManager();
+  toast('已重置為預設牌組', 'grad');
 }
 
 function catalogBoostCardHtml(c) {
@@ -1074,6 +1249,8 @@ function registerSW() {
 // ─────────── Init ───────────
 function init() {
   const hasGame = load();
+  // Rebuild deck pools from possibly-custom state.customDecks
+  rebuildDecks();
   // Bump nextPlayerId past existing ids so new players don't collide
   if (state.players.length) {
     const maxId = state.players.reduce((m, p) => {

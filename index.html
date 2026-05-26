@@ -89,6 +89,12 @@
       </div>
 
       <div class="tool-card">
+        <h3>卡牌資料</h3>
+        <p class="tool-hint">匯入自訂 JSON 可覆蓋預設牌組。資料存於本機 localStorage。</p>
+        <button class="btn btn-block btn-ghost" id="btn-deck-manager">管理卡牌資料</button>
+      </div>
+
+      <div class="tool-card">
         <h3>里程提醒</h3>
         <p class="tool-hint">
           單項 25 / 35 / 45　抽里程際遇卡<br />
@@ -161,6 +167,72 @@
         <button class="btn btn-ghost" id="setup-cancel">取消</button>
         <button class="btn btn-primary" id="setup-start">開始本局</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- Deck manager modal -->
+  <div id="deck-manager-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dm-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h2 id="dm-title">卡牌資料管理</h2>
+        <button class="icon-btn" id="dm-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body">
+        <section class="dm-section">
+          <h3>目前牌組</h3>
+          <div class="dm-row">
+            <span class="dm-label">行動指令牌</span>
+            <span><strong id="dm-action-source">預設</strong> · <span id="dm-action-count">— 張</span></span>
+          </div>
+          <div class="dm-row">
+            <span class="dm-label">共好加速卡</span>
+            <span><strong id="dm-boost-source">預設</strong> · <span id="dm-boost-count">— 張</span></span>
+          </div>
+        </section>
+
+        <section class="dm-section">
+          <h3>匯出當前資料</h3>
+          <p class="dm-hint">下載完整 JSON，可作為自訂模板的起點。</p>
+          <button class="btn" id="dm-export">下載 JSON 檔</button>
+        </section>
+
+        <section class="dm-section">
+          <h3>匯入新卡牌</h3>
+          <p class="dm-hint">支援檔案或貼上 JSON。只送出其中一個 deck，另一個會保留原狀。</p>
+          <input type="file" id="dm-file" accept="application/json,.json" hidden />
+          <button class="btn" id="dm-file-btn">選擇 JSON 檔案</button>
+          <div class="dm-paste-section">
+            <textarea id="dm-paste" placeholder='{
+  "actionDeck": {
+    "類別A": {
+      "reward": { "fortune": 2, "wisdom": 2, "civ": 0 },
+      "rewardText": "福報 +2 · 智慧 +2",
+      "cards": [
+        { "name": "卡名", "desc": "敘述" }
+      ]
+    }
+  },
+  "boostDeck": [
+    {
+      "name": "卡名",
+      "action": "即時行動",
+      "insight": "福慧覺察",
+      "reward": { "fortune": 0, "wisdom": 2, "civ": 0 },
+      "rewardText": "智慧 +2"
+    }
+  ]
+}' rows="8"></textarea>
+            <button class="btn btn-primary" id="dm-paste-apply">套用貼上的 JSON</button>
+          </div>
+        </section>
+
+        <section class="dm-section">
+          <h3>還原</h3>
+          <p class="dm-hint">移除所有自訂、回到內建預設牌組。</p>
+          <button class="btn btn-warn" id="dm-reset">重置為預設</button>
+        </section>
+      </div>
     </div>
   </div>
 

@@ -823,6 +823,62 @@ button { font-family: inherit; }
 .card-actions select:focus { outline: none; border-color: var(--ink); }
 .card-buttons { display: flex; gap: 10px; justify-content: flex-end; }
 
+/* ───────────── Deck manager ───────────── */
+
+.dm-section {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.dm-section:first-child { padding-top: 4px; }
+.dm-section:last-child  { border-bottom: none; padding-bottom: 4px; }
+.dm-section h3 {
+  margin: 0 0 10px;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+.dm-hint {
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1.65;
+  margin: 0 0 12px;
+  letter-spacing: 0.02em;
+}
+.dm-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 13px;
+  gap: 16px;
+}
+.dm-row:last-child { margin-bottom: 0; }
+.dm-label {
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+}
+.dm-row > span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+.dm-row strong { font-weight: 500; }
+
+#dm-paste {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+  background: var(--surface-soft);
+  color: var(--ink);
+  margin: 12px 0;
+  letter-spacing: 0;
+}
+#dm-paste:focus { outline: none; border-color: var(--ink); }
+#dm-paste::placeholder { color: var(--ink-mute); }
+.dm-paste-section { margin-top: 14px; }
+
 /* ───────────── Card catalog ───────────── */
 
 .catalog-panel { width: min(820px, 100%); }
