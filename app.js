@@ -804,9 +804,9 @@ function renderSetup() {
       <div class="setup-player-row ${isTop ? 'top' : ''}" data-idx="${i}">
         <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="玩家 ${i + 1}" maxlength="10" />
         <button class="mini-btn" data-roll="fortune">擲福</button>
-        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="—" aria-label="福報初始值" />
+        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="" aria-label="福報初始值" />
         <button class="mini-btn" data-roll="wisdom">擲慧</button>
-        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="—" aria-label="智慧初始值" />
+        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="" aria-label="智慧初始值" />
       </div>
     `;
   }).join('');
