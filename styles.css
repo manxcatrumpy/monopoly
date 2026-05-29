@@ -491,9 +491,89 @@ button { font-family: inherit; }
 }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
 
-/* Rolling number animation */
-.rolling { animation: shake 0.08s linear infinite alternate; }
-@keyframes shake { from { transform: translateX(-1px); } to { transform: translateX(1px); } }
+/* Virtual 3D die — its own stage block in the setup modal */
+.dice-stage {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 22px 18px 18px;
+  margin-bottom: 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.dice-scene {
+  width: 130px;
+  height: 140px;
+  perspective: 540px;
+  display: grid;
+  place-items: center;
+}
+/* True 3D pentagonal trapezohedron (real d10). buildD10() in app.js computes the
+   solid's geometry and places each kite face with matrix3d; CSS only sets the
+   shared look, the resting tilt and the spin animations. The .die10 node has zero
+   size so its origin is the solid's centre; each .d-face is a 120×120 box centred
+   on that origin, carrying one inline-SVG kite (transparent elsewhere). */
+.die10 {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(-14deg) rotateY(18deg);
+  color: var(--ink);
+  animation: d10Idle 7s linear infinite;
+}
+.die10.fortune { color: var(--fortune); }
+.die10.wisdom  { color: var(--wisdom);  }
+.d-face {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  left: -60px;
+  top: -60px;
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+}
+.d-face svg { width: 100%; height: 100%; overflow: visible; }
+.kface {
+  fill: var(--surface);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.die10-num {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  fill: currentColor;
+}
+
+.die10.rolling { animation: d10Roll 1.05s cubic-bezier(0.2, 0.55, 0.3, 1) forwards; }
+
+@keyframes d10Idle {
+  from { transform: rotateX(-14deg) rotateY(0deg); }
+  to   { transform: rotateX(-14deg) rotateY(360deg); }
+}
+@keyframes d10Roll {
+  0%   { transform: rotateX(-14deg) rotateY(0deg)    rotateZ(0deg); }
+  25%  { transform: rotateX(40deg)  rotateY(220deg)  rotateZ(40deg); }
+  50%  { transform: rotateX(-30deg) rotateY(460deg)  rotateZ(-30deg); }
+  75%  { transform: rotateX(26deg)  rotateY(660deg)  rotateZ(20deg); }
+  100% { transform: rotateX(-14deg) rotateY(720deg)  rotateZ(0deg); }
+}
+
+.dice-caption {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+  text-align: center;
+  min-height: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .die10, .die10.rolling { animation: none; }
+}
 
 /* ───────────── Tools sidebar ───────────── */
 
@@ -685,6 +765,25 @@ button { font-family: inherit; }
 }
 .setup-player-row .roll-out.fortune { color: var(--fortune); }
 .setup-player-row .roll-out.wisdom  { color: var(--wisdom);  }
+/* Editable initial-福慧 fields */
+.setup-player-row input.roll-out {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 8px 4px;
+  font-family: inherit;
+  cursor: text;
+}
+.setup-player-row input.roll-out::-webkit-outer-spin-button,
+.setup-player-row input.roll-out::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.setup-player-row input.roll-out { -moz-appearance: textfield; }
+.setup-player-row input.roll-out::placeholder { color: var(--ink-mute); font-weight: 400; }
+.setup-player-row input.roll-out:focus {
+  outline: none;
+  border-color: var(--ink);
+  background: var(--surface);
+}
 .setup-player-row .mini-btn {
   background: var(--surface);
   border: 1px solid var(--line-strong);

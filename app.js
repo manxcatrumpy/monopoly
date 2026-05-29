@@ -224,21 +224,187 @@ function comprehensiveScore(p) {
 function roll(sides) {
   return 1 + Math.floor(Math.random() * sides);
 }
-function animateNumber(el, finalValue, durationMs = 400) {
-  const ticks = 8;
-  const interval = durationMs / ticks;
-  let i = 0;
-  el.classList.add('rolling');
-  const id = setInterval(() => {
-    i++;
-    if (i >= ticks) {
-      clearInterval(id);
-      el.textContent = String(finalValue);
-      el.classList.remove('rolling');
-    } else {
-      el.textContent = String(1 + Math.floor(Math.random() * Math.max(2, finalValue + 2)));
+// ── Virtual 3D die (setup modal) ──
+// A real ten-sided die is a pentagonal trapezohedron: two apexes and ten
+// kite-shaped faces meeting at a zig-zag equator. buildD10() computes the
+// solid's true geometry and lays each kite out as an SVG <polygon> placed in 3D
+// via matrix3d, so the faces close cleanly into the genuine d10 silhouette.
+// Each face carries its own fixed number (opposite faces sum to 11, like a real
+// die). The die gently turns while idle and tumbles fast on a roll; clicking a
+// player's 擲福 / 擲慧 spins it, then settles with the rolled face turned to the
+// viewer and writes that value into the player's field.
+let diceBusy = false;
+let d10Built = false;
+let d10Faces = []; // [{ el, normal, value }] — populated by buildD10()
+
+function buildD10() {
+  const die = $('#die10');
+  if (!die) return;
+  const faces = $$('.d-face', die);
+  if (faces.length < 10) return;
+
+  // Face numbers: top kites 1–5, bottom kites arranged so each face and the one
+  // opposite it (bottom kite (i+2) mod 5) sum to 11 — the standard d10 layout.
+  const FACE_VALUES = [1, 2, 3, 4, 5, 7, 6, 10, 9, 8];
+  d10Faces = [];
+
+  const N = 5;
+  const H = 42;             // apex distance from centre
+  const Rr = 38;            // equatorial ring radius
+  const zr = 0.10557 * H;   // ring half-height that makes every kite face planar
+  const S = 60;             // viewBox centre (viewBox is 0 0 120 120)
+  const D2R = Math.PI / 180;
+
+  const T = [0, -H, 0];     // top apex (−y is up on screen)
+  const B = [0,  H, 0];     // bottom apex
+  const U = [], L = [];     // upper ring (above equator) / lower ring (below)
+  for (let i = 0; i < N; i++) {
+    const au = i * 72 * D2R;
+    const al = (i * 72 + 36) * D2R;
+    U.push([Rr * Math.cos(au), -zr, Rr * Math.sin(au)]);
+    L.push([Rr * Math.cos(al),  zr, Rr * Math.sin(al)]);
+  }
+
+  // 5 top kites (apex T) then 5 bottom kites (apex B). `near` is the kite's
+  // equator-side tip; text is oriented with its top pointing toward the apex.
+  const defs = [];
+  for (let i = 0; i < N; i++) {
+    defs.push({ apex: T, near: L[i], corners: [T, U[i], L[i], U[(i + 1) % N]] });
+  }
+  for (let i = 0; i < N; i++) {
+    defs.push({ apex: B, near: U[(i + 1) % N], corners: [B, L[i], U[(i + 1) % N], L[(i + 1) % N]] });
+  }
+
+  const sub   = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+  const dot   = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  const norm  = (a) => { const m = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/m, a[1]/m, a[2]/m]; };
+
+  defs.forEach((d, fi) => {
+    const c = d.corners;
+    const C = [ (c[0][0]+c[1][0]+c[2][0]+c[3][0]) / 4,
+                (c[0][1]+c[1][1]+c[2][1]+c[3][1]) / 4,
+                (c[0][2]+c[1][2]+c[2][2]+c[3][2]) / 4 ];
+
+    // Newell normal, flipped to point outward (away from the centre).
+    let nx = 0, ny = 0, nz = 0;
+    for (let k = 0; k < 4; k++) {
+      const p = c[k], q = c[(k + 1) % 4];
+      nx += (p[1]-q[1]) * (p[2]+q[2]);
+      ny += (p[2]-q[2]) * (p[0]+q[0]);
+      nz += (p[0]-q[0]) * (p[1]+q[1]);
     }
-  }, interval);
+    let n = norm([nx, ny, nz]);
+    if (dot(n, C) < 0) n = [-n[0], -n[1], -n[2]];
+
+    // In-plane basis: v runs apex→tip (projected onto the face), u perpendicular.
+    // u = cross(v, n) keeps det([u v n]) > 0 so the number is never mirrored.
+    let vr = sub(d.near, d.apex);
+    const vn = dot(vr, n);
+    vr = [vr[0]-n[0]*vn, vr[1]-n[1]*vn, vr[2]-n[2]*vn];
+    const v = norm(vr);
+    const u = norm(cross(v, n));
+
+    const pts = c.map(p => {
+      const e = sub(p, C);
+      return `${(S + dot(e, u)).toFixed(2)},${(S + dot(e, v)).toFixed(2)}`;
+    }).join(' ');
+
+    const face = faces[fi];
+    $('.kface', face).setAttribute('points', pts);
+    $('.die10-num', face).textContent = String(FACE_VALUES[fi]);
+    face.style.transform =
+      `matrix3d(${u[0]},${u[1]},${u[2]},0,` +
+      `${v[0]},${v[1]},${v[2]},0,` +
+      `${n[0]},${n[1]},${n[2]},0,` +
+      `${C[0]},${C[1]},${C[2]},1)`;
+
+    // apexDir = this kite's pole, (0,∓1,0); used to stand the die up on settle.
+    d10Faces.push({ el: face, normal: n, apexDir: norm(d.apex), value: FACE_VALUES[fi] });
+  });
+
+  d10Built = true;
+}
+
+// Freeze the die in the classic d10 "hero" pose: stand the solid up so its polar
+// axis is vertical, then spin about that axis so the rolled face turns to the
+// front — apex pointing up, number upright — exactly how a real d10 reads.
+function settleOnFace(die, value) {
+  const face = d10Faces.find(f => f.value === value);
+  if (!face) return;
+  const n = face.normal;
+
+  // Target the rolled face's local frame onto a fixed world frame:
+  //   apex (e2)            → screen-up   (0,−1,0)
+  //   face's outward azimuth (e3) → camera (0, 0,1)
+  const e2 = face.apexDir;
+  let e3 = [n[0], 0, n[2]];                       // horizontal part of the normal
+  const h = Math.hypot(e3[0], e3[2]) || 1;
+  e3 = [e3[0] / h, 0, e3[2] / h];
+  const e1 = [                                     // e1 = e2 × e3
+    e2[1]*e3[2] - e2[2]*e3[1],
+    e2[2]*e3[0] - e2[0]*e3[2],
+    e2[0]*e3[1] - e2[1]*e3[0]
+  ];
+  // R rows = [−e1, −e2, e3]; maps e2→(0,−1,0), e3→(0,0,1). The kite is symmetric
+  // about its meridian, so the number comes out upright automatically.
+  const R = [
+    [-e1[0], -e1[1], -e1[2]],
+    [-e2[0], -e2[1], -e2[2]],
+    [ e3[0],  e3[1],  e3[2]]
+  ];
+  const m = `matrix3d(${R[0][0]},${R[1][0]},${R[2][0]},0,` +
+            `${R[0][1]},${R[1][1]},${R[2][1]},0,` +
+            `${R[0][2]},${R[1][2]},${R[2][2]},0,0,0,0,1)`;
+  die.style.animation = 'none';                   // stop the idle spin
+  die.style.transform = `rotateX(-10deg) ${m}`;   // slight downward view for depth
+}
+
+function resetDiceStage() {
+  const die = $('#die10');
+  if (!die) return;
+  diceBusy = false;
+  die.classList.remove('rolling', 'fortune', 'wisdom');
+  die.style.animation = '';   // clear any frozen pose → resume the gentle idle spin
+  die.style.transform = '';
+  const cap = $('#dice-caption');
+  if (cap) cap.textContent = '點玩家旁的「擲福 / 擲慧」開始擲骰';
+}
+
+function rollSetupDie(stat, idx) {
+  if (diceBusy) return; // one roll at a time
+  const die = $('#die10');
+  const cap = $('#dice-caption');
+  const input = $(`.setup-player-row[data-idx="${idx}"] .roll-out.${stat}`);
+  if (!die || !d10Faces.length || !input) return;
+
+  const finalValue = roll(10);
+  setupTmp.rolls[idx][stat] = finalValue;
+  const name = setupTmp.rolls[idx].name || `玩家 ${idx + 1}`;
+  const statLabel = stat === 'fortune' ? '福報' : '智慧';
+
+  diceBusy = true;
+  die.classList.remove('fortune', 'wisdom');
+  die.classList.add(stat);
+  cap.textContent = `${name} · ${statLabel} 擲骰中…`;
+
+  // Clear any frozen pose and restart the tumble animation cleanly. Faces keep
+  // their own fixed numbers throughout — the spin itself conveys the roll.
+  die.style.animation = '';
+  die.style.transform = '';
+  die.classList.remove('rolling');
+  void die.getBoundingClientRect(); // force reflow so the animation re-triggers
+  die.classList.add('rolling');
+
+  // When the tumble ends, settle with the rolled face turned to the viewer.
+  setTimeout(() => {
+    die.classList.remove('rolling');
+    settleOnFace(die, finalValue);
+    input.value = String(finalValue);
+    cap.textContent = `${name} · ${statLabel} ＝ ${finalValue}`;
+    diceBusy = false;
+    renderTopMarker();
+  }, 1050); // matches the d10Roll animation duration
 }
 
 // ─────────── Time ───────────
@@ -613,6 +779,8 @@ function openSetup(opts = {}) {
   $('#setup-round').value = state.roundNum;
   $('#setup-civ-goal-input').value = state.civGoal || 30;
   renderSetup();
+  if (!d10Built) buildD10();
+  resetDiceStage();
   $('#setup-modal').classList.remove('hidden');
 }
 function closeSetup() { $('#setup-modal').classList.add('hidden'); }
@@ -636,9 +804,9 @@ function renderSetup() {
       <div class="setup-player-row ${isTop ? 'top' : ''}" data-idx="${i}">
         <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="玩家 ${i + 1}" maxlength="10" />
         <button class="mini-btn" data-roll="fortune">擲福</button>
-        <div class="roll-out fortune">${r.fortune || '—'}</div>
+        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="—" aria-label="福報初始值" />
         <button class="mini-btn" data-roll="wisdom">擲慧</button>
-        <div class="roll-out wisdom">${r.wisdom || '—'}</div>
+        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="—" aria-label="智慧初始值" />
       </div>
     `;
   }).join('');
@@ -649,17 +817,20 @@ function renderSetup() {
       setupTmp.rolls[idx].name = e.target.value;
       renderTopMarker();
     });
-    $$('button[data-roll]', row).forEach(b => {
-      b.addEventListener('click', () => {
-        const stat = b.dataset.roll;
-        const v = roll(10);
-        const out = $(`.roll-out.${stat}`, row);
-        animateNumber(out, v, 320);
-        setTimeout(() => {
-          setupTmp.rolls[idx][stat] = v;
-          renderTopMarker();
-        }, 340);
+    // Manual entry — type the initial 福/慧 directly (0–10)
+    $$('.roll-out', row).forEach(inp => {
+      const stat = inp.dataset.stat;
+      inp.addEventListener('input', () => {
+        let v = parseInt(inp.value, 10);
+        if (!Number.isFinite(v) || v < 0) v = 0;
+        if (v > 10) { v = 10; inp.value = '10'; }
+        setupTmp.rolls[idx][stat] = v;
+        renderTopMarker();
       });
+    });
+    // Dice roll — tumble the shared virtual die, then write its result here
+    $$('button[data-roll]', row).forEach(b => {
+      b.addEventListener('click', () => rollSetupDie(b.dataset.roll, idx));
     });
   });
 
