@@ -237,6 +237,29 @@ let diceBusy = false;
 let d10Built = false;
 let d10Faces = []; // [{ el, normal, value }] — populated by buildD10()
 
+// Build an SVG path for a polygon with softened corners: at each vertex, pull
+// back `r` along both edges and join the two points with a quadratic arc that
+// rounds off the point. Radius is clamped to half of each adjacent edge.
+function roundedPath(pts, r) {
+  const n = pts.length;
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const cur = pts[i];
+    const prev = pts[(i - 1 + n) % n];
+    const next = pts[(i + 1) % n];
+    const vp = [prev[0] - cur[0], prev[1] - cur[1]];
+    const vn = [next[0] - cur[0], next[1] - cur[1]];
+    const lp = Math.hypot(vp[0], vp[1]) || 1;
+    const ln = Math.hypot(vn[0], vn[1]) || 1;
+    const rr = Math.min(r, lp / 2, ln / 2);
+    const a = [cur[0] + vp[0] / lp * rr, cur[1] + vp[1] / lp * rr];
+    const b = [cur[0] + vn[0] / ln * rr, cur[1] + vn[1] / ln * rr];
+    d += `${i === 0 ? 'M' : 'L'}${a[0].toFixed(2)} ${a[1].toFixed(2)} `;
+    d += `Q${cur[0].toFixed(2)} ${cur[1].toFixed(2)} ${b[0].toFixed(2)} ${b[1].toFixed(2)} `;
+  }
+  return d + 'Z';
+}
+
 function buildD10() {
   const die = $('#die10');
   if (!die) return;
@@ -305,13 +328,13 @@ function buildD10() {
     const v = norm(vr);
     const u = norm(cross(v, n));
 
-    const pts = c.map(p => {
+    const pts2d = c.map(p => {
       const e = sub(p, C);
-      return `${(S + dot(e, u)).toFixed(2)},${(S + dot(e, v)).toFixed(2)}`;
-    }).join(' ');
+      return [S + dot(e, u), S + dot(e, v)];
+    });
 
     const face = faces[fi];
-    $('.kface', face).setAttribute('points', pts);
+    $('.kface', face).setAttribute('d', roundedPath(pts2d, 6));
     $('.die10-num', face).textContent = String(FACE_VALUES[fi]);
     face.style.transform =
       `matrix3d(${u[0]},${u[1]},${u[2]},0,` +
