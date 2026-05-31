@@ -383,13 +383,18 @@ function settleOnFace(die, value) {
   die.style.transform = `rotateX(-10deg) ${m}`;   // slight downward view for depth
 }
 
+// Roll choreography, in milliseconds.
+const DICE_TUMBLE = 720; // free spin via CSS keyframes
+const DICE_SETTLE = 640; // eased glide into the rolled face
+
 function resetDiceStage() {
   const die = $('#die10');
   if (!die) return;
   diceBusy = false;
   die.classList.remove('rolling', 'fortune', 'wisdom');
-  die.style.animation = '';   // clear any frozen pose → resume the gentle idle spin
+  die.style.animation = '';    // clear any frozen pose → resume the gentle idle spin
   die.style.transform = '';
+  die.style.transition = '';   // drop the settle easing
   const cap = $('#dice-caption');
   if (cap) cap.textContent = '點玩家旁的「擲福 / 擲慧」開始擲骰';
 }
@@ -411,23 +416,48 @@ function rollSetupDie(stat, idx) {
   die.classList.add(stat);
   cap.textContent = `${name} · ${statLabel} 擲骰中…`;
 
-  // Clear any frozen pose and restart the tumble animation cleanly. Faces keep
-  // their own fixed numbers throughout — the spin itself conveys the roll.
+  const finish = () => {
+    input.value = String(finalValue);
+    cap.textContent = `${name} · ${statLabel} ＝ ${finalValue}`;
+    diceBusy = false;
+    renderTopMarker();
+  };
+
+  // Reduced motion: skip the spin and rest on the face immediately.
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    die.style.transition = 'none';
+    settleOnFace(die, finalValue);
+    finish();
+    return;
+  }
+
+  // Phase 1 — free tumble. Faces keep their own fixed numbers throughout; the
+  // spin itself conveys the roll. transition:none so the reset below can't animate.
+  die.style.transition = 'none';
   die.style.animation = '';
   die.style.transform = '';
   die.classList.remove('rolling');
   void die.getBoundingClientRect(); // force reflow so the animation re-triggers
   die.classList.add('rolling');
 
-  // When the tumble ends, settle with the rolled face turned to the viewer.
+  // Phase 2 — freeze at the live, end-of-tumble transform, then let a CSS
+  // transition decelerate the solid into the hero pose instead of snapping.
   setTimeout(() => {
+    const frozen = getComputedStyle(die).transform; // current matrix mid-spin
     die.classList.remove('rolling');
-    settleOnFace(die, finalValue);
-    input.value = String(finalValue);
-    cap.textContent = `${name} · ${statLabel} ＝ ${finalValue}`;
-    diceBusy = false;
-    renderTopMarker();
-  }, 1050); // matches the d10Roll animation duration
+    die.style.animation = 'none';
+    die.style.transform = frozen;
+    void die.getBoundingClientRect();               // lock the easing start
+    die.style.transition =
+      `transform ${DICE_SETTLE}ms cubic-bezier(0.16, 0.72, 0.24, 1)`;
+    settleOnFace(die, finalValue);                  // transform change → glides in
+
+    setTimeout(() => {
+      die.style.transition = '';
+      finish();
+    }, DICE_SETTLE);
+  }, DICE_TUMBLE);
 }
 
 // ─────────── Time ───────────
