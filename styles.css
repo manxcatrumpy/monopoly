@@ -519,9 +519,10 @@ button { font-family: inherit; }
   width: 0;
   height: 0;
   transform-style: preserve-3d;
-  transform: rotateX(-15deg) rotateY(0deg);
+  /* Resting camera tilt: look down onto the horizontal top face. Kept in sync
+     with VIEW_TILT in app.js, which drives the lying idle and the throw. */
+  transform: rotateX(-54deg);
   color: var(--ink);
-  animation: d10Idle 11s ease-in-out infinite;
 }
 .die10.fortune { color: var(--fortune); }
 .die10.wisdom  { color: var(--wisdom);  }
@@ -549,27 +550,9 @@ button { font-family: inherit; }
   fill: currentColor;
 }
 
-/* Tumble eases out so the spin is already slowing as it reaches its level
-   end-state (rotateY 720 = two clean turns); app.js then glides it into the
-   hero pose from there, so the eye never sees an abrupt stop. */
-.die10.rolling { animation: d10Roll 0.72s cubic-bezier(0.32, 0.12, 0.22, 1) forwards; }
-
-/* Idle: a slow, breathing compound tumble — rotateY carries the turn while
-   rotateX/rotateZ sway gently, all returning to start for a seamless loop. */
-@keyframes d10Idle {
-  0%   { transform: rotateX(-17deg) rotateY(0deg)   rotateZ(-3deg); }
-  25%  { transform: rotateX(-8deg)  rotateY(90deg)  rotateZ(2deg); }
-  50%  { transform: rotateX(-19deg) rotateY(180deg) rotateZ(3deg); }
-  75%  { transform: rotateX(-7deg)  rotateY(270deg) rotateZ(-2deg); }
-  100% { transform: rotateX(-17deg) rotateY(360deg) rotateZ(-3deg); }
-}
-@keyframes d10Roll {
-  0%   { transform: rotateX(-15deg) rotateY(0deg)    rotateZ(0deg); }
-  25%  { transform: rotateX(38deg)  rotateY(230deg)  rotateZ(34deg); }
-  50%  { transform: rotateX(-28deg) rotateY(470deg)  rotateZ(-26deg); }
-  75%  { transform: rotateX(22deg)  rotateY(640deg)  rotateZ(16deg); }
-  100% { transform: rotateX(-15deg) rotateY(720deg)  rotateZ(0deg); }
-}
+/* The idle turntable and the throw are both driven from app.js with the Web
+   Animations API (see startDieIdle / buildThrowKeyframes), so the die can lie
+   flat, slowly yaw at rest, and carry gravity-like easing on a roll. */
 
 .dice-caption {
   font-size: 12px;
@@ -577,10 +560,6 @@ button { font-family: inherit; }
   color: var(--ink-dim);
   text-align: center;
   min-height: 16px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .die10, .die10.rolling { animation: none; }
 }
 
 /* ───────────── Tools sidebar ───────────── */

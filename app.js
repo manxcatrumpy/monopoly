@@ -236,6 +236,9 @@ function roll(sides) {
 let diceBusy = false;
 let d10Built = false;
 let d10Faces = []; // [{ el, normal, value }] — populated by buildD10()
+let diceAnim = null; // the in-flight Web Animations throw, so reset can cancel it
+let idleAnim = null; // the looping idle rotation
+let idleRestM = null; // a face-up orientation matrix used as the idle's resting pose
 
 // Build an SVG path for a polygon with softened corners: at each vertex, pull
 // back `r` along both edges and join the two points with a quadratic arc that
@@ -342,59 +345,116 @@ function buildD10() {
       `${n[0]},${n[1]},${n[2]},0,` +
       `${C[0]},${C[1]},${C[2]},1)`;
 
-    // apexDir = this kite's pole, (0,∓1,0); used to stand the die up on settle.
-    d10Faces.push({ el: face, normal: n, apexDir: norm(d.apex), value: FACE_VALUES[fi] });
+    // Store the full face frame: n (outward normal), v (apex→tip, = the number's
+    // "down"), u (in-plane perpendicular). Used to lay the face flat on settle.
+    d10Faces.push({ el: face, normal: n, u, v, apexDir: norm(d.apex), value: FACE_VALUES[fi] });
   });
 
   d10Built = true;
+  idleRestM = faceUpMatrix(d10Faces[0].value); // a resting orientation for the idle
 }
 
-// Freeze the die in the classic d10 "hero" pose: stand the solid up so its polar
-// axis is vertical, then spin about that axis so the rolled face turns to the
-// front — apex pointing up, number upright — exactly how a real d10 reads.
-function settleOnFace(die, value) {
-  const face = d10Faces.find(f => f.value === value);
-  if (!face) return;
-  const n = face.normal;
+// Camera tilt for the resting view: rotate the whole solid forward so we look
+// down onto the top face. When a real d10 settles it lies on a bottom kite and
+// the antipodal kite is horizontal on top -- that top face is the result. We
+// orient the rolled face there and tip the camera down to read it.
+const VIEW_TILT = -54;
 
-  // Target the rolled face's local frame onto a fixed world frame:
-  //   apex (e2)            → screen-up   (0,−1,0)
-  //   face's outward azimuth (e3) → camera (0, 0,1)
-  const e2 = face.apexDir;
-  let e3 = [n[0], 0, n[2]];                       // horizontal part of the normal
-  const h = Math.hypot(e3[0], e3[2]) || 1;
-  e3 = [e3[0] / h, 0, e3[2] / h];
-  const e1 = [                                     // e1 = e2 × e3
-    e2[1]*e3[2] - e2[2]*e3[1],
-    e2[2]*e3[0] - e2[0]*e3[2],
-    e2[0]*e3[1] - e2[1]*e3[0]
-  ];
-  // R rows = [−e1, −e2, e3]; maps e2→(0,−1,0), e3→(0,0,1). The kite is symmetric
-  // about its meridian, so the number comes out upright automatically.
-  const R = [
-    [-e1[0], -e1[1], -e1[2]],
-    [-e2[0], -e2[1], -e2[2]],
-    [ e3[0],  e3[1],  e3[2]]
-  ];
-  const m = `matrix3d(${R[0][0]},${R[1][0]},${R[2][0]},0,` +
-            `${R[0][1]},${R[1][1]},${R[2][1]},0,` +
-            `${R[0][2]},${R[1][2]},${R[2][2]},0,0,0,0,1)`;
-  die.style.animation = 'none';                   // stop the idle spin
-  die.style.transform = `rotateX(-10deg) ${m}`;   // slight downward view for depth
+// Orientation that lays the given face flat on top: its outward normal points
+// straight up (world up is 0,-1,0) so the kite is horizontal and the number
+// reads upright once the camera tilts down. Rows [u, -n, v] map the face normal
+// to up, v (apex->tip) into the table, and u to screen-right.
+function faceUpMatrix(value) {
+  const f = d10Faces.find(x => x.value === value);
+  if (!f) return null;
+  const { u, v, normal: n } = f;
+  return `matrix3d(${u[0]},${-n[0]},${v[0]},0,` +
+                  `${u[1]},${-n[1]},${v[1]},0,` +
+                  `${u[2]},${-n[2]},${v[2]},0,0,0,0,1)`;
 }
 
-// Roll choreography, in milliseconds.
-const DICE_TUMBLE = 720; // free spin via CSS keyframes
-const DICE_SETTLE = 640; // eased glide into the rolled face
+// Full resting pose: lay the rolled face flat and up, give it a random heading
+// (yaw about the vertical axis keeps the face level, just turns it like a die
+// settled at some angle), then tilt the camera down to read the top face.
+function faceRestPose(value, yaw) {
+  const m = faceUpMatrix(value);
+  if (!m) return null;
+  return `rotateX(${VIEW_TILT}deg) rotateY(${yaw.toFixed(1)}deg) ${m}`;
+}
+
+const DICE_THROW_MS = 1650; // full throw → bounce → settle
+
+// Keyframes for a die that behaves like a real thrown solid: it is tossed up,
+// tumbles freely on every axis, falls under "gravity" (ease-in on the way down,
+// ease-out on the way up), bounces a couple of times with shrinking height, then
+// locks onto the rolled face and rocks to rest with a quickly damped wobble.
+function buildThrowKeyframes(rest) {
+  const dir = Math.random() < 0.5 ? 1 : -1; // tumble handedness varies per throw
+  // Airborne phase — free tumble, no face lock yet (random-looking spin).
+  const air = (ty, tx, rx, ry, rz) =>
+    `translate(${(tx * dir).toFixed(1)}px, ${ty}px) rotateX(${rx}deg) ` +
+    `rotateY(${(ry * dir).toFixed(0)}deg) rotateZ(${(rz * dir).toFixed(0)}deg)`;
+  // Settle phase — locked to the rest pose, with a small parent-space rock.
+  const rock = (ty, nod, twist) =>
+    `translateY(${ty}px) rotateX(${nod}deg) rotateZ(${twist}deg) ${rest}`;
+
+  const G_UP   = 'cubic-bezier(0.22, 0.58, 0.40, 1)';   // rising: decelerate
+  const G_DOWN = 'cubic-bezier(0.52, 0, 0.86, 0.52)';   // falling: accelerate
+  const SOFT   = 'cubic-bezier(0.33, 0, 0.30, 1)';      // settle rocks
+
+  return [
+    { offset: 0.00, easing: G_UP,   transform: air(  0,   0,  -15,    0,    0) }, // launch
+    { offset: 0.17, easing: G_DOWN, transform: air(-46,  -7,  165,  205,   72) }, // apex of the throw
+    { offset: 0.40, easing: G_UP,   transform: air(  0,   5,  330,  430,  150) }, // first impact
+    { offset: 0.55, easing: G_DOWN, transform: air(-22,   4,  430,  560,  205) }, // bounce apex
+    { offset: 0.70, easing: SOFT,   transform: air(  0,   0,  520,  655,  250) }, // second impact
+    { offset: 0.80, easing: G_DOWN, transform: rock(-7,  9.5,  7.5) },            // tiny hop, rock over
+    { offset: 0.88, easing: SOFT,   transform: rock( 0, -5.0, -4.0) },            // rock back
+    { offset: 0.94, easing: SOFT,   transform: rock( 0,  2.4,  2.0) },            // smaller
+    { offset: 0.975,easing: SOFT,   transform: rock( 0, -1.1, -0.9) },            // smaller still
+    { offset: 1.00, easing: SOFT,   transform: rest }                            // at rest
+  ];
+}
+
+function stopDiceAnim() {
+  if (diceAnim) { try { diceAnim.cancel(); } catch (_) {} diceAnim = null; }
+}
+
+function stopDieIdle() {
+  if (idleAnim) { try { idleAnim.cancel(); } catch (_) {} idleAnim = null; }
+}
+
+// Idle state: the die simply lies on the table (a face flat and up, viewed from
+// the tilted camera) and turns slowly about the vertical axis, like a die left
+// resting on a felt mat. WAAPI drives it so it composites the same way as the
+// throw; reduced motion gets a static lying pose instead.
+function startDieIdle() {
+  const die = $('#die10');
+  if (!die || !idleRestM) return;
+  stopDieIdle();
+  die.style.animation = 'none';
+  const tilt = `rotateX(${VIEW_TILT}deg)`;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    die.style.transform = `${tilt} rotateY(0deg) ${idleRestM}`;
+    return;
+  }
+  die.style.transform = '';
+  idleAnim = die.animate([
+    { transform: `${tilt} rotateY(0deg) ${idleRestM}` },
+    { transform: `${tilt} rotateY(360deg) ${idleRestM}` }
+  ], { duration: 18000, easing: 'linear', iterations: Infinity });
+}
 
 function resetDiceStage() {
   const die = $('#die10');
   if (!die) return;
   diceBusy = false;
-  die.classList.remove('rolling', 'fortune', 'wisdom');
-  die.style.animation = '';    // clear any frozen pose → resume the gentle idle spin
+  stopDiceAnim();
+  die.classList.remove('fortune', 'wisdom');
+  die.style.animation = 'none';
   die.style.transform = '';
-  die.style.transition = '';   // drop the settle easing
+  startDieIdle();             // resume the slow resting turntable
   const cap = $('#dice-caption');
   if (cap) cap.textContent = '點玩家旁的「擲福 / 擲慧」開始擲骰';
 }
@@ -412,52 +472,41 @@ function rollSetupDie(stat, idx) {
   const statLabel = stat === 'fortune' ? '福報' : '智慧';
 
   diceBusy = true;
+  stopDieIdle();
   die.classList.remove('fortune', 'wisdom');
   die.classList.add(stat);
   cap.textContent = `${name} · ${statLabel} 擲骰中…`;
 
+  // The die settles flat with the rolled face up; a random heading (yaw) makes
+  // each throw come to rest at a different angle, like a real die on the table.
+  const yaw = -42 + Math.random() * 84;
+  const rest = faceRestPose(finalValue, yaw);
   const finish = () => {
+    if (rest) { die.style.animation = 'none'; die.style.transform = rest; }
     input.value = String(finalValue);
     cap.textContent = `${name} · ${statLabel} ＝ ${finalValue}`;
     diceBusy = false;
     renderTopMarker();
   };
 
-  // Reduced motion: skip the spin and rest on the face immediately.
+  // Reduced motion: skip the throw and rest on the face immediately (finish()
+  // poses the die from `rest`).
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) {
-    die.style.transition = 'none';
-    settleOnFace(die, finalValue);
-    finish();
-    return;
-  }
+  if (reduce || !rest) { finish(); return; }
 
-  // Phase 1 — free tumble. Faces keep their own fixed numbers throughout; the
-  // spin itself conveys the roll. transition:none so the reset below can't animate.
-  die.style.transition = 'none';
-  die.style.animation = '';
+  // Animate the throw with the Web Animations API so each leg can carry its own
+  // gravity-like easing and the settle can rock with a damped wobble — neither
+  // of which a single CSS transition can express. WAAPI also wins over the CSS
+  // idle animation, so the toss isn't fighting the turntable underneath.
+  stopDiceAnim();
+  die.style.animation = 'none';
   die.style.transform = '';
-  die.classList.remove('rolling');
-  void die.getBoundingClientRect(); // force reflow so the animation re-triggers
-  die.classList.add('rolling');
-
-  // Phase 2 — freeze at the live, end-of-tumble transform, then let a CSS
-  // transition decelerate the solid into the hero pose instead of snapping.
-  setTimeout(() => {
-    const frozen = getComputedStyle(die).transform; // current matrix mid-spin
-    die.classList.remove('rolling');
-    die.style.animation = 'none';
-    die.style.transform = frozen;
-    void die.getBoundingClientRect();               // lock the easing start
-    die.style.transition =
-      `transform ${DICE_SETTLE}ms cubic-bezier(0.16, 0.72, 0.24, 1)`;
-    settleOnFace(die, finalValue);                  // transform change → glides in
-
-    setTimeout(() => {
-      die.style.transition = '';
-      finish();
-    }, DICE_SETTLE);
-  }, DICE_TUMBLE);
+  diceAnim = die.animate(buildThrowKeyframes(rest), {
+    duration: DICE_THROW_MS,
+    easing: 'linear',
+    fill: 'forwards'
+  });
+  diceAnim.onfinish = () => { stopDiceAnim(); finish(); };
 }
 
 // ─────────── Time ───────────
