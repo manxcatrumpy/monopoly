@@ -5,65 +5,61 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 // ─────────── Card decks ───────────
-// NOTE: 智慧專精 appears identical to 福慧文明聯動 in source; treated as
-// separate decks (effectively doubling those 5 cards in the pool) pending
-// confirmation from the host.
+// Host-updated deck content (4 categories). Each category carries a base reward;
+// a card may override it via its own `reward` / `rewardText`, and `side` notes a
+// manual extra effect that the host applies by hand.
 const DEFAULT_ACTION_DECK = {
   '福慧雙增': {
-    reward: { fortune: 2, wisdom: 2, civ: 0 },
-    rewardText: '福報 +2 · 智慧 +2',
+    reward: { fortune: 2, wisdom: 2, civ: 2 },
+    rewardText: '福報 +2 · 智慧 +2 · 文明 +2',
     cards: [
-      { name: '真誠傾聽', desc: '邀請場上「福報最低」的玩家，請對方分享「一件近期覺得最開心、或有成就感的小事」。你只需專注看著對方的眼睛傾聽，並在最後給予一個真誠的肯定，全程不可打斷，也不可把話題轉回自己身上。' },
-      { name: '經驗傳承', desc: '分享一個你過去在生活或學習中「走過的彎路」或「踩過的小坑」，以及你從中學到的一個實用教訓。坦然正視過去的不足並轉化為經驗，是最高級的「智慧」；將自己跌倒的經驗化為他人的避坑指南，即是累積「福報」。' },
-      { name: '打破成見', desc: '分享一個後來發現是偏頗的日常觀念（例如：刻板印象、誤解），並分享你是如何醒悟的。承認自身的無知並願意打破思維框架，需要極大的「智慧」；接納多元、不再輕易評斷他人，將為你結下廣闊的人際「福報」。' },
-      { name: '情緒覺察', desc: '說出曾出現過的一個「微小負面情緒」（如：不耐煩、小焦慮），並分享你是如何「接納它」或「轉念放下它」。明白情緒沒有對錯，看見並允許它的存在即是「智慧」；能與之和平共處而不去波及周遭的人，即是深厚的「福報」。' },
-      { name: '和解之橋', desc: '回想一次你快要生氣的時刻。向大家分享一個你專屬的「情緒急救小撇步」（例如：喝杯溫水、深呼吸三次）。分享後，邀請全桌玩家跟著你一起做一次這個動作。' },
-      { name: '言辭布施', desc: '觀察目前場上總積分落後，或是剛剛遭遇無常扣分的玩家。用一句溫暖、肯定的話語給予他力量與鼓勵。了解語言的影響力，在他人低潮時給予正向引導是「智慧」；用善語為他人驅散陰霾、給予支持，即是最美好的「福報」。' },
-      { name: '物盡其用', desc: '分享一個你在生活中「延長物品壽命」或「一物多用」的實際小技巧。因為，惜物愛物是培福，巧思應用是長慧。' },
-      { name: '時間布施', desc: '宣告在下一輪輪到你擲骰時，你將放棄自己的移動回合，並把擲骰的點數與機會讓給左邊的玩家。體會無私讓利、成就他人的快樂，將為你帶來無形的「福報」。知道適時成就他人是「智慧」。' },
-      { name: '跨界學習', desc: '向場上任一玩家提出一個你一直想了解的小問題（例如：如何煮好一杯咖啡？如何挑選花材？），請對方用 1 分鐘為你解答。', side: '解答者同獲 +1 福、+1 慧' },
+      { name: '真誠傾聽', desc: '邀請場上「福報最低」者分享近期開心小事。專注傾聽並真誠肯定，不打斷也不轉移話題。' },
+      { name: '經驗傳承', desc: '分享過去踩坑的實用教訓。正視過去的不足而認真成長，是智慧；將跌倒經驗化為他人的避坑指南，即是添福。' },
+      { name: '打破成見', desc: '分享一個偏頗的日常觀念，並說明如何醒悟。承認自身的無知並願意打破框架，需要極大的「智慧」；接納多元、不輕易評斷，結下廣闊人際的「福報」。' },
+      { name: '情緒覺察', desc: '說出微小負面情緒，分享如何「接納它」或「轉念放下它」。情緒沒有對錯，看見並允許它存在即是「智慧」；能與情緒共處、停止情緒蔓延，為「福報」止漏。' },
+      { name: '跨越情緒', desc: '分享你的「情緒急救小撇步」（例如：喝杯溫水、深呼吸三次），並邀請全桌玩家跟著你一起做一次這個動作。' },
+      { name: '語言力量', desc: '用溫暖肯定的話鼓勵積分落後或遇無常者。在他人低潮時給予正向引導是「智慧」；用善語驅散陰霾、給予支持，即是美好的「福報」。' },
+      { name: '物盡其用', desc: '分享生活中延長物品壽命或一物多用的技巧。惜物愛物是培福，巧思應用是長慧。' },
+      { name: '時間布施', desc: '宣告下輪放棄移動，將擲骰機會讓給左方。體會無私讓利、成就他人的快樂，帶來無形的「福報」；成就他人是「智慧」。' },
+      { name: '跨界學習', desc: '向任一玩家提出想了解的事，請對方用 1 分鐘為你解答。', side: '解答者額外獲得文明 +1' },
     ],
   },
   '福報專精': {
     reward: { fortune: 3, wisdom: 0, civ: 1 },
     rewardText: '福報 +3 · 文明 +1',
     cards: [
-      { name: '微小善意', desc: '承諾在遊戲結束後的 24 小時內，完成一件的微小付出（如：撿起路邊垃圾、為後方的人擋門），並與全桌擊掌為證。將善意從遊戲桌面延伸到真實的日常生活中，將化為守護社會的真實「福報」。' },
-      { name: '無私分享', desc: '拿出自己的 2 點福報，無條件贈予場上福報最少的玩家。克服匱乏感，明白給予不會讓自己變少，是「智慧」的突破；雪中送炭，主動拉拔落後者，是新文明共好的「福報」實踐。', side: '自身 -2 福報，轉贈場上福報最低者' },
-      { name: '主動承擔', desc: '承諾在本次聚會/遊戲結束後，主動承擔一項清理或收拾的善後工作。看見環境的需要並主動補位，這份敏銳的「智慧」，能為群體帶來和諧，也是最直接累積「福報」的方法。' },
-      { name: '言辭布施', desc: '用一句溫暖、有力量的話，鼓勵目前場上積分落後的玩家。了解語言的影響力，在他人低潮時給予正向引導是「智慧」；用善語為他人驅散陰霾、給予支持，即是最美好的「福報」。' },
-      { name: '感恩回饋', desc: '分享近期生活中，一位默默為你付出，但你尚未向他道謝的人，並現場傳訊息或當面約對方道謝。察到自己擁有的便利皆來自他人的貢獻，是「智慧」的顯現；將感恩化為實際的行動與文字，能啟動源源不絕的「福報」循環。' },
+      { name: '微小善意', desc: '承諾遊戲後的 24 小時內，完成一件微小付出，並與全桌擊掌為證。將善意從遊戲桌面延伸到真實的日常生活中，化為守護社會的真實「福報」。' },
+      { name: '無私分享', desc: '拿出自己的 2 點福報，無條件贈予場上福報最少的玩家。克服匱乏、明白給予不會讓自己變少，是「智慧」的突破；主動拉拔落後者，是「福報」的實踐。' },
+      { name: '主動承擔', desc: '承諾本次聚會結束後主動承擔一項善後工作。敏銳看見環境的需要並主動補位，是「智慧」；促成和諧，是最直接累積「福報」的方法。' },
+      { name: '成就他人', desc: '分享一次放棄出風頭、把舞台或功勞讓給別人的經驗。功成身退而不爭，是「智慧」；成就他人的成長，是無量「福報」。' },
+      { name: '感恩回饋', desc: '分享近期默默為你付出的人，並現場傳訊道謝。能看見他人的好與付出，是「智慧」的顯現；將感恩化為實際行動，啟動「福報」循環。' },
     ],
   },
   '福慧文明聯動': {
-    reward: { fortune: 2, wisdom: 1, civ: 1 },
-    rewardText: '福報 +2 · 智慧 +1 · 文明 +1',
+    reward: { fortune: 2, wisdom: 2, civ: 2 },
+    rewardText: '福報 +2 · 智慧 +2 · 文明 +2',
     cards: [
-      { name: '共好提案', desc: '為現場的空間或接下來的活動提出一個「能讓大家更舒適或更有意義」的微型提案（例如：調整燈光、換個座位、約定不看手機）。經半數同意即刻執行。' },
+      { name: '共好提案', desc: '為空間或活動提出一個「讓大家更舒適或更有意義」的微型提案（例如：調整燈光、換個座位、約定不看手機），經半數同意即刻執行。' },
       { name: '弱勢關懷', desc: '與目前總積分最低的一名玩家結盟。對方能同步獲得你下一次的福報與智慧點數。' },
-      { name: '知識開源', desc: '向全場分享一個能夠提升生活品質、工作效率或身心健康的實用工具/方法/APP，並說明其價值。' },
-      { name: '世代／跨界對話', desc: '分享一個你從不同年齡層，或是不同領域的人身上，學到最寶貴的一堂課。' },
-      { name: '環保倡議', desc: '提出一項你可以立刻在生活中實踐的減碳／環保行動（如：出門帶環保杯、冷氣調高一度）。', side: '第一個響應者 +1 福報' },
+      { name: '知識開源', desc: '分享並說明一個能提升效率、品質或身心健康的實用工具／方法／APP。' },
+      { name: '世代／跨界對話', desc: '分享你從不同年齡層，或不同領域的人身上，學到最寶貴的一堂課。' },
+      { name: '環保倡議', desc: '提出一項可以立刻實踐的減碳／環保行動（如：出門帶環保杯、冷氣調高一度）。', side: '首位響應者獲福報 +1' },
     ],
   },
   '智慧專精': {
-    reward: { fortune: 1, wisdom: 3, civ: 0 },
-    rewardText: '智慧 +3 · 福報 +1',
+    reward: { fortune: 1, wisdom: 3, civ: 2 },
+    rewardText: '智慧 +3 · 福報 +1 · 文明 +2',
     cards: [
-      { name: '打破成見', desc: '分享一個你過去一直深信不疑，但後來發現是錯誤或偏頗的觀念。你是如何醒悟的？願意打破思維框架，需要極大的「智慧」；接納多元、不再輕易評斷他人，將為你結下廣闊的人際「福報」。' },
-      { name: '反求諸己', desc: '分享一次與他人發生衝突時，你意識到「其實自己也有責任」的經歷。停止指責外界，將檢討的手指轉向自己，是修行中最難的「智慧」；懂得自我反省就能化解惡緣，自然能留住「福報」。' },
-      { name: '每日閱讀', desc: '分享一句深深影響你的座右銘，或是近期讀到、聽到的一句充滿力量的話語。如果不記得，可以立刻用手機查一句分享給大家。汲取前人的經驗與思想精華，是站在巨人的肩膀上累積「智慧」；將好觀念傳遞給同桌的人，即是知識開源的「福報」。' },
+      { name: '接納無常', desc: '分享一次計畫被打亂時，迅速放下執著並調整的經驗。立即調整、接受當下，需要極大的「智慧」；隨遇而安、不生抱怨，即是守住「福報」。' },
+      { name: '反求諸己', desc: '分享一次發生衝突時，意識到「其實自己也有責任」的經歷。停止指責、轉向內省，是難得的「智慧」；自我反省能化解芥蒂，自然能留住「福報」。' },
+      { name: '每日閱讀', desc: '分享一句深深影響你的座右銘，或聽到的一句充滿力量的話語。汲取他人經驗與思想，是站在巨人肩膀上累積「智慧」；將好觀念傳遞給他人，即是知識開源的「福報」。' },
       {
         name: '覆盤總結',
-        desc: '針對目前遊戲的局勢，客觀地分析並給出一個「如何讓大家整體分數更高」的策略建議。',
-        reward: { fortune: 1, wisdom: 3, civ: 1 },
-        rewardText: '智慧 +3 · 福報 +1 · 文明 +1',
+        desc: '客觀分析目前遊戲的局勢，提出能讓整體分數更高的建議。',
+        reward: { fortune: 1, wisdom: 3, civ: 3 },
+        rewardText: '智慧 +3 · 福報 +1 · 文明 +3',
       },
-      {
-        name: '靜心錨定',
-        desc: '帶領全桌玩家放下手邊動作，閉上眼睛，共同進行 3 次深呼吸，重新將意識拉回當下。',
-        side: '參與配合的玩家各獲 +1 智慧',
-      },
+      { name: '靜心錨定', desc: '帶領全桌閉上眼睛，同步深呼吸 3 次，重新將意識拉回當下。', side: '參與配合的玩家皆獲得智慧 +1' },
     ],
   },
 };
@@ -94,35 +90,34 @@ function buildActionPool() {
 // ─────────── Boost deck (共好加速卡) ───────────
 // Each card stands alone (no categories). 「即時行動」 + 「福慧覺察」 sections.
 const DEFAULT_BOOST_DECK = [
-  { name: '能量補給站',   reward: { fortune: 1, wisdom: 0, civ: 1 }, rewardText: '福報 +1 · 文明 +1',
-    action: '與上一家擊掌，並互相對彼此大聲說一句：「有你在這一起，真好」。',
-    insight: '無畏布施，給予他人心靈的支持與力量。' },
-  { name: '隨手微服務',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
+  { name: '能量補給站',   reward: { fortune: 1, wisdom: 0, civ: 1 }, rewardText: '雙方 福報 +1 · 文明 +1', both: true,
+    action: '與上一家擊掌，並互相對彼此大聲說一句：「有你一起，真好」。',
+    insight: '懂得正向表達，同時激勵他人的共好行動。' },
+  { name: '隨手微服務',   reward: { fortune: 3, wisdom: 0, civ: 0 }, rewardText: '雙方 福報 +3', both: true,
     action: '主動為上一家做一件微小的服務（例如：幫他倒水、遞一張衛生紙、或幫他把眼前的桌面稍微整理整齊⋯）。',
     insight: '用行動主動利他。' },
-  { name: '無聲的祝福',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '福報 +1 · 智慧 +1',
+  { name: '無聲的祝福',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +1', both: true,
     action: '對上一家露出真誠的燦爛「笑臉」，傳遞無聲的善意。',
     insight: '善意不需要複雜的包裝，簡單的交流就能傳遞溫暖。' },
   { name: '點數大共享',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
-    action: '將自己身上的 1 點「福報」或「智慧」贈予上一家，並對他說：「這份好運分給你」。',
-    insight: '慷慨是打破匱乏感的最佳練習。願意分享，福報反而會回流。',
-    side: '自身 -1 福或慧，轉贈上一家' },
-  { name: '感恩的共振',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
+    action: '將自己身上的 1 點「福報」或「智慧」贈予上一家，並對他說：「這份好運，分給你」。',
+    insight: '慷慨是打破匱乏感的最佳練習。願意分享，福報反而會回流。' },
+  { name: '感恩的共振',   reward: { fortune: 3, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +3 · 智慧 +2 · 文明 +1', both: true,
     action: '你與上一家輪流分享一件「今天發生、值得感恩的小事」。',
-    insight: '感恩的心念能瞬間提升周圍的磁場與頻率。' },
-  { name: '正念同頻率',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+    insight: '心懷感恩，能瞬間帶動周圍的和諧氛圍。' },
+  { name: '正念同頻率',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
     action: '你與上一家一起閉上眼睛，由你喊節拍，兩人同步進行 3 次深呼吸。',
     insight: '在喧鬧中找回平靜，把注意力收回到自己的身體。' },
-  { name: '情緒資源回收', reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
-    action: '與上一家各自說出一個近期的「小煩惱」，說完後，兩人一起「哈哈大笑三聲」把它丟掉。',
+  { name: '情緒資源回收', reward: { fortune: 2, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +2 · 智慧 +2 · 文明 +1', both: true,
+    action: '與上一家各自說出近期的「小煩惱」，說完後，兩人一起「大笑三聲」把它丟掉。',
     insight: '幽默感與轉念，是面對無常時最強大的心理韌性。' },
-  { name: '傾聽的修煉',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
-    action: '請上一家分享此刻的「心情或感受」，你要全神貫注地看著他的眼睛傾聽，不發一語、不插嘴。',
+  { name: '傾聽的修煉',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
+    action: '請上一家分享此刻的「心情或感受」，需全神貫注地看著對方，認真傾聽。',
     insight: '真正的傾聽必須放下「我執」與「想給建議的衝動」。' },
-  { name: '舒展與覺知',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '智慧 +1 · 福報 +1',
+  { name: '舒展與覺知',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
     action: '由上一家示範一個簡單的「肩頸伸展或伸懶腰動作」，你跟著他一起做 10 秒鐘。',
     insight: '身體是修行的殿堂。隨時覺察並照顧身體的緊繃。' },
-  { name: '意圖的宣告',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '智慧 +2',
+  { name: '意圖的宣告',   reward: { fortune: 2, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +2 · 智慧 +2', both: true,
     action: '你與上一家輪流大聲宣告一個「遊戲結束前要完成的微小目標」（例如：我要多微笑、我要不抱怨）。',
     insight: '為自己的行為設定清晰的意圖，是有意識生活的開始。' },
 ];
@@ -1248,15 +1243,21 @@ function renderCard() {
   const playerOpts = state.players.map(p =>
     `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
   ).join('');
-  $('#card-foot').innerHTML = `
-    <div class="card-actions">
+  const selectHtml = (id, label) => `
       <label class="row">
-        <span>套用至</span>
-        <select id="card-recipient">
+        <span>${label}</span>
+        <select id="${id}">
           <option value="">— 請選擇玩家 —</option>
           ${playerOpts}
         </select>
-      </label>
+      </label>`;
+  // 「雙方」卡（boost）要同時套用給本人與上一家，給兩個下拉；其餘卡用單一收受者。
+  const recipientControls = c.both
+    ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '上一家')
+    : selectHtml('card-recipient', '套用至');
+  $('#card-foot').innerHTML = `
+    <div class="card-actions">
+      ${recipientControls}
       <div class="card-buttons">
         <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
         <button class="btn btn-primary" id="card-apply">套用獎勵</button>
@@ -1271,7 +1272,14 @@ function renderCard() {
   $('#card-apply').addEventListener('click', () => {
     const pid = $('#card-recipient').value;
     if (!pid) { toast('請先選擇要套用的玩家'); return; }
-    applyCardReward(pid, currentCard);
+    if (currentCard.both) {
+      const pid2 = $('#card-recipient2').value;
+      if (!pid2) { toast('「雙方」卡請選擇上一家玩家'); return; }
+      if (pid2 === pid) { toast('本人與上一家不可為同一人'); return; }
+      applyCardReward([pid, pid2], currentCard);
+    } else {
+      applyCardReward(pid, currentCard);
+    }
   });
 }
 
@@ -1543,19 +1551,31 @@ function catalogBoostCardHtml(c) {
   `;
 }
 
-function applyCardReward(playerId, card) {
-  const p = getPlayer(playerId);
-  if (!p || !card) return;
+// Apply a card's reward to one player, or — for 「雙方」boost cards — to several
+// at once (each recipient gets the full per-player reward).
+function applyCardReward(playerIds, card) {
+  if (!card) return;
+  const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
   const mult = scoreMultiplier();
   const r = scaleReward(card.reward || {}, mult);
-  if (r.fortune) setStat(playerId, 'fortune', (p.fortune || 0) + r.fortune);
-  if (r.wisdom)  setStat(playerId, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
-  if (r.civ)     setStat(playerId, 'civ',     (p.civ     || 0) + r.civ);
-  // During the sprint show the doubled tally plus a clear ×2 tag; otherwise the
-  // card's own wording.
-  const rewardText = mult > 1 ? describeReward(r) : card.rewardText;
+  const names = [];
+  ids.forEach(pid => {
+    const p = getPlayer(pid);
+    if (!p) return;
+    if (r.fortune) setStat(pid, 'fortune', (p.fortune || 0) + r.fortune);
+    if (r.wisdom)  setStat(pid, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
+    if (r.civ)     setStat(pid, 'civ',     (p.civ     || 0) + r.civ);
+    names.push(p.name || '玩家');
+  });
+  if (!names.length) return;
+  // During the sprint show the doubled per-player tally plus a clear ×2 tag;
+  // otherwise the card's own wording. For 雙方 cards spell out the per-player
+  // grant so two names + the value read unambiguously.
+  const rewardText = mult > 1
+    ? describeReward(r)
+    : (ids.length > 1 ? `雙方各得 ${describeReward(r)}` : card.rewardText);
   const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
-  const msg = `${p.name || '玩家'} 完成「${card.name}」　${rewardText}${tag}`;
+  const msg = `${names.join('、')} 完成「${card.name}」　${rewardText}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
