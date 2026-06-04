@@ -905,6 +905,15 @@ button { font-family: inherit; }
   border-radius: var(--radius-xs);
   letter-spacing: 0.04em;
 }
+/* Sprint reminder for a card's manual side-effect — it isn't auto-doubled. */
+.card-side-x2 {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--civ);
+  color: var(--civ);
+  font-weight: 600;
+}
 .card-reward {
   align-self: flex-start;
   padding: 8px 14px;
