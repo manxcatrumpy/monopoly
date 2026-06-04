@@ -1287,13 +1287,23 @@ function rewardLineHtml(c) {
   return `<div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>`;
 }
 
+// The 附加 (side) line. Side effects are applied by hand, so during the sprint
+// they are NOT auto-doubled — remind the host to apply this one at ×2 manually.
+function sideLineHtml(c) {
+  if (!c.side) return '';
+  const note = scoreMultiplier() > 1
+    ? `<span class="card-side-x2">衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用</span>`
+    : '';
+  return `<p class="card-side">附加：${escapeHtml(c.side)}${note}</p>`;
+}
+
 function renderActionBody(c) {
   return `
     <div class="card-display">
       <div class="card-category">${escapeHtml(c.category)}</div>
       <h3 class="card-name">${escapeHtml(c.name)}</h3>
       <p class="card-desc">${escapeHtml(c.desc)}</p>
-      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
+      ${sideLineHtml(c)}
       ${rewardLineHtml(c)}
     </div>
   `;
@@ -1312,7 +1322,7 @@ function renderBoostBody(c) {
         <div class="card-section-label">福慧覺察</div>
         <p class="card-section-text">${escapeHtml(c.insight)}</p>
       </div>
-      ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
+      ${sideLineHtml(c)}
       ${rewardLineHtml(c)}
     </div>
   `;
