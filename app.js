@@ -138,6 +138,8 @@ function rebuildDecks() {
 
 const STORAGE_KEY = 'fuhui-dashboard-state-v1';
 const MAX_GAME_SECONDS = 100 * 60;
+const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊發」：卡牌得分／扣分 ×2
+const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 50;
 const MILESTONES = [25, 35, 45, 50];
 const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
@@ -547,6 +549,28 @@ function resetTimer() {
   state.timer = { accumulated: 0, lastStartedAt: null, running: false };
 }
 
+// ─────────── 倒數衝刺：無常與恩典齊發 ───────────
+// 在最後 SPRINT_SECONDS（15 分鐘）內，所有卡牌的得分與扣分一律 ×2。
+function sprintActive() {
+  return elapsedSeconds() >= MAX_GAME_SECONDS - SPRINT_SECONDS;
+}
+function scoreMultiplier() {
+  return sprintActive() ? SPRINT_MULTIPLIER : 1;
+}
+// 依倍率縮放一張卡的 reward（保留各分項正負號）。
+function scaleReward(base = {}, mult = 1) {
+  const out = {};
+  STATS.forEach(stat => { out[stat] = (base[stat] || 0) * mult; });
+  return out;
+}
+// 把 reward 物件描述成 "福報 +4 · 智慧 +2"（保留正負號、略過 0）。
+function describeReward(r = {}) {
+  return STATS
+    .filter(stat => r[stat])
+    .map(stat => `${STAT_LABEL[stat]} ${r[stat] > 0 ? '+' : ''}${r[stat]}`)
+    .join(' · ');
+}
+
 // ─────────── Toasts & log ───────────
 let toastTimer;
 function toast(msg, kind = '') {
@@ -675,8 +699,20 @@ function updateTopbar() {
   timerEl.classList.toggle('warn', sec >= 80 * 60 && sec < MAX_GAME_SECONDS);
   timerEl.classList.toggle('over', sec >= MAX_GAME_SECONDS);
 
+  // Final-15-minute sprint: surface it in the timer and a top banner.
+  const sprint = sprintActive();
+  timerEl.classList.toggle('sprint', sprint);
+  const banner = $('#sprint-banner');
+  if (banner) banner.classList.toggle('hidden', !sprint);
+
   const btn = $('#btn-toggle-timer');
   btn.textContent = state.timer.running ? '暫停' : '開始';
+
+  if (sprint && !state._sprintNoticed) {
+    state._sprintNoticed = true;
+    toast('無常與恩典齊發 — 最後 15 分鐘，卡牌得分與扣分 ×2', 'grad');
+    logEvent('無常與恩典齊發啟動 — 卡牌得分／扣分 ×2', 'grad');
+  }
 
   if (sec >= MAX_GAME_SECONDS && !state._timeUpNoticed) {
     state._timeUpNoticed = true;
@@ -986,6 +1022,7 @@ function applySetup() {
   }
   resetTimer();
   state._timeUpNoticed = false;
+  state._sprintNoticed = false;
   state.history = [];
   state.navigatorClaimed = emptyNavClaim();
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
@@ -1076,6 +1113,7 @@ function nextRound() {
   });
   resetTimer();
   state._timeUpNoticed = false;
+  state._sprintNoticed = false;
   state.navigatorClaimed = emptyNavClaim();
   state.log = [];
   logEvent(`進入第 ${state.roundNum} 局（積分歸零）`, 'grad');
@@ -1099,6 +1137,7 @@ function restoreRound(idx) {
   state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
   state.history = state.history.slice(0, idx);
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
+  state._sprintNoticed = sprintActive();
   save();
   renderAll();
   closeHistory();
@@ -1236,6 +1275,18 @@ function renderCard() {
   });
 }
 
+// The reward line on a drawn card. During the sprint it previews the doubled
+// tally so the host sees what 套用獎勵 will actually grant.
+function rewardLineHtml(c) {
+  const mult = scoreMultiplier();
+  if (mult > 1) {
+    const doubled = describeReward(scaleReward(c.reward || {}, mult));
+    return `<div class="card-reward sprint">無常與恩典齊發 ×${mult}　獎勵　${escapeHtml(doubled)}` +
+           `<span class="card-reward-base">（原 ${escapeHtml(c.rewardText)}）</span></div>`;
+  }
+  return `<div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>`;
+}
+
 function renderActionBody(c) {
   return `
     <div class="card-display">
@@ -1243,7 +1294,7 @@ function renderActionBody(c) {
       <h3 class="card-name">${escapeHtml(c.name)}</h3>
       <p class="card-desc">${escapeHtml(c.desc)}</p>
       ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
-      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
+      ${rewardLineHtml(c)}
     </div>
   `;
 }
@@ -1262,7 +1313,7 @@ function renderBoostBody(c) {
         <p class="card-section-text">${escapeHtml(c.insight)}</p>
       </div>
       ${c.side ? `<p class="card-side">附加：${escapeHtml(c.side)}</p>` : ''}
-      <div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>
+      ${rewardLineHtml(c)}
     </div>
   `;
 }
@@ -1485,11 +1536,16 @@ function catalogBoostCardHtml(c) {
 function applyCardReward(playerId, card) {
   const p = getPlayer(playerId);
   if (!p || !card) return;
-  const r = card.reward || {};
+  const mult = scoreMultiplier();
+  const r = scaleReward(card.reward || {}, mult);
   if (r.fortune) setStat(playerId, 'fortune', (p.fortune || 0) + r.fortune);
   if (r.wisdom)  setStat(playerId, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
   if (r.civ)     setStat(playerId, 'civ',     (p.civ     || 0) + r.civ);
-  const msg = `${p.name || '玩家'} 完成「${card.name}」　${card.rewardText}`;
+  // During the sprint show the doubled tally plus a clear ×2 tag; otherwise the
+  // card's own wording.
+  const rewardText = mult > 1 ? describeReward(r) : card.rewardText;
+  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const msg = `${p.name || '玩家'} 完成「${card.name}」　${rewardText}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
