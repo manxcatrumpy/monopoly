@@ -134,7 +134,32 @@ button { font-family: inherit; }
 .meta-cap { font-size: 12px; color: var(--ink-mute); font-weight: 400; margin-left: 6px; }
 
 .timer.warn strong { color: var(--warn); }
+.timer.sprint strong { color: var(--civ); }
 .timer.over strong { color: var(--danger); animation: pulse 1.4s ease-in-out infinite; }
+
+/* Final-15-minute sprint banner — 無常與恩典齊發（卡牌得分／扣分 ×2） */
+.sprint-banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16px;
+  padding: 9px 18px;
+  background: var(--civ-soft);
+  border-bottom: 1px solid var(--civ);
+  text-align: center;
+}
+.sprint-banner.hidden { display: none; }
+.sprint-banner-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--civ);
+}
+.sprint-banner-sub {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
 
 .actions { display: flex; gap: 8px; }
 
@@ -890,6 +915,18 @@ button { font-family: inherit; }
   font-weight: 500;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+.card-reward.sprint {
+  border-color: var(--civ);
+  background: var(--civ-soft);
+  color: var(--civ);
+}
+.card-reward-base {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
 }
 
 .card-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
