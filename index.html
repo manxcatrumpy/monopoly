@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#F7F5F0" />
+  <meta name="theme-color" content="#EFF2E9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="福慧大富翁" />
@@ -12,14 +12,34 @@
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icons/icon.svg" />
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./components.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="logo" aria-hidden="true">☸</span>
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="#E6AE3A" stroke-width="2" stroke-linecap="round">
+            <line x1="32" y1="7" x2="32" y2="14"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(-100 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(-75 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(-50 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(-25 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(25 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(50 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(75 32 30)"></line>
+            <line x1="32" y1="7" x2="32" y2="14" transform="rotate(100 32 30)"></line>
+          </g>
+          <circle cx="32" cy="30" r="13" fill="#EFC158"></circle>
+          <circle cx="32" cy="30" r="10.5" fill="#E0A331"></circle>
+          <rect x="28.4" y="26.4" width="7.2" height="7.2" rx="1.3" fill="#FCFBF6"></rect>
+          <path d="M12 40 q5 -3 10 0 t10 0 t10 0 t10 0" fill="none" stroke="#4E97CC" stroke-width="2.4" stroke-linecap="round"></path>
+          <path d="M14 46 q4.5 3 9 0 t9 0 t9 0 t9 0" fill="none" stroke="#2F6FA8" stroke-width="2.4" stroke-linecap="round"></path>
+        </svg>
+      </span>
       <div class="brand-text">
         <div class="title">福慧大富翁</div>
-        <div class="subtitle">Host Dashboard</div>
+        <div class="subtitle">主持人控制台 · Host</div>
       </div>
     </div>
 
