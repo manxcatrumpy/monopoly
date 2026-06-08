@@ -11,21 +11,16 @@
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"></rect>
   <g transform="translate(0,16) scale(8)">
-    <g stroke="#E6AE3A" stroke-width="2" stroke-linecap="round">
-      <line x1="32" y1="6.5" x2="32" y2="14"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(-100 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(-75 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(-50 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(-25 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(25 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(50 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(75 32 30)"></line>
-      <line x1="32" y1="6.5" x2="32" y2="14" transform="rotate(100 32 30)"></line>
+    <g stroke="#E0A331" stroke-width="2" stroke-linecap="round">
+      <line x1="32" y1="14.5" x2="32" y2="7"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(45 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(90 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(135 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(180 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(225 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(270 32 30)"></line>
+      <line x1="32" y1="14.5" x2="32" y2="7" transform="rotate(315 32 30)"></line>
     </g>
-    <circle cx="32" cy="30" r="13.5" fill="#EFC158"></circle>
-    <circle cx="32" cy="30" r="11" fill="url(#coin)"></circle>
-    <rect x="28.3" y="26.3" width="7.4" height="7.4" rx="1.4" fill="#FCFBF6"></rect>
-    <path d="M11 40 q5.25 -3.1 10.5 0 t10.5 0 t10.5 0 t10.5 0" fill="none" stroke="#4E97CC" stroke-width="2.6" stroke-linecap="round"></path>
-    <path d="M13.5 46.4 q4.75 3.1 9.5 0 t9.5 0 t9.5 0 t9.5 0" fill="none" stroke="#2F6FA8" stroke-width="2.6" stroke-linecap="round"></path>
+    <circle cx="32" cy="30" r="13" fill="url(#coin)"></circle>
   </g>
 </svg>
