@@ -338,7 +338,38 @@
 .history-item .hi-player .hp-scores { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .history-item .hi-player .hp-total { font-size: 10px; color: var(--ink-mute); letter-spacing: 0.1em; margin-top: 2px; }
 .history-item .hi-player .hp-total strong { font-size: 16px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: 0; margin-left: 4px; }
-.history-item .hi-actions { display: flex; justify-content: flex-end; }
+.history-item .hi-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Read-only round detail (non-destructive 查看) */
+.history-list.hidden { display: none; }
+.history-detail { display: flex; flex-direction: column; gap: 16px; }
+.history-detail.hidden { display: none; }
+.hd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hd-readonly { font-size: 11px; color: var(--ink-mute); letter-spacing: 0.08em; }
+.hd-title { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
+.hd-meta { font-size: 11px; color: var(--ink-mute); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; margin-top: -10px; }
+.hd-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hd-sum { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 13px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-sm); }
+.hd-sum span { font-size: 10px; color: var(--ink-mute); letter-spacing: 0.14em; }
+.hd-sum strong { font-size: 17px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hd-sum.reached strong { color: var(--primary-deep); }
+.hd-players { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.hd-player { background: var(--surface-2); border-radius: var(--r-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-sm); position: relative; }
+.hd-player.graduated { box-shadow: 0 0 0 2px var(--fortune-soft), var(--shadow-sm); }
+.hd-pname { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.hd-player.graduated .hd-pname::after {
+  content: "★ 畢業"; font-size: 9px; letter-spacing: 0.12em; color: #8A6A1E;
+  background: var(--fortune-tint); padding: 2px 8px; border-radius: var(--r-pill);
+  font-weight: 700; margin-left: 6px;
+}
+.hd-pstats { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.03em; }
+.hd-pstats span { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.hd-pstats b { color: var(--ink); font-weight: 700; }
+.hd-pstats .dot { width: 7px; height: 7px; }
+.hd-ptotal { font-size: 10px; color: var(--ink-mute); letter-spacing: 0.1em; }
+.hd-ptotal strong { font-size: 16px; color: var(--ink); font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.hd-log-label { font-size: 11px; color: var(--ink-mute); letter-spacing: 0.14em; margin-bottom: 8px; }
+.hd-loglist { max-height: 260px; overflow-y: auto; }
 
 /* ───────────── Toast ───────────── */
 .toast {

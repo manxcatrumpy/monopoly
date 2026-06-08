@@ -1117,26 +1117,37 @@ function nextRound() {
   toast(`已進入第 ${state.roundNum} 局 — 上一局已存入歷史紀錄`);
 }
 
+// Switch the live game to a past round without losing the current one. The round
+// you're leaving is archived into the slot the chosen round vacated (a swap), so
+// every round stays available and you can switch back any time — nothing is lost.
 function restoreRound(idx) {
-  if (!state.history || !state.history[idx]) return;
-  const entry = state.history[idx];
-  const tail = state.history.length - idx - 1;
-  const tailNote = tail > 0 ? `，第 ${entry.roundNum} 局之後的 ${tail} 局歷史也會一併丟失` : '';
-  if (!confirm(`復原到第 ${entry.roundNum} 局？\n當前第 ${state.roundNum} 局所有變更將遺失${tailNote}。`)) return;
+  const entry = state.history && state.history[idx];
+  if (!entry) return;
+  if (!confirm(`切回第 ${entry.roundNum} 局？\n目前的第 ${state.roundNum} 局會自動存進歷史，之後可隨時再切回，不會遺失。`)) return;
 
+  // Finalize the current round's elapsed time, then snapshot it.
+  if (state.timer.running) pauseTimer();
+  const leaving = snapshotRound();
+  leaving.completedAt = Date.now();
+
+  // Load the chosen past round as the live game.
   state.roundNum = entry.roundNum;
   state.civGoal = entry.civGoal;
   state.timer = entry.timer;
   state.players = entry.players;
   state.log = entry.log;
   state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
-  state.history = state.history.slice(0, idx);
+
+  // The vacated slot now holds the round we just left — a swap, so the round
+  // count is unchanged and no round disappears.
+  state.history[idx] = leaving;
+
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
   state._sprintNoticed = sprintActive();
   save();
   renderAll();
   closeHistory();
-  toast(`已復原至第 ${state.roundNum} 局`, 'grad');
+  toast(`已切回第 ${state.roundNum} 局 — 第 ${leaving.roundNum} 局已存入歷史`, 'grad');
 }
 
 function refreshHistoryButton() {
@@ -1153,6 +1164,7 @@ function refreshHistoryButton() {
 
 function openHistory() {
   renderHistoryList();
+  backToHistoryList(); // always open on the list, not a stale detail view
   $('#history-modal').classList.remove('hidden');
 }
 function closeHistory() {
@@ -1167,7 +1179,7 @@ function renderHistoryList() {
   }
   // Newest first
   const html = state.history.map((entry, idx) => ({ entry, idx }))
-    .reverse()
+    .sort((a, b) => b.entry.roundNum - a.entry.roundNum) // newest round first (array order can change after a swap)
     .map(({ entry, idx }) => {
       const dur = fmt(entry.timer && entry.timer.accumulated || 0);
       const when = entry.completedAt
@@ -1191,16 +1203,88 @@ function renderHistoryList() {
           </div>
           <div class="hi-players">${players}</div>
           <div class="hi-actions">
-            <button class="btn btn-ghost" data-restore="${idx}">復原到此局</button>
+            <button class="btn btn-ghost" data-view="${idx}">查看</button>
+            <button class="btn btn-ghost" data-restore="${idx}">切回此局</button>
           </div>
         </li>
       `;
     }).join('');
   ul.innerHTML = html;
 
+  $$('button[data-view]', ul).forEach(b => {
+    b.addEventListener('click', () => viewRound(+b.dataset.view));
+  });
   $$('button[data-restore]', ul).forEach(b => {
     b.addEventListener('click', () => restoreRound(+b.dataset.restore));
   });
+}
+
+// Read-only look at a past round: shows its players, scores and event log
+// without touching the live game or any other history entry.
+function viewRound(idx) {
+  const entry = state.history && state.history[idx];
+  const detail = $('#history-detail');
+  const list = $('#history-list');
+  if (!entry || !detail || !list) return;
+
+  const dur = fmt((entry.timer && entry.timer.accumulated) || 0);
+  const when = entry.completedAt
+    ? new Date(entry.completedAt).toLocaleString('zh-TW', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      })
+    : '—';
+  const players = entry.players || [];
+  const sum = (k) => players.reduce((s, p) => s + (p[k] || 0), 0);
+  const totalCiv = sum('civ'), reached = totalCiv >= (entry.civGoal || 0);
+
+  const playerCards = players.map(p => `
+    <div class="hd-player ${p.graduated ? 'graduated' : ''}">
+      <div class="hd-pname">${escapeHtml(p.name || '玩家')}</div>
+      <div class="hd-pstats">
+        <span><span class="dot dot-fortune"></span>福報 <b>${p.fortune || 0}</b></span>
+        <span><span class="dot dot-wisdom"></span>智慧 <b>${p.wisdom || 0}</b></span>
+        <span><span class="dot dot-civ"></span>文明 <b>${p.civ || 0}</b></span>
+      </div>
+      <div class="hd-ptotal">綜合 <strong>${comprehensiveScore(p)}</strong></div>
+    </div>`).join('');
+
+  const logItems = (entry.log && entry.log.length)
+    ? entry.log.map(e => `<li class="${e.kind || ''}">${escapeHtml(e.text)}<span class="ml-time">${fmt(e.t || 0)}</span></li>`).join('')
+    : '<li class="empty">（當局無事件紀錄）</li>';
+
+  detail.innerHTML = `
+    <div class="hd-head">
+      <button class="btn btn-ghost" id="history-back">← 返回列表</button>
+      <span class="hd-readonly">唯讀檢視 · 不影響目前對局</span>
+    </div>
+    <div class="hd-title">第 ${entry.roundNum} 局</div>
+    <div class="hd-meta">完成 ${when} · 時長 ${dur} · 文明高度 ${entry.civGoal}</div>
+    <div class="hd-summary">
+      <div class="hd-sum ${reached ? 'reached' : ''}"><span>集體文明</span><strong>${totalCiv} / ${entry.civGoal}</strong></div>
+      <div class="hd-sum"><span>集體福報</span><strong>${sum('fortune')}</strong></div>
+      <div class="hd-sum"><span>集體智慧</span><strong>${sum('wisdom')}</strong></div>
+    </div>
+    <div class="hd-players">${playerCards}</div>
+    <div class="hd-log">
+      <div class="hd-log-label">當局事件日誌</div>
+      <ul class="milestone-log hd-loglist">${logItems}</ul>
+    </div>
+  `;
+
+  list.classList.add('hidden');
+  detail.classList.remove('hidden');
+  $('#history-title').textContent = `歷史紀錄 · 第 ${entry.roundNum} 局`;
+  $('#history-back').addEventListener('click', backToHistoryList);
+}
+
+function backToHistoryList() {
+  const detail = $('#history-detail');
+  const list = $('#history-list');
+  if (detail) detail.classList.add('hidden');
+  if (list) list.classList.remove('hidden');
+  const title = $('#history-title');
+  if (title) title.textContent = '歷史紀錄';
 }
 
 // ─────────── Card draw ───────────
