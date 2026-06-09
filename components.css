@@ -42,6 +42,17 @@
   padding: 16px 28px; border-top: 1px solid var(--line);
 }
 
+/* Confirm dialog — compact centered panel */
+.confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
+.confirm-title { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
+.confirm-message { margin: 0; font-size: 14px; line-height: 1.7; color: var(--ink-dim); white-space: pre-line; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.btn-danger {
+  background: var(--danger); border-color: transparent; color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(161,77,58,0.30);
+}
+.btn-danger:hover { background: #8B4332; border-color: transparent; }
+
 .setup-section { border: none; padding: 0 0 24px; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
 .setup-section:last-of-type { border-bottom: none; padding-bottom: 4px; margin-bottom: 0; }
 .setup-section legend {
@@ -83,7 +94,7 @@
 .setup-player-row input[type="text"] {
   background: var(--surface); border: 1px solid var(--line);
   color: var(--ink); padding: 9px 12px; border-radius: var(--r-sm);
-  font-size: 14px; min-height: 40px; letter-spacing: 0.02em;
+  font-size: 16px; min-height: 44px; letter-spacing: 0.02em;
 }
 .setup-player-row input[type="text"]:focus { outline: none; border-color: var(--wisdom); }
 .setup-player-row .roll-out {
@@ -93,8 +104,8 @@
   padding: 8px 0; border: 1px solid var(--line);
   min-height: 40px; display: grid; place-items: center; color: var(--ink);
 }
-.setup-player-row .roll-out.fortune { color: var(--fortune); }
-.setup-player-row .roll-out.wisdom  { color: var(--wisdom);  }
+.setup-player-row .roll-out.fortune { color: var(--fortune-ink); }
+.setup-player-row .roll-out.wisdom  { color: var(--wisdom-ink);  }
 .setup-player-row input.roll-out {
   -webkit-appearance: none; appearance: none; display: block; width: 100%;
   padding: 8px 4px; cursor: text;
@@ -125,14 +136,14 @@
 .row input[type="number"] {
   background: var(--surface); border: 1px solid var(--line);
   color: var(--ink); padding: 9px 12px; border-radius: var(--r-sm);
-  font-size: 14px; width: 96px; min-height: 40px; font-variant-numeric: tabular-nums;
+  font-size: 16px; width: 96px; min-height: 44px; font-variant-numeric: tabular-nums;
 }
 .row input[type="number"]:focus { outline: none; border-color: var(--wisdom); }
 
 .hint { color: var(--ink-mute); font-size: 11px; margin: 12px 0 0; line-height: 1.6; letter-spacing: 0.03em; }
 .hint.inline { margin: 0; }
 .civ-input-row { margin-bottom: 8px; }
-.civ-input-row input[type="number"] { width: 110px; font-size: 15px; font-weight: 700; }
+.civ-input-row input[type="number"] { width: 110px; font-size: 16px; font-weight: 700; }
 
 /* ───────────── Virtual 3D die ───────────── */
 .dice-stage {
@@ -212,7 +223,7 @@
   font-size: 10px; letter-spacing: 0.24em; color: var(--ink-mute);
   margin-bottom: 6px; font-weight: 700;
   display: inline-block; padding: 3px 10px; border-radius: var(--r-pill);
-  background: var(--wisdom-tint); color: var(--wisdom);
+  background: var(--wisdom-tint); color: var(--wisdom-ink);
 }
 .card-section-text { font-size: 14.5px; line-height: 1.85; color: var(--ink); margin: 6px 0 0; letter-spacing: 0.02em; text-wrap: pretty; }
 .card-side {
@@ -248,7 +259,7 @@
 .card-actions select {
   flex: 1; background: var(--surface); border: 1px solid var(--line);
   color: var(--ink); padding: 9px 12px; border-radius: var(--r-sm);
-  font-size: 14px; min-height: 42px; letter-spacing: 0.02em;
+  font-size: 16px; min-height: 44px; letter-spacing: 0.02em;
 }
 .card-actions select:focus { outline: none; border-color: var(--wisdom); }
 .card-buttons { display: flex; gap: 10px; justify-content: flex-end; }
@@ -271,7 +282,7 @@
   display: block; width: 100%; padding: 12px;
   border: 1px solid var(--line); border-radius: var(--r-sm);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px; line-height: 1.55; resize: vertical;
+  font-size: 16px; line-height: 1.55; resize: vertical;
   background: var(--surface-2); color: var(--ink); margin: 12px 0; letter-spacing: 0;
 }
 #dm-paste:focus { outline: none; border-color: var(--wisdom); }
@@ -312,7 +323,7 @@
 }
 .cc-desc, .cc-line { font-size: 13px; line-height: 1.7; margin: 0 0 8px; color: var(--ink); letter-spacing: 0.02em; }
 .cc-line:last-of-type { margin-bottom: 0; }
-.cc-section-label { display: block; font-size: 9px; letter-spacing: 0.2em; color: var(--wisdom); font-weight: 700; margin-bottom: 3px; }
+.cc-section-label { display: block; font-size: 9px; letter-spacing: 0.2em; color: var(--wisdom-ink); font-weight: 700; margin-bottom: 3px; }
 .cc-side { font-size: 11px; color: var(--ink-dim); margin: 8px 0 0; padding: 7px 11px; background: var(--surface); border-radius: var(--r-sm); letter-spacing: 0.02em; }
 
 /* ───────────── History list ───────────── */

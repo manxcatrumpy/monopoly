@@ -317,6 +317,19 @@
     </div>
   </div>
 
+  <!-- Confirm dialog (in-app replacement for native confirm) -->
+  <div id="confirm-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel confirm-panel">
+      <h2 id="confirm-title" class="confirm-title">確認</h2>
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="btn" id="confirm-cancel" type="button">取消</button>
+        <button class="btn btn-primary" id="confirm-ok" type="button">確定</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 

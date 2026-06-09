@@ -31,6 +31,10 @@
   --civ:          #84B377;   /* 文明 · sprout green */
   --civ-soft:     #DCEBD3;
   --civ-tint:     #EDF4E6;
+  /* Darker accent variants for when the hue is used as readable TEXT (the soft
+     pastels above fail WCAG as text). Pass >=4.5:1 on surface and their tints. */
+  --fortune-ink:  #876718;
+  --wisdom-ink:   #2E756D;
 
   /* Category accents (board card families) */
   --c-teal:   #7FC2BB;
@@ -623,4 +627,15 @@ button { font-family: inherit; }
 @keyframes toastIn {
   from { transform: translate(-50%, 16px); opacity: 0; }
   to   { transform: translate(-50%, 0);    opacity: 1; }
+}
+
+/* Respect users who ask for less motion: neutralise CSS animation/transition
+   globally (the JS-driven dice already checks this separately). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

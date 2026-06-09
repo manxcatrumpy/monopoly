@@ -577,6 +577,45 @@ function toast(msg, kind = '') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
 }
+
+// In-app confirm dialog (replaces native confirm()). Returns a Promise<boolean>.
+function confirmModal({ title = '確認', message = '', confirmText = '確定', cancelText = '取消', danger = false } = {}) {
+  return new Promise((resolve) => {
+    const modal = $('#confirm-modal');
+    const okBtn = $('#confirm-ok');
+    const cancelBtn = $('#confirm-cancel');
+    const backdrop = $('.modal-backdrop', modal);
+    if (!modal) { resolve(window.confirm(message || title)); return; } // graceful fallback
+
+    $('#confirm-title').textContent = title;
+    $('#confirm-message').textContent = message;
+    okBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
+    okBtn.classList.toggle('btn-danger', !!danger);
+    okBtn.classList.toggle('btn-primary', !danger);
+
+    const done = (result) => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      backdrop.removeEventListener('click', onCancel);
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    };
+    const onOk = () => done(true);
+    const onCancel = () => done(false);
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
+    };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    backdrop.addEventListener('click', onCancel);
+    document.addEventListener('keydown', onKey);
+    modal.classList.remove('hidden');
+    okBtn.focus();
+  });
+}
 function logEvent(text, kind = '') {
   state.log.unshift({ text, kind, t: elapsedSeconds() });
   if (state.log.length > 40) state.log.pop();
@@ -771,7 +810,8 @@ function buildPlayerCard(p) {
       const delta = parseInt(t.dataset.delta, 10);
       adjustStat(p.id, stat, delta);
     } else if (t.matches('[data-act="remove"]')) {
-      if (confirm(`移除「${p.name || '玩家'}」？`)) removePlayer(p.id);
+      confirmModal({ title: '移除玩家', message: `確定要移除「${p.name || '玩家'}」？`, confirmText: '移除', danger: true })
+        .then((ok) => { if (ok) removePlayer(p.id); });
     }
   });
 
@@ -1001,9 +1041,10 @@ function renderTopMarker() {
 }
 
 
-function applySetup() {
+async function applySetup() {
   if (setupTmp.rolls.some(r => (r.fortune || 0) === 0 || (r.wisdom || 0) === 0)) {
-    if (!confirm('有玩家尚未擲福慧初始值，仍要開始嗎？')) return;
+    const ok = await confirmModal({ title: '尚未擲完初始值', message: '有玩家尚未擲福慧初始值，仍要開始嗎？', confirmText: '仍要開始' });
+    if (!ok) return;
   }
   const isNext = setupTmp.mode === 'next';
   // 下一局：先把目前這一局存進歷史（之後可從歷史檢視／切回），再建立新的一局。
@@ -1089,8 +1130,9 @@ function bindEvents() {
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
 
-  $('#btn-reset-game').addEventListener('click', () => {
-    if (!confirm('重置所有積分、計時與設定，確定？')) return;
+  $('#btn-reset-game').addEventListener('click', async () => {
+    const ok = await confirmModal({ title: '重置整個遊戲', message: '將清除所有玩家積分、計時、設定與歷史，且無法復原。確定要重置嗎？', confirmText: '重置', danger: true });
+    if (!ok) return;
     state = defaultState();
     save();
     renderAll();
@@ -1113,10 +1155,15 @@ function snapshotRound() {
 // Switch the live game to a past round without losing the current one. The round
 // you're leaving is archived into the slot the chosen round vacated (a swap), so
 // every round stays available and you can switch back any time — nothing is lost.
-function restoreRound(idx) {
+async function restoreRound(idx) {
   const entry = state.history && state.history[idx];
   if (!entry) return;
-  if (!confirm(`切回第 ${entry.roundNum} 局？\n目前的第 ${state.roundNum} 局會自動存進歷史，之後可隨時再切回，不會遺失。`)) return;
+  const ok = await confirmModal({
+    title: `切回第 ${entry.roundNum} 局`,
+    message: `目前的第 ${state.roundNum} 局會自動存進歷史，之後可隨時再切回，不會遺失。`,
+    confirmText: '切回此局',
+  });
+  if (!ok) return;
 
   // Finalize the current round's elapsed time, then snapshot it.
   if (state.timer.running) pauseTimer();
@@ -1576,7 +1623,7 @@ function validateImport(data) {
   return null;
 }
 
-function applyDecksImport(data) {
+async function applyDecksImport(data) {
   const err = validateImport(data);
   if (err) { toast('匯入失敗：' + err); return; }
 
@@ -1588,7 +1635,8 @@ function applyDecksImport(data) {
   const parts = [];
   if (actionCount !== null) parts.push(`行動指令牌 ${actionCount} 張`);
   if (boostCount  !== null) parts.push(`共好加速卡 ${boostCount} 張`);
-  if (!confirm(`匯入：${parts.join(' · ')}\n當前對應牌組將被覆蓋（其他保留）。確定？`)) return;
+  const ok = await confirmModal({ title: '匯入卡牌資料', message: `匯入：${parts.join(' · ')}\n當前對應牌組將被覆蓋（其他保留）。`, confirmText: '匯入' });
+  if (!ok) return;
 
   const next = Object.assign({ action: null, boost: null }, state.customDecks || {});
   if (data.actionDeck) next.action = data.actionDeck;
@@ -1601,12 +1649,13 @@ function applyDecksImport(data) {
   toast('卡牌資料已更新', 'grad');
 }
 
-function resetDecksToDefault() {
+async function resetDecksToDefault() {
   if (!state.customDecks || (!state.customDecks.action && !state.customDecks.boost)) {
     toast('目前已是預設牌組');
     return;
   }
-  if (!confirm('重置為預設牌組？\n所有自訂卡牌資料會被清除。')) return;
+  const ok = await confirmModal({ title: '重置為預設牌組', message: '所有自訂卡牌資料會被清除。', confirmText: '重置', danger: true });
+  if (!ok) return;
   state.customDecks = { action: null, boost: null };
   rebuildDecks();
   save();
