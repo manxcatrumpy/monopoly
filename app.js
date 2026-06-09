@@ -902,15 +902,26 @@ function removePlayer(id) {
 const setupTmp = {
   count: 4,
   rolls: [], // [{ name, fortune, wisdom }]
+  mode: 'new', // 'new' = brand-new game (clears history); 'next' = next round (archives current)
 };
 
 function openSetup(opts = {}) {
+  const mode = opts.mode === 'next' ? 'next' : 'new';
+  setupTmp.mode = mode;
   setupTmp.count = state.players.length || 4;
+  // Next round: carry the same players (names) but blank 福/慧 so the host
+  // re-rolls each round's initial values. New game: pre-fill current values.
   setupTmp.rolls = state.players.length
-    ? state.players.map(p => ({ name: p.name, fortune: p.fortune, wisdom: p.wisdom }))
+    ? state.players.map(p => ({
+        name: p.name,
+        fortune: mode === 'next' ? 0 : p.fortune,
+        wisdom:  mode === 'next' ? 0 : p.wisdom,
+      }))
     : Array.from({ length: setupTmp.count }, () => ({ name: '', fortune: 0, wisdom: 0 }));
-  $('#setup-round').value = state.roundNum;
+  $('#setup-round').value = mode === 'next' ? state.roundNum + 1 : state.roundNum;
   $('#setup-civ-goal-input').value = state.civGoal || 30;
+  const title = $('#setup-title');
+  if (title) title.textContent = mode === 'next' ? '進入下一局 — 啟程準備' : '開新局 — 啟程準備';
   renderSetup();
   if (!d10Built) buildD10();
   resetDiceStage();
@@ -994,6 +1005,14 @@ function applySetup() {
   if (setupTmp.rolls.some(r => (r.fortune || 0) === 0 || (r.wisdom || 0) === 0)) {
     if (!confirm('有玩家尚未擲福慧初始值，仍要開始嗎？')) return;
   }
+  const isNext = setupTmp.mode === 'next';
+  // 下一局：先把目前這一局存進歷史（之後可從歷史檢視／切回），再建立新的一局。
+  if (isNext && state.players.length) {
+    if (state.timer.running) pauseTimer();
+    const snap = snapshotRound();
+    snap.completedAt = Date.now();
+    state.history.push(snap);
+  }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
   state.players = setupTmp.rolls.map((r, i) => makePlayer({
     name: r.name || `玩家 ${i + 1}`,
@@ -1018,7 +1037,7 @@ function applySetup() {
   resetTimer();
   state._timeUpNoticed = false;
   state._sprintNoticed = false;
-  state.history = [];
+  if (!isNext) state.history = [];   // only a brand-new game clears history; 下一局 keeps it
   state.navigatorClaimed = emptyNavClaim();
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
   NAV_THRESHOLDS.forEach(n => {
@@ -1026,16 +1045,19 @@ function applySetup() {
     if (first) state.navigatorClaimed[n] = first.id;
   });
   state.log = [];
-  logEvent(`第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
+  logEvent(isNext
+    ? `進入第 ${state.roundNum} 局 · 文明高度 ${state.civGoal}`
+    : `第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
   save();
   closeSetup();
   renderAll();
+  if (isNext) toast(`已進入第 ${state.roundNum} 局 — 上一局已存入歷史紀錄`);
 }
 
 // ─────────── Topbar / sidebar bindings ───────────
 function bindEvents() {
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
-  $('#btn-next-round').addEventListener('click', nextRound);
+  $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   $('#btn-history').addEventListener('click', openHistory);
   $('#history-close').addEventListener('click', closeHistory);
   $('#btn-draw-action').addEventListener('click', () => openCardDraw('action'));
@@ -1086,35 +1108,6 @@ function snapshotRound() {
     log: state.log,
     navigatorClaimed: state.navigatorClaimed,
   }));
-}
-
-function nextRound() {
-  const msg = `進入第 ${state.roundNum + 1} 局？\n所有玩家積分將歸零、計時器重置、紀錄清空。\n（可從右上「歷史紀錄」復原任一過往局）`;
-  if (!confirm(msg)) return;
-
-  // Pause first so accumulated elapsed time is finalized in the snapshot
-  if (state.timer.running) pauseTimer();
-  const snap = snapshotRound();
-  snap.completedAt = Date.now();
-  state.history.push(snap);
-
-  state.roundNum += 1;
-  state.players.forEach(p => {
-    p.civ = 0;
-    p.fortune = 0;
-    p.wisdom = 0;
-    p.graduated = false;
-    p.notified = {};
-  });
-  resetTimer();
-  state._timeUpNoticed = false;
-  state._sprintNoticed = false;
-  state.navigatorClaimed = emptyNavClaim();
-  state.log = [];
-  logEvent(`進入第 ${state.roundNum} 局（積分歸零）`, 'grad');
-  save();
-  renderAll();
-  toast(`已進入第 ${state.roundNum} 局 — 上一局已存入歷史紀錄`);
 }
 
 // Switch the live game to a past round without losing the current one. The round
