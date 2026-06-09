@@ -54,14 +54,14 @@
 .chip {
   background: var(--surface); border: 1px solid var(--line-strong);
   color: var(--ink); padding: 9px 20px; border-radius: var(--r-pill);
-  cursor: pointer; font-size: 13px; font-weight: 600; min-height: 42px;
+  cursor: pointer; font-size: 13px; font-weight: 600; min-height: 44px;
   letter-spacing: 0.04em; box-shadow: var(--shadow-sm);
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 .chip:hover { background: var(--surface-2); transform: translateY(-1px); }
 .chip.active {
   background: linear-gradient(165deg, #8BBB82, var(--primary));
-  border-color: transparent; color: #fff;
+  border-color: transparent; color: #243024;
   box-shadow: 0 6px 16px rgba(123,174,115,0.34);
 }
 
@@ -108,7 +108,7 @@
   background: var(--surface); border: 1px solid var(--line-strong);
   color: var(--ink); padding: 8px 12px; border-radius: var(--r-pill);
   cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap;
-  min-height: 40px; letter-spacing: 0.06em; box-shadow: var(--shadow-sm);
+  min-height: 44px; letter-spacing: 0.06em; box-shadow: var(--shadow-sm);
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 .setup-player-row .mini-btn:hover { background: var(--surface-2); transform: translateY(-1px); }
