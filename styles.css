@@ -67,8 +67,11 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
-html { font-size: 16px; }
+/* body must NOT get height:100% — it would cap the topbar's sticky range at
+   one viewport (sticky can't escape its parent's box). min-height on body
+   below keeps the full-height wash. */
+html, body { margin: 0; padding: 0; }
+html { font-size: 16px; height: 100%; }
 
 body {
   min-height: 100vh;
@@ -84,7 +87,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   padding-bottom: env(safe-area-inset-bottom);
-  overflow-x: hidden;
+  /* clip, not hidden: hidden turns body into a scroll container, which breaks
+     the topbar's position:sticky (it would stick to body, which never scrolls) */
+  overflow-x: clip;
   letter-spacing: 0.01em;
 }
 
@@ -304,6 +309,17 @@ button { font-family: inherit; }
 }
 @media (max-width: 1024px) {
   .dashboard { grid-template-columns: 1fr; padding: 20px; }
+  /* Two-row topbar: brand + actions on top, the meta strip on its own full
+     row. Without this the five meta items stack vertically and the (sticky)
+     bar swallows ~30% of an iPad portrait screen. */
+  .topbar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand actions" "meta meta";
+    gap: 10px 16px;
+  }
+  .brand   { grid-area: brand; }
+  .actions { grid-area: actions; }
+  .meta    { grid-area: meta; justify-content: space-between; }
   .meta-item { min-width: 96px; padding: 2px 16px; }
   .meta-value { font-size: 19px; }
 }
