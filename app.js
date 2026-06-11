@@ -724,6 +724,23 @@ function updateTopbar() {
   const pct = Math.min(100, (total / Math.max(1, state.civGoal)) * 100);
   $('#civ-bar-fill').style.width = pct + '%';
 
+  // 集體文明達標＝勝利：進度條轉金、跳通知並記 log。旗標在回落時清除，
+  // 所以主持人改錯數字後再次達標仍會重新慶祝。
+  const goalReached = total >= state.civGoal;
+  $('.civ-bar').classList.toggle('reached', goalReached);
+  const civLabel = $('.civ-progress-label');
+  civLabel.classList.toggle('reached', goalReached);
+  civLabel.textContent = goalReached
+    ? `集體文明 ${total} — 已達標 ${state.civGoal}、全員勝利`
+    : '集體文明積分總和 — 達標即勝利';
+  if (goalReached && !state._civGoalNoticed) {
+    state._civGoalNoticed = true;
+    toast(`集體文明達 ${state.civGoal} — 達標、全員勝利！`, 'grad');
+    logEvent(`集體文明達標 ${state.civGoal} — 全員勝利`, 'grad');
+  } else if (!goalReached && state._civGoalNoticed) {
+    state._civGoalNoticed = false;
+  }
+
   $('#fortune-total').textContent = totalFortune();
   $('#wisdom-total').textContent = totalWisdom();
 
@@ -1078,6 +1095,7 @@ async function applySetup() {
   resetTimer();
   state._timeUpNoticed = false;
   state._sprintNoticed = false;
+  state._civGoalNoticed = false;
   if (!isNext) state.history = [];   // only a brand-new game clears history; 下一局 keeps it
   state.navigatorClaimed = emptyNavClaim();
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
@@ -1184,6 +1202,7 @@ async function restoreRound(idx) {
 
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
   state._sprintNoticed = sprintActive();
+  state._civGoalNoticed = totalCiv() >= state.civGoal;
   save();
   renderAll();
   closeHistory();
