@@ -136,6 +136,14 @@
     </aside>
   </main>
 
+  <!-- Floating quick-draw shortcuts. Shown only at widths where the tools
+       column drops below the player grid (≤1024px), so drawing never needs
+       a scroll round-trip. Hidden while no game is running. -->
+  <div id="quick-draw" class="quick-draw hidden">
+    <button class="btn" id="btn-quick-action">抽 行動指令牌</button>
+    <button class="btn" id="btn-quick-boost">抽 共好加速卡</button>
+  </div>
+
   <!-- Setup modal -->
   <div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setup-title">
     <div class="modal-backdrop"></div>
