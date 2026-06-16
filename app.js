@@ -822,6 +822,7 @@ function buildPlayerCard(p) {
   card.dataset.playerId = p.id;
 
   const total = comprehensiveScore(p);
+  const fw = (p.fortune || 0) + (p.wisdom || 0);
   const milestoneAlert = nextActiveMilestone(p);
 
   card.innerHTML = `
@@ -829,6 +830,10 @@ function buildPlayerCard(p) {
     <header class="pc-head">
       <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="玩家名稱" maxlength="10" />
       <span class="pc-hat" title="已畢業">畢業</span>
+      <div class="pc-fw" title="福報 + 智慧">
+        <span>福+慧</span>
+        <strong>${fw}</strong>
+      </div>
       <div class="pc-total">
         <span>綜合</span>
         <strong>${total}</strong>
@@ -943,6 +948,8 @@ function updatePlayerCard(p) {
 
   card.classList.toggle('graduated', !!p.graduated);
   card.querySelector('.pc-total strong').textContent = comprehensiveScore(p);
+  const fwEl = card.querySelector('.pc-fw strong');
+  if (fwEl) fwEl.textContent = (p.fortune || 0) + (p.wisdom || 0);
 
   STATS.forEach(stat => {
     const row = card.querySelector(`.stat-${stat}`);
