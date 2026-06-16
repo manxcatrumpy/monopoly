@@ -462,6 +462,21 @@ button { font-family: inherit; }
 }
 .player-card.graduated .pc-hat { opacity: 1; transform: translateY(0) scale(1); }
 
+/* Secondary readout: raw 福報+智慧 sum (used by 文明高度設定 / 命運「忘失初心」).
+   Kept smaller/muted so it doesn't compete with the 綜合 headline. */
+.pc-fw {
+  font-size: 9px; color: var(--ink-mute);
+  display: flex; flex-direction: column; align-items: flex-end;
+  line-height: 1.1;
+  letter-spacing: 0.16em;
+}
+.pc-fw strong {
+  font-size: 16px; color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-top: 3px;
+}
 .pc-total {
   font-size: 9px; color: var(--ink-mute);
   display: flex; flex-direction: column; align-items: flex-end;
