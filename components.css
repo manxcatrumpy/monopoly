@@ -475,3 +475,29 @@
 /* Prevent iOS auto-zoom on form inputs */
 input[type="number"], input[type="text"], select { font-size: 16px; }
 @media (min-width: 768px) { .stat-row .stat-num { font-size: 28px; } }
+
+/* ───────────── Floating quick-draw bar ─────────────
+   Only at widths where the tools column drops below the player grid; on wider
+   screens the sidebar draw buttons are already in view. Must stay after the
+   720/640 .dashboard rules above so the reserved bottom padding wins. */
+.quick-draw { display: none; }
+@media (max-width: 1024px) {
+  .quick-draw {
+    position: fixed;
+    right: 18px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 60; /* above the sticky topbar (50), beneath modals (100) */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .quick-draw .btn {
+    background: rgba(252,251,246,0.96);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--line);
+  }
+  /* keep the last row of cards / danger zone tappable above the bar */
+  .dashboard { padding-bottom: 150px; }
+}
+.quick-draw.hidden { display: none; }

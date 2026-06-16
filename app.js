@@ -761,6 +761,8 @@ function renderPlayers() {
   const grid = $('#players');
   grid.innerHTML = '';
   grid.style.setProperty('--cols', state.players.length <= 4 ? 2 : 3);
+  // Quick-draw shortcuts only make sense with a running game
+  $('#quick-draw').classList.toggle('hidden', !state.players.length);
   if (!state.players.length) {
     grid.innerHTML = `
       <div class="empty-state">
@@ -1103,6 +1105,8 @@ function bindEvents() {
   $('#history-close').addEventListener('click', closeHistory);
   $('#btn-draw-action').addEventListener('click', () => openCardDraw('action'));
   $('#btn-draw-boost').addEventListener('click', () => openCardDraw('boost'));
+  $('#btn-quick-action').addEventListener('click', () => openCardDraw('action'));
+  $('#btn-quick-boost').addEventListener('click', () => openCardDraw('boost'));
   $('#btn-browse-cards').addEventListener('click', () => openCatalog('action'));
   $('#catalog-close').addEventListener('click', closeCatalog);
   $$('.catalog-tab').forEach(b => {
