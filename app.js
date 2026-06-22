@@ -763,6 +763,16 @@ function updateTopbar() {
     state._civGoalNoticed = false;
   }
 
+  // 條件二：全員畢業 — 所有玩家皆畢業即達成「全員圓滿」、可進行結算。
+  const allGraduated = state.players.length > 0 && state.players.every(p => p.graduated);
+  if (allGraduated && !state._allGradNoticed) {
+    state._allGradNoticed = true;
+    toast('全員畢業 — 全員圓滿、可進行最終結算', 'grad');
+    logEvent('全員畢業 — 全員圓滿、可進行結算', 'grad');
+  } else if (!allGraduated && state._allGradNoticed) {
+    state._allGradNoticed = false;
+  }
+
   $('#fortune-total').textContent = totalFortune();
   $('#wisdom-total').textContent = totalWisdom();
 
@@ -1128,6 +1138,7 @@ async function applySetup() {
   state._timeUpNoticed = false;
   state._sprintNoticed = false;
   state._civGoalNoticed = false;
+  state._allGradNoticed = false;
   if (!isNext) state.history = [];   // only a brand-new game clears history; 下一局 keeps it
   state.navigatorClaimed = emptyNavClaim();
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
@@ -1237,6 +1248,7 @@ async function restoreRound(idx) {
   state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
   state._sprintNoticed = sprintActive();
   state._civGoalNoticed = totalCiv() >= state.civGoal;
+  state._allGradNoticed = state.players.length > 0 && state.players.every(p => p.graduated);
   save();
   renderAll();
   closeHistory();
