@@ -157,8 +157,8 @@ const STORAGE_KEY = 'fuhui-dashboard-state-v1';
 const MAX_GAME_SECONDS = 100 * 60;
 const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊發」：卡牌得分／扣分 ×2
 const SPRINT_MULTIPLIER = 2;
-const GRAD_THRESHOLD = 50;
-const MILESTONES = [25, 35, 45, 50];
+const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
+const MILESTONES = [25, 35, 45, 55]; // 單項里程；最後一階＝畢業線
 const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
 const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福慧雙達者
 const STATS = ['fortune', 'wisdom', 'civ'];
@@ -667,14 +667,14 @@ function processStatChange(player, stat, oldVal, newVal) {
     const k = key(stat, m);
     if (oldVal < m && newVal >= m && !player.notified[k]) {
       player.notified[k] = true;
-      const msg = m === 50
-        ? `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 50　抽卡、可宣告畢業`
+      const msg = m === GRAD_THRESHOLD
+        ? `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${GRAD_THRESHOLD}　抽卡、可宣告畢業`
         : `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽里程際遇卡`;
-      toast(msg, m === 50 ? 'grad' : '');
-      logEvent(msg, m === 50 ? 'grad' : 'milestone');
+      toast(msg, m === GRAD_THRESHOLD ? 'grad' : '');
+      logEvent(msg, m === GRAD_THRESHOLD ? 'grad' : 'milestone');
       flashCard(player.id);
     }
-    if (oldVal >= m && newVal < m && player.notified[k] && m !== 50) {
+    if (oldVal >= m && newVal < m && player.notified[k] && m !== GRAD_THRESHOLD) {
       player.notified[k] = false;
     }
   }
@@ -721,7 +721,7 @@ function checkGraduation(player) {
     flashCard(player.id, 'grad');
   } else if (!meets && player.graduated) {
     player.graduated = false;
-    const msg = `${player.name || '玩家'} 資格降級（福或慧 < 50）`;
+    const msg = `${player.name || '玩家'} 資格降級（福或慧 < ${GRAD_THRESHOLD}）`;
     toast(msg);
     logEvent(msg);
   }
@@ -892,7 +892,8 @@ function buildPlayerCard(p) {
 }
 
 function nextActiveMilestone(p) {
-  // Show a small badge if fortune or wisdom is at exactly a milestone and not yet 50
+  // Show a small badge for the intermediate 25/35/45 draw milestones (the 55 grad
+  // line gets its own 畢業 treatment, so it's excluded here).
   for (const stat of ['fortune', 'wisdom']) {
     for (const m of [25, 35, 45]) {
       const k = key(stat, m);
@@ -905,7 +906,7 @@ function nextActiveMilestone(p) {
 }
 
 function statusHint(p) {
-  if (p.fortune >= 45 && p.wisdom >= 45) return '即將畢業';
+  if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return '即將畢業';
   if (p.fortune >= 35 || p.wisdom >= 35) return '中段修煉';
   return '修煉中';
 }
