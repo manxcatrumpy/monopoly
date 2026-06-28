@@ -151,7 +151,10 @@ button { font-family: inherit; }
   display: flex;
   gap: 0;
   justify-content: center;
-  flex-wrap: wrap;
+  /* nowrap in the wide one-row layout: wrapping here let the timer flip between
+     rows on every per-second re-render when the strip was near the edge. The
+     narrow layout below switches the whole strip to its own row instead. */
+  flex-wrap: nowrap;
 }
 .meta-item {
   display: flex; flex-direction: column; align-items: center;
@@ -316,11 +319,11 @@ button { font-family: inherit; }
   max-width: 1600px;
   margin: 0 auto;
 }
-@media (max-width: 1024px) {
-  .dashboard { grid-template-columns: 1fr; padding: 20px; }
-  /* Two-row topbar: brand + actions on top, the meta strip on its own full
-     row. Without this the five meta items stack vertically and the (sticky)
-     bar swallows ~30% of an iPad portrait screen. */
+/* Two-row topbar: brand + actions on top, the meta strip on its own full row.
+   Kicks in while there's still comfortable room (the meta needs ~1200px to share
+   a row with brand+actions), so the strip never sits at the wrap boundary where
+   the timer jittered between rows. */
+@media (max-width: 1280px) {
   .topbar {
     grid-template-columns: 1fr auto;
     grid-template-areas: "brand actions" "meta meta";
@@ -328,9 +331,13 @@ button { font-family: inherit; }
   }
   .brand   { grid-area: brand; }
   .actions { grid-area: actions; }
-  .meta    { grid-area: meta; justify-content: space-between; }
+  .meta    { grid-area: meta; justify-content: space-between; flex-wrap: wrap; }
   .meta-item { min-width: 96px; padding: 2px 16px; }
   .meta-value { font-size: 19px; }
+}
+
+@media (max-width: 1024px) {
+  .dashboard { grid-template-columns: 1fr; padding: 20px; }
 }
 
 .section-head {
