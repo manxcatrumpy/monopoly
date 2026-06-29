@@ -606,19 +606,6 @@ button { font-family: inherit; }
 }
 .pc-remove:hover { color: var(--danger-deep); background: #FBEEEA; }
 
-/* Milestone flag */
-.milestone-flag {
-  position: absolute; top: 5px; right: 18px;
-  font-size: 9px;
-  padding: 5px 11px;
-  background: linear-gradient(165deg, #FBEFCB, var(--fortune-soft));
-  color: #8A6A1E;
-  border-radius: 0 0 var(--r-sm) var(--r-sm);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  z-index: 2;
-  box-shadow: 0 3px 9px rgba(216,169,78,0.24);
-}
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
 
 /* ───────────── Tools sidebar ───────────── */
