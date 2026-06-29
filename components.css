@@ -38,8 +38,23 @@
   contain: paint;
 }
 .modal-foot {
-  display: flex; justify-content: flex-end; gap: 10px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
   padding: 16px 28px; border-top: 1px solid var(--line);
+}
+
+/* Version label parked on the far left of a modal footer */
+.app-version {
+  margin-right: auto;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+.app-version:empty { display: none; }
+
+/* Inline version tag riding alongside the brand subtitle */
+.ver-tag {
+  opacity: 0.7;
+  letter-spacing: 0.12em;
 }
 
 /* Confirm dialog — compact centered panel */

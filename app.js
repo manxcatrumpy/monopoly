@@ -168,6 +168,10 @@ function emptyNavClaim() {
   return NAV_THRESHOLDS.reduce((o, n) => (o[n] = null, o), {});
 }
 
+// App version — single source of truth. Keep the trailing build number in sync
+// with the CACHE bump in sw.js so a host can confirm the running build.
+const APP_VERSION = '1.0.0 (build 34)';
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -1786,6 +1790,12 @@ function registerSW() {
   }
 }
 
+// ─────────── App version ───────────
+// Stamp APP_VERSION into every spot tagged with [data-app-version].
+function renderVersion() {
+  $$('[data-app-version]').forEach((el) => { el.textContent = 'v' + APP_VERSION; });
+}
+
 // ─────────── Init ───────────
 function init() {
   const hasGame = load();
@@ -1799,6 +1809,7 @@ function init() {
     }, 0);
     nextPlayerId = maxId + 1;
   }
+  renderVersion();
   bindEvents();
   renderAll();
   startTimerLoop();
