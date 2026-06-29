@@ -449,13 +449,25 @@
   .meta-item { min-width: 0; padding: 2px 13px; }
   .actions .btn { padding: 9px 14px; font-size: 12px; letter-spacing: 0.04em; min-height: 40px; }
   .dashboard { padding: 18px 20px 32px; gap: 18px; }
-  .topbar { padding: 14px 20px; gap: 16px; }
+  .topbar {
+    padding:
+      calc(14px + var(--sa-top))
+      calc(20px + var(--sa-right))
+      14px
+      calc(20px + var(--sa-left));
+    gap: 16px;
+  }
 }
 @media (max-width: 640px) {
   .topbar {
     grid-template-columns: 1fr auto;
     grid-template-areas: "brand actions" "meta meta";
-    gap: 12px; padding: 12px 16px;
+    gap: 12px;
+    padding:
+      calc(12px + var(--sa-top))
+      calc(16px + var(--sa-right))
+      12px
+      calc(16px + var(--sa-left));
   }
   .brand   { grid-area: brand; gap: 10px; }
   .actions { grid-area: actions; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -492,7 +504,13 @@
   .cc-name { font-size: 14px; }
 }
 @media (max-width: 380px) {
-  .topbar { padding: 10px 12px; }
+  .topbar {
+    padding:
+      calc(10px + var(--sa-top))
+      calc(12px + var(--sa-right))
+      10px
+      calc(12px + var(--sa-left));
+  }
   .actions .btn { padding: 7px 11px; font-size: 11px; min-height: 36px; }
   .meta-value { font-size: 16px; }
   .meta-item label { font-size: 8.5px; }
