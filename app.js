@@ -663,20 +663,17 @@ function key(stat, m) { return stat[0] + m; } // e.g. f25, w50
 
 function processStatChange(player, stat, oldVal, newVal) {
   if (stat === 'civ') return;
-  for (const m of MILESTONES) {
-    const k = key(stat, m);
-    if (oldVal < m && newVal >= m && !player.notified[k]) {
-      player.notified[k] = true;
-      const msg = m === GRAD_THRESHOLD
-        ? `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${GRAD_THRESHOLD}　抽卡、可宣告畢業`
-        : `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽里程際遇卡`;
-      toast(msg, m === GRAD_THRESHOLD ? 'grad' : '');
-      logEvent(msg, m === GRAD_THRESHOLD ? 'grad' : 'milestone');
-      flashCard(player.id);
-    }
-    if (oldVal >= m && newVal < m && player.notified[k] && m !== GRAD_THRESHOLD) {
-      player.notified[k] = false;
-    }
+  // Only the graduation-line milestone (55) is announced. The single-stat
+  // 25/35/45 「抽里程際遇卡」 prompts were removed — they aren't in the rulebook
+  // (the only card-draw milestones are the dual 領航者 / 自我突破 際遇).
+  const m = GRAD_THRESHOLD;
+  const k = key(stat, m);
+  if (oldVal < m && newVal >= m && !player.notified[k]) {
+    player.notified[k] = true;
+    const msg = `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽卡、可宣告畢業`;
+    toast(msg, 'grad');
+    logEvent(msg, 'grad');
+    flashCard(player.id);
   }
   checkGraduation(player);
 }
@@ -833,10 +830,7 @@ function buildPlayerCard(p) {
 
   const total = comprehensiveScore(p);
   const fw = (p.fortune || 0) + (p.wisdom || 0);
-  const milestoneAlert = nextActiveMilestone(p);
-
   card.innerHTML = `
-    ${milestoneAlert ? `<div class="milestone-flag">${milestoneAlert}</div>` : ''}
     <header class="pc-head">
       <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="玩家名稱" maxlength="10" />
       <span class="pc-hat" title="已畢業">畢業</span>
@@ -889,20 +883,6 @@ function buildPlayerCard(p) {
   });
 
   return card;
-}
-
-function nextActiveMilestone(p) {
-  // Show a small badge for the intermediate 25/35/45 draw milestones (the 55 grad
-  // line gets its own 畢業 treatment, so it's excluded here).
-  for (const stat of ['fortune', 'wisdom']) {
-    for (const m of [25, 35, 45]) {
-      const k = key(stat, m);
-      if (p[stat] >= m && p[stat] < m + 5 && p.notified[k]) {
-        return `${STAT_LABEL[stat]} ${m}　抽卡`;
-      }
-    }
-  }
-  return null;
 }
 
 function statusHint(p) {
@@ -979,15 +959,6 @@ function updatePlayerCard(p) {
   card.querySelector('.pc-status').textContent =
     p.graduated ? '已畢業　持續共好' : statusHint(p);
 
-  const existingFlag = card.querySelector('.milestone-flag');
-  const flagText = nextActiveMilestone(p);
-  if (existingFlag) existingFlag.remove();
-  if (flagText) {
-    const div = document.createElement('div');
-    div.className = 'milestone-flag';
-    div.textContent = flagText;
-    card.insertBefore(div, card.firstChild);
-  }
 }
 
 function removePlayer(id) {
