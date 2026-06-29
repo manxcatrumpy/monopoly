@@ -1423,6 +1423,24 @@ function drawFromDeck(deckKey) {
   return pick;
 }
 
+// A compact, read-only score reference shown inside the card modal — several
+// action cards ask the host to judge players (福報最低 / 總積分最低 / 分數落後…)
+// but the modal covers the player cards. Scores can't change while the modal is
+// open (it's a blocking overlay), so a snapshot at render time stays accurate.
+function cardPlayersRefHtml() {
+  if (!state.players.length) return '';
+  const items = state.players.map(p => `
+    <div class="cpr-item${p.graduated ? ' graduated' : ''}">
+      <span class="cpr-name">${escapeHtml(p.name || '玩家')}</span>
+      <span class="cpr-stats"><b>福</b>${p.fortune || 0} <b>慧</b>${p.wisdom || 0} <b>文</b>${p.civ || 0}</span>
+      <span class="cpr-tot">綜 ${comprehensiveScore(p)}</span>
+    </div>`).join('');
+  return `<div class="card-players-ref">
+    <div class="cpr-label">玩家現況 · 判斷對象用</div>
+    <div class="cpr-list">${items}</div>
+  </div>`;
+}
+
 function renderCard() {
   if (!currentCard) return;
   const c = currentCard;
@@ -1445,6 +1463,7 @@ function renderCard() {
     ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '上一家')
     : selectHtml('card-recipient', '套用至');
   $('#card-foot').innerHTML = `
+    ${cardPlayersRefHtml()}
     <div class="card-actions">
       ${recipientControls}
       <div class="card-buttons">

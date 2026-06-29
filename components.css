@@ -254,6 +254,24 @@
   letter-spacing: 0.06em; color: var(--ink-dim);
 }
 
+/* Card foot stacks: player score reference, then recipient + action buttons. */
+#card-foot { flex-direction: column; align-items: stretch; gap: 14px; }
+
+/* Read-only player score reference inside the card modal (判斷對象用). */
+.card-players-ref { padding: 10px 12px; background: var(--surface-2); border-radius: var(--r-sm); }
+.cpr-label { font-size: 10px; letter-spacing: 0.14em; color: var(--ink-mute); margin-bottom: 8px; }
+.cpr-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.cpr-item {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 5px 11px; background: var(--surface); border-radius: var(--r-pill);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
+.cpr-item.graduated { box-shadow: 0 0 0 1.5px var(--fortune-soft), var(--shadow-sm); }
+.cpr-name { font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.cpr-stats b { font-weight: 400; color: var(--ink-mute); margin-left: 2px; }
+.cpr-tot { color: var(--ink); font-weight: 700; }
+
 .card-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-actions .row { justify-content: flex-start; }
 .card-actions select {
