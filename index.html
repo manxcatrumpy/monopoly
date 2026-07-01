@@ -190,13 +190,24 @@
           <div class="setup-civ">
             <div class="setup-civ-info">
               本局最高者：<strong id="setup-top-player">—</strong>
-              （福+慧 <strong id="setup-top-score">—</strong>） — 請其擲實體白 × 黑骰後輸入結果
+              （福+慧 <strong id="setup-top-score">—</strong>） — 請其擲實體白骰與黑骰後輸入點數
             </div>
-            <label class="row civ-input-row">
-              <span>文明高度</span>
-              <input type="number" id="setup-civ-goal-input" min="1" value="30" />
-            </label>
-            <p class="hint">建議白×黑（不足 30 以 30 計）。</p>
+            <div class="civ-dice-inputs">
+              <label class="row civ-input-row">
+                <span>白骰</span>
+                <input type="number" id="setup-civ-white" min="1" max="6" value="1" />
+              </label>
+              <label class="row civ-input-row">
+                <span>黑骰</span>
+                <input type="number" id="setup-civ-black" min="1" max="6" value="1" />
+              </label>
+            </div>
+            <div class="civ-goal-calc">
+              文明高度 ＝ 白 <strong id="civ-calc-white">1</strong>
+              × 黑 <strong id="civ-calc-black">1</strong>
+              ＋ 基礎 40 ＝ <strong id="civ-calc-goal">41</strong>
+            </div>
+            <p class="hint">白骰、黑骰各 1–6 點；文明高度自動計算。</p>
           </div>
         </fieldset>
 
