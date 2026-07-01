@@ -145,6 +145,16 @@
   border-radius: var(--r-md); line-height: 1.65;
 }
 .setup-civ-info strong { color: var(--ink); font-weight: 700; }
+.civ-dice-inputs { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
+.civ-dice-inputs .civ-input-row { margin-bottom: 0; }
+.civ-dice-inputs input[type="number"] { width: 84px; font-size: 16px; font-weight: 700; }
+.civ-goal-calc {
+  font-size: 14px; color: var(--ink-dim); line-height: 1.6;
+  padding: 12px 15px; background: var(--fortune-tint);
+  border-radius: var(--r-md); letter-spacing: 0.02em;
+}
+.civ-goal-calc strong { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+#civ-calc-goal { font-size: 17px; color: var(--fortune-ink); }
 
 .row { display: flex; gap: 12px; align-items: center; }
 .row > span { color: var(--ink-dim); font-size: 13px; letter-spacing: 0.04em; }

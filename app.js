@@ -158,6 +158,8 @@ const MAX_GAME_SECONDS = 100 * 60;
 const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊發」：卡牌得分／扣分 ×2
 const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
+const CIV_BASE = 40;                // 文明高度基礎點：白骰 × 黑骰 ＋ 此基礎
+const DIE_MIN = 1, DIE_MAX = 6;     // 實體白/黑骰點數範圍
 const MILESTONES = [25, 35, 45, 55]; // 單項里程；最後一階＝畢業線
 const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
 const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福慧雙達者
@@ -979,6 +981,24 @@ const setupTmp = {
   mode: 'new', // 'new' = brand-new game (clears history); 'next' = next round (archives current)
 };
 
+// 文明高度 ＝ 白骰 × 黑骰 ＋ 基礎 40（骰點鉗制在 1–6）
+function clampDie(v) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return DIE_MIN;
+  return Math.min(DIE_MAX, Math.max(DIE_MIN, n));
+}
+function computeCivGoal(white, black) {
+  return clampDie(white) * clampDie(black) + CIV_BASE;
+}
+// Refresh the live "白 × 黑 ＋ 40 ＝ N" readout from the two dice inputs.
+function updateCivCalc() {
+  const w = clampDie($('#setup-civ-white').value);
+  const b = clampDie($('#setup-civ-black').value);
+  $('#civ-calc-white').textContent = w;
+  $('#civ-calc-black').textContent = b;
+  $('#civ-calc-goal').textContent = w * b + CIV_BASE;
+}
+
 function openSetup(opts = {}) {
   const mode = opts.mode === 'next' ? 'next' : 'new';
   setupTmp.mode = mode;
@@ -993,7 +1013,10 @@ function openSetup(opts = {}) {
       }))
     : Array.from({ length: setupTmp.count }, () => ({ name: '', fortune: 0, wisdom: 0 }));
   $('#setup-round').value = mode === 'next' ? state.roundNum + 1 : state.roundNum;
-  $('#setup-civ-goal-input').value = state.civGoal || 30;
+  // Dice start at 1 each round; the host enters the physical roll before starting.
+  $('#setup-civ-white').value = DIE_MIN;
+  $('#setup-civ-black').value = DIE_MIN;
+  updateCivCalc();
   const title = $('#setup-title');
   if (title) title.textContent = mode === 'next' ? '進入下一局 — 啟程準備' : '開新局 — 啟程準備';
   renderSetup();
@@ -1105,10 +1128,7 @@ async function applySetup() {
     });
     if (p.fortune >= GRAD_THRESHOLD && p.wisdom >= GRAD_THRESHOLD) p.graduated = true;
   });
-  const inputGoal = parseInt($('#setup-civ-goal-input').value, 10);
-  if (Number.isFinite(inputGoal) && inputGoal > 0) {
-    state.civGoal = inputGoal;
-  }
+  state.civGoal = computeCivGoal($('#setup-civ-white').value, $('#setup-civ-black').value);
   resetTimer();
   state._timeUpNoticed = false;
   state._sprintNoticed = false;
@@ -1164,6 +1184,8 @@ function bindEvents() {
   $('#setup-close').addEventListener('click', closeSetup);
   $('#setup-cancel').addEventListener('click', closeSetup);
   $('#setup-start').addEventListener('click', applySetup);
+  $('#setup-civ-white').addEventListener('input', updateCivCalc);
+  $('#setup-civ-black').addEventListener('input', updateCivCalc);
 
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
