@@ -159,7 +159,6 @@ const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊�
 const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
 const CIV_BASE = 40;                // 文明高度基礎點：白骰 × 黑骰 ＋ 此基礎
-const AWAKEN_ROUNDS = 3;            // 覺醒卡：正收益 ×2 持續的局數
 const DIE_MIN = 1, DIE_MAX = 6;     // 實體白/黑骰點數範圍
 const MILESTONES = [25, 35, 45, 55]; // 單項里程；最後一階＝畢業線
 const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
@@ -173,7 +172,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 40)';
+const APP_VERSION = '1.0.0 (build 41)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -230,7 +229,7 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     civ: 0,
     graduated: false,
     abundance: false,    // 豐盛卡：持有後每次經過起始點額外福報 +4（永久，主持人手動標記）
-    awakenRounds: 0,     // 覺醒卡：>0 時起始點正收益 ×2，每次經過起始點消耗 1
+    awaken: false,       // 覺醒卡：持有時起始點正收益 ×2（主持人手動掛上／移除）
     notified: {},
   };
 }
@@ -859,8 +858,8 @@ function buildPlayerCard(p) {
       <span class="pc-buffs-label">持有卡</span>
       <button class="pc-buff${p.abundance ? ' on' : ''}" data-act="buff-abundance"
         title="豐盛卡：每次經過起始點額外 福報 +4（永久，再點取消）">豐盛</button>
-      <button class="pc-buff${(p.awakenRounds || 0) > 0 ? ' on' : ''}" data-act="buff-awaken"
-        title="覺醒卡：起始點正收益 ×2，持續 ${AWAKEN_ROUNDS} 局（再點取消）">覺醒${(p.awakenRounds || 0) > 0 ? ` ×2 · 剩 ${p.awakenRounds} 局` : ''}</button>
+      <button class="pc-buff${p.awaken ? ' on' : ''}" data-act="buff-awaken"
+        title="覺醒卡：起始點正收益 ×2（3 回合後請自行再點取消）">覺醒${p.awaken ? ' ×2' : ''}</button>
     </div>
 
     <footer class="pc-foot">
@@ -942,7 +941,7 @@ function adjustStat(playerId, stat, delta) {
   setStat(playerId, stat, (p[stat] || 0) + delta);
 }
 
-// 持有卡標記（起始點加分會自動套用）。豐盛永久、覺醒維持 AWAKEN_ROUNDS 局。
+// 持有卡標記（起始點加分會自動套用）。豐盛與覺醒都是開/關，由主持人手動掛上／移除。
 function toggleAbundance(playerId) {
   const p = getPlayer(playerId); if (!p) return;
   p.abundance = !p.abundance;
@@ -952,11 +951,9 @@ function toggleAbundance(playerId) {
 }
 function toggleAwaken(playerId) {
   const p = getPlayer(playerId); if (!p) return;
-  p.awakenRounds = (p.awakenRounds || 0) > 0 ? 0 : AWAKEN_ROUNDS;
+  p.awaken = !p.awaken;
   save(); renderPlayers();
-  const m = p.awakenRounds > 0
-    ? `${p.name || '玩家'} 取得覺醒卡 — 起始點正收益 ×2，持續 ${AWAKEN_ROUNDS} 局`
-    : `${p.name || '玩家'} 移除覺醒卡`;
+  const m = `${p.name || '玩家'} ${p.awaken ? '取得' : '移除'}覺醒卡`;
   toast(m, 'grad'); logEvent(m, 'grad');
 }
 function setStat(playerId, stat, value) {
@@ -1145,10 +1142,10 @@ async function applySetup() {
     state.history.push(snap);
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
-  // 下一局：原值延續持有卡（豐盛永久、覺醒剩餘局數保留），沿玩家順序對應。
-  // 覺醒的遞減發生在「經過起始點加分」時，不在換局時扣，避免雙重消耗。
+  // 下一局：延續持有卡標記（豐盛、覺醒都保留），沿玩家順序對應。
+  // 覺醒無自動到期，滿 3 回合後由主持人自行在玩家卡上移除。
   const carriedBuffs = isNext
-    ? state.players.map(p => ({ abundance: !!p.abundance, awakenRounds: (p.awakenRounds || 0) }))
+    ? state.players.map(p => ({ abundance: !!p.abundance, awaken: !!p.awaken }))
     : [];
   state.players = setupTmp.rolls.map((r, i) => {
     const np = makePlayer({
@@ -1156,7 +1153,7 @@ async function applySetup() {
       fortune: r.fortune || 0,
       wisdom: r.wisdom || 0,
     });
-    if (carriedBuffs[i]) { np.abundance = carriedBuffs[i].abundance; np.awakenRounds = carriedBuffs[i].awakenRounds; }
+    if (carriedBuffs[i]) { np.abundance = carriedBuffs[i].abundance; np.awaken = carriedBuffs[i].awaken; }
     return np;
   });
   // Pre-mark milestones already reached so we don't spam toasts on game start
@@ -1866,7 +1863,7 @@ function originReward({ stop, graduated, abundance, awaken, sprintX2 }) {
 
 // 依玩家目前持有卡與是否衝刺，回傳自動套用的加成脈絡。
 function originContext(p) {
-  return { abundance: !!p.abundance, awaken: (p.awakenRounds || 0) > 0, sprintX2: sprintActive() };
+  return { abundance: !!p.abundance, awaken: !!p.awaken, sprintX2: sprintActive() };
 }
 
 function openOrigin() {
@@ -1899,7 +1896,7 @@ function updateOriginPreview() {
   // 自動加成徽章（唯讀，讓主持人看懂數字怎麼來的）
   const badges = [];
   if (ctx.abundance) badges.push('豐盛 福+4');
-  if (ctx.awaken)    badges.push(`覺醒 ×2（剩 ${p.awakenRounds} 局）`);
+  if (ctx.awaken)    badges.push('覺醒 ×2');
   if (ctx.sprintX2)  badges.push('衝刺 ×2');
   $('#origin-auto').innerHTML = badges.length
     ? badges.map(b => `<span class="origin-auto-badge">${b}</span>`).join('')
@@ -1927,16 +1924,8 @@ function applyOrigin() {
   if (ctx.abundance) buffs.push('豐盛');
   if (ctx.awaken)    buffs.push('覺醒×2');
   if (ctx.sprintX2)  buffs.push('衝刺×2');
-  // 覺醒卡以「經過起始點」為一次消耗：套用後剩餘局數 −1。
-  let awakenNote = '';
-  if (ctx.awaken) {
-    p.awakenRounds = Math.max(0, (p.awakenRounds || 0) - 1);
-    awakenNote = p.awakenRounds > 0 ? `　覺醒剩 ${p.awakenRounds} 局` : '　覺醒卡已用畢';
-    save();
-    renderPlayers();
-  }
   const buffTag = buffs.length ? `（${buffs.join('、')}）` : '';
-  const msg = `${p.name || '玩家'} ${landing}起始點　${describeReward(r)}${buffTag}${awakenNote}`;
+  const msg = `${p.name || '玩家'} ${landing}起始點　${describeReward(r)}${buffTag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeOrigin();
