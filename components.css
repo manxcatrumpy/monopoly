@@ -196,16 +196,15 @@
 }
 .origin-seg-sub { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; opacity: 0.8; }
 
-.origin-buffs { display: flex; flex-direction: column; gap: 10px; }
-.origin-buff {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px; background: var(--surface-2);
-  border: 1px solid var(--line); border-radius: var(--r-md);
-  cursor: pointer; min-height: 48px;
+/* Auto-applied buff badges (read-only) inside the origin modal */
+.origin-auto { display: flex; flex-wrap: wrap; gap: 8px; }
+.origin-auto-badge {
+  display: inline-flex; align-items: center;
+  padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--fortune-soft); color: #8A6A1E;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
 }
-.origin-buff input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; }
-.origin-buff-text { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
-.origin-buff-text strong { color: var(--ink); font-weight: 700; }
+.origin-auto-none { font-size: 12px; color: var(--ink-mute); letter-spacing: 0.04em; }
 
 .origin-preview {
   margin-top: 4px; padding: 16px 18px;

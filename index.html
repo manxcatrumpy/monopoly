@@ -352,21 +352,9 @@
         </fieldset>
 
         <fieldset class="setup-section">
-          <legend>③ 卡片加成（可疊加，沒有就留空）</legend>
-          <div class="origin-buffs">
-            <label class="origin-buff">
-              <input type="checkbox" id="origin-abundance" />
-              <span class="origin-buff-text"><strong>豐盛卡</strong> · 每次經過起始點 額外 福報 +4</span>
-            </label>
-            <label class="origin-buff">
-              <input type="checkbox" id="origin-awaken" />
-              <span class="origin-buff-text"><strong>覺醒卡</strong> · 本回合正收益 ×2</span>
-            </label>
-            <label class="origin-buff" id="origin-sprint-wrap" hidden>
-              <input type="checkbox" id="origin-sprint" />
-              <span class="origin-buff-text"><strong>衝刺 ×2</strong> · 最後 15 分鐘（起始點預設不套用，需要才勾）</span>
-            </label>
-          </div>
+          <legend>③ 自動加成（依玩家持有卡與是否衝刺）</legend>
+          <div class="origin-auto" id="origin-auto"></div>
+          <p class="hint">豐盛／覺醒在玩家卡上標記，衝刺 ×2 於最後 15 分鐘自動判斷——這裡不需手動勾選。</p>
         </fieldset>
 
         <div class="origin-preview" id="origin-preview"></div>

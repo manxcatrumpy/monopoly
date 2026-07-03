@@ -628,6 +628,31 @@ button { font-family: inherit; }
 }
 .pc-remove:hover { color: var(--danger-deep); background: #FBEEEA; }
 
+/* Held-card (buff) toggles on each player card — drive origin-point scoring. */
+.pc-buffs {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding-top: 12px; margin-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.pc-buffs-label {
+  font-size: 10px; letter-spacing: 0.16em; color: var(--ink-mute);
+  margin-right: 2px;
+}
+.pc-buff {
+  background: var(--surface); border: 1px solid var(--line-strong);
+  color: var(--ink-dim); cursor: pointer;
+  padding: 6px 13px; border-radius: var(--r-pill);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  min-height: 34px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pc-buff:hover { background: var(--surface-2); border-color: var(--ink-mute); }
+.pc-buff.on {
+  background: linear-gradient(165deg, #FBE7B4, var(--fortune-soft));
+  border-color: transparent; color: #7A5E1A;
+  box-shadow: 0 3px 10px rgba(216,169,78,0.26);
+}
+
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
 
 /* ───────────── Tools sidebar ───────────── */
