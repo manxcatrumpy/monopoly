@@ -173,7 +173,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 39)';
+const APP_VERSION = '1.0.0 (build 40)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -230,7 +230,7 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     civ: 0,
     graduated: false,
     abundance: false,    // 豐盛卡：持有後每次經過起始點額外福報 +4（永久，主持人手動標記）
-    awakenRounds: 0,     // 覺醒卡：>0 時起始點正收益 ×2，每局遞減
+    awakenRounds: 0,     // 覺醒卡：>0 時起始點正收益 ×2，每次經過起始點消耗 1
     notified: {},
   };
 }
@@ -1145,9 +1145,10 @@ async function applySetup() {
     state.history.push(snap);
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
-  // 下一局：延續持有卡（豐盛永久、覺醒每局遞減 1），沿玩家順序對應。
+  // 下一局：原值延續持有卡（豐盛永久、覺醒剩餘局數保留），沿玩家順序對應。
+  // 覺醒的遞減發生在「經過起始點加分」時，不在換局時扣，避免雙重消耗。
   const carriedBuffs = isNext
-    ? state.players.map(p => ({ abundance: !!p.abundance, awakenRounds: Math.max(0, (p.awakenRounds || 0) - 1) }))
+    ? state.players.map(p => ({ abundance: !!p.abundance, awakenRounds: (p.awakenRounds || 0) }))
     : [];
   state.players = setupTmp.rolls.map((r, i) => {
     const np = makePlayer({
@@ -1926,8 +1927,16 @@ function applyOrigin() {
   if (ctx.abundance) buffs.push('豐盛');
   if (ctx.awaken)    buffs.push('覺醒×2');
   if (ctx.sprintX2)  buffs.push('衝刺×2');
+  // 覺醒卡以「經過起始點」為一次消耗：套用後剩餘局數 −1。
+  let awakenNote = '';
+  if (ctx.awaken) {
+    p.awakenRounds = Math.max(0, (p.awakenRounds || 0) - 1);
+    awakenNote = p.awakenRounds > 0 ? `　覺醒剩 ${p.awakenRounds} 局` : '　覺醒卡已用畢';
+    save();
+    renderPlayers();
+  }
   const buffTag = buffs.length ? `（${buffs.join('、')}）` : '';
-  const msg = `${p.name || '玩家'} ${landing}起始點　${describeReward(r)}${buffTag}`;
+  const msg = `${p.name || '玩家'} ${landing}起始點　${describeReward(r)}${buffTag}${awakenNote}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeOrigin();
