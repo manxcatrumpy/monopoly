@@ -105,8 +105,8 @@
       <div class="tool-card">
         <h3>抽卡</h3>
         <p class="tool-hint">主持人代抽，會顯示卡牌內容與獎勵，可指派玩家自動套用點數。</p>
-        <button class="btn btn-block" id="btn-draw-action">抽 行動指令牌</button>
-        <button class="btn btn-block" id="btn-draw-boost">抽 共好加速卡</button>
+        <button class="btn btn-block btn-draw" id="btn-draw-action">抽 行動指令牌</button>
+        <button class="btn btn-block btn-draw" id="btn-draw-boost">抽 共好加速卡</button>
         <button class="btn btn-block btn-ghost" id="btn-browse-cards">瀏覽全部卡牌</button>
       </div>
 
@@ -139,8 +139,8 @@
        column drops below the player grid (≤1024px), so drawing never needs
        a scroll round-trip. Hidden while no game is running. -->
   <div id="quick-draw" class="quick-draw hidden">
-    <button class="btn" id="btn-quick-action">抽 行動指令牌</button>
-    <button class="btn" id="btn-quick-boost">抽 共好加速卡</button>
+    <button class="btn btn-draw" id="btn-quick-action">抽 行動指令牌</button>
+    <button class="btn btn-draw" id="btn-quick-boost">抽 共好加速卡</button>
   </div>
 
   <!-- Setup modal -->
