@@ -172,7 +172,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 37)';
+const APP_VERSION = '1.0.0 (build 42)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -228,6 +228,8 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     wisdom,
     civ: 0,
     graduated: false,
+    abundance: false,    // 豐盛卡：持有後每次經過起始點額外福報 +4（永久，主持人手動標記）
+    awaken: false,       // 覺醒卡：持有時起始點正收益 ×2（主持人手動掛上／移除）
     notified: {},
   };
 }
@@ -852,6 +854,14 @@ function buildPlayerCard(p) {
 
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
+    <div class="pc-buffs">
+      <span class="pc-buffs-label">持有卡</span>
+      <button class="pc-buff${p.abundance ? ' on' : ''}" data-act="buff-abundance"
+        title="豐盛卡：取得時 其他玩家各福報+2（自付）、自己文明+4；之後每次經過起始點額外 福報+4（永久，再點取消）">豐盛</button>
+      <button class="pc-buff${p.awaken ? ' on' : ''}" data-act="buff-awaken"
+        title="覺醒卡：取得時 福報+4·智慧+4·文明+4；起始點正收益 ×2（3 回合後請自行再點取消）">覺醒${p.awaken ? ' ×2' : ''}</button>
+    </div>
+
     <footer class="pc-foot">
       <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
       <button class="pc-remove" data-act="remove">移除</button>
@@ -865,6 +875,10 @@ function buildPlayerCard(p) {
       const stat = t.dataset.stat;
       const delta = parseInt(t.dataset.delta, 10);
       adjustStat(p.id, stat, delta);
+    } else if (t.closest('[data-act="buff-abundance"]')) {
+      toggleAbundance(p.id);
+    } else if (t.closest('[data-act="buff-awaken"]')) {
+      toggleAwaken(p.id);
     } else if (t.matches('[data-act="remove"]')) {
       confirmModal({ title: '移除玩家', message: `確定要移除「${p.name || '玩家'}」？`, confirmText: '移除', danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
@@ -925,6 +939,52 @@ function getPlayer(id) { return state.players.find(p => p.id === id); }
 function adjustStat(playerId, stat, delta) {
   const p = getPlayer(playerId); if (!p) return;
   setStat(playerId, stat, (p[stat] || 0) + delta);
+}
+
+// 持有卡標記（起始點加分會自動套用永久效果）。開＝取得（套用當下的立即效果），關＝移除（不動分）。
+// 豐盛：福報足夠時分給其他玩家各 +2（持有者付出），自己文明+4；不足則只掛卡、不自動分。
+function toggleAbundance(playerId) {
+  const p = getPlayer(playerId); if (!p) return;
+  if (p.abundance) {                     // 移除：僅取消標記
+    p.abundance = false;
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 移除豐盛卡`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+    return;
+  }
+  const others = state.players.filter(o => o.id !== p.id);
+  const cost = others.length * 2;
+  p.abundance = true;
+  if ((p.fortune || 0) >= cost) {         // 立即效果：分享福報、換得文明
+    others.forEach(o => setStat(o.id, 'fortune', (o.fortune || 0) + 2));
+    setStat(p.id, 'fortune', (p.fortune || 0) - cost);
+    setStat(p.id, 'civ', (p.civ || 0) + 4);
+    renderPlayers();
+    const m = `${p.name || '玩家'} 取得豐盛卡 — 分享福報：其他玩家各 +2（自付 ${cost}）、自己 文明+4`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+  } else {                               // 福報不足：只掛卡，立即效果請主持人自行處理
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 取得豐盛卡（福報不足 ${cost}，未自動分福，請手動處理）`;
+    toast(m, 'warn'); logEvent(m, 'grad');
+  }
+}
+// 覺醒：取得時 福報+4 · 智慧+4 · 文明+4；並掛上「起始點正收益 ×2」標記。
+function toggleAwaken(playerId) {
+  const p = getPlayer(playerId); if (!p) return;
+  if (p.awaken) {                        // 移除：僅取消標記
+    p.awaken = false;
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 移除覺醒卡`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+    return;
+  }
+  p.awaken = true;
+  setStat(p.id, 'fortune', (p.fortune || 0) + 4);
+  setStat(p.id, 'wisdom',  (p.wisdom  || 0) + 4);
+  setStat(p.id, 'civ',     (p.civ     || 0) + 4);
+  renderPlayers();
+  const m = `${p.name || '玩家'} 取得覺醒卡 — 福報+4 · 智慧+4 · 文明+4，起始點正收益 ×2`;
+  toast(m, 'grad'); logEvent(m, 'grad');
 }
 function setStat(playerId, stat, value) {
   const p = getPlayer(playerId); if (!p) return;
@@ -1112,11 +1172,20 @@ async function applySetup() {
     state.history.push(snap);
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
-  state.players = setupTmp.rolls.map((r, i) => makePlayer({
-    name: r.name || `玩家 ${i + 1}`,
-    fortune: r.fortune || 0,
-    wisdom: r.wisdom || 0,
-  }));
+  // 下一局：延續持有卡標記（豐盛、覺醒都保留），沿玩家順序對應。
+  // 覺醒無自動到期，滿 3 回合後由主持人自行在玩家卡上移除。
+  const carriedBuffs = isNext
+    ? state.players.map(p => ({ abundance: !!p.abundance, awaken: !!p.awaken }))
+    : [];
+  state.players = setupTmp.rolls.map((r, i) => {
+    const np = makePlayer({
+      name: r.name || `玩家 ${i + 1}`,
+      fortune: r.fortune || 0,
+      wisdom: r.wisdom || 0,
+    });
+    if (carriedBuffs[i]) { np.abundance = carriedBuffs[i].abundance; np.awaken = carriedBuffs[i].awaken; }
+    return np;
+  });
   // Pre-mark milestones already reached so we don't spam toasts on game start
   state.players.forEach(p => {
     ['fortune', 'wisdom'].forEach(stat => {
@@ -1166,6 +1235,24 @@ function bindEvents() {
   $$('.catalog-tab').forEach(b => {
     b.addEventListener('click', () => renderCatalog(b.dataset.tab));
   });
+
+  // 起始點 · 回歸初心
+  $('#btn-origin').addEventListener('click', openOrigin);
+  $('#origin-close').addEventListener('click', closeOrigin);
+  $('#origin-cancel').addEventListener('click', closeOrigin);
+  $('.modal-backdrop', $('#origin-modal')).addEventListener('click', closeOrigin);
+  $('#origin-apply').addEventListener('click', applyOrigin);
+  $('#origin-players').addEventListener('click', (e) => {
+    const chip = e.target.closest('.origin-chip'); if (!chip) return;
+    originSel.playerId = chip.dataset.pid;
+    renderOriginPlayers();
+    updateOriginPreview();
+  });
+  $$('#origin-landing .origin-seg-btn').forEach(b => b.addEventListener('click', () => {
+    originSel.stop = b.dataset.stop === '1';
+    $$('#origin-landing .origin-seg-btn').forEach(x => x.classList.toggle('active', x === b));
+    updateOriginPreview();
+  }));
 
   // Deck manager
   $('#btn-deck-manager').addEventListener('click', openDeckManager);
@@ -1786,6 +1873,92 @@ function applyCardReward(playerIds, card) {
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
+}
+
+// ─────────── 起始點 · 回歸初心 ───────────
+// 基本表：停格＝經過的兩倍（福/慧）；畢業只影響文明（經過 0→1、停格 1→2）。
+// 加成全部自動：豐盛卡（玩家持有，額外福 +4）→ 覺醒卡（玩家持有）／衝刺（時間內）正收益 ×2。
+let originSel = null; // { playerId, stop }
+
+function originReward({ stop, graduated, abundance, awaken, sprintX2 }) {
+  let fortune = stop ? 2 : 1;
+  let wisdom  = stop ? 2 : 1;
+  let civ     = (stop ? 1 : 0) + (graduated ? 1 : 0);
+  if (abundance) fortune += 4;              // 豐盛卡：每次經過起始點 額外福報 +4
+  let mult = 1;
+  if (awaken)   mult *= 2;                   // 覺醒卡：本回合正收益 ×2
+  if (sprintX2) mult *= 2;                   // 衝刺：最後 15 分鐘自動 ×2
+  return { fortune: fortune * mult, wisdom: wisdom * mult, civ: civ * mult };
+}
+
+// 依玩家目前持有卡與是否衝刺，回傳自動套用的加成脈絡。
+function originContext(p) {
+  return { abundance: !!p.abundance, awaken: !!p.awaken, sprintX2: sprintActive() };
+}
+
+function openOrigin() {
+  if (!state.players.length) { toast('尚未開局，請先建立玩家', 'warn'); return; }
+  const stillThere = state.players.some(p => p.id === (originSel && originSel.playerId));
+  originSel = { playerId: stillThere ? originSel.playerId : state.players[0].id, stop: false };
+  $$('#origin-landing .origin-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.stop === '0'));
+  renderOriginPlayers();
+  updateOriginPreview();
+  $('#origin-modal').classList.remove('hidden');
+}
+function closeOrigin() { $('#origin-modal').classList.add('hidden'); }
+
+function renderOriginPlayers() {
+  const wrap = $('#origin-players');
+  wrap.innerHTML = state.players.map(p => `
+    <button type="button" class="origin-chip${p.id === originSel.playerId ? ' active' : ''}${p.graduated ? ' grad' : ''}" data-pid="${p.id}">
+      <span class="origin-chip-name">${escapeHtml(p.name || '玩家')}</span>
+      ${p.graduated ? '<span class="origin-chip-tag">已畢業</span>' : ''}
+    </button>`).join('');
+}
+
+function updateOriginPreview() {
+  const p = getPlayer(originSel.playerId);
+  if (!p) return;
+  const graduated = !!p.graduated;
+  const ctx = originContext(p);
+  const r = originReward({ stop: originSel.stop, graduated, ...ctx });
+
+  // 自動加成徽章（唯讀，讓主持人看懂數字怎麼來的）
+  const badges = [];
+  if (ctx.abundance) badges.push('豐盛 福+4');
+  if (ctx.awaken)    badges.push('覺醒 ×2');
+  if (ctx.sprintX2)  badges.push('衝刺 ×2');
+  $('#origin-auto').innerHTML = badges.length
+    ? badges.map(b => `<span class="origin-auto-badge">${b}</span>`).join('')
+    : '<span class="origin-auto-none">此玩家目前無加成</span>';
+
+  const parts = [`基本 ${originSel.stop ? '停格' : '經過'}${graduated ? ' · 已畢業' : ''}`];
+  if (ctx.abundance) parts.push('＋豐盛 福+4');
+  const mults = [];
+  if (ctx.awaken)   mults.push('覺醒');
+  if (ctx.sprintX2) mults.push('衝刺');
+  if (mults.length) parts.push(`${mults.join('×')} ×2`);
+  $('#origin-preview').innerHTML = `
+    <div class="origin-preview-who">${escapeHtml(p.name || '玩家')}　<span>${parts.join('　')}</span></div>
+    <div class="origin-preview-total">${describeReward(r)}</div>`;
+}
+
+function applyOrigin() {
+  const p = getPlayer(originSel.playerId);
+  if (!p) { closeOrigin(); return; }
+  const ctx = originContext(p);
+  const r = originReward({ stop: originSel.stop, graduated: !!p.graduated, ...ctx });
+  STATS.forEach(stat => { if (r[stat]) setStat(p.id, stat, (p[stat] || 0) + r[stat]); });
+  const landing = originSel.stop ? '停在' : '經過';
+  const buffs = [];
+  if (ctx.abundance) buffs.push('豐盛');
+  if (ctx.awaken)    buffs.push('覺醒×2');
+  if (ctx.sprintX2)  buffs.push('衝刺×2');
+  const buffTag = buffs.length ? `（${buffs.join('、')}）` : '';
+  const msg = `${p.name || '玩家'} ${landing}起始點　${describeReward(r)}${buffTag}`;
+  toast(msg, 'grad');
+  logEvent(msg, 'grad');
+  closeOrigin();
 }
 
 // ─────────── Render all ───────────

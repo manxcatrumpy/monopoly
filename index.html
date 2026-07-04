@@ -111,6 +111,12 @@
       </div>
 
       <div class="tool-card">
+        <h3>起始點 · 回歸初心</h3>
+        <p class="tool-hint">玩家經過／停在起始點時，一鍵套用福慧文明加分。畢業與否自動判斷，可勾選卡片加成並即時預覽。</p>
+        <button class="btn btn-block btn-draw" id="btn-origin">起始點加分</button>
+      </div>
+
+      <div class="tool-card">
         <h3>卡牌資料</h3>
         <p class="tool-hint">匯入自訂 JSON 可覆蓋預設牌組。資料存於本機 localStorage。</p>
         <button class="btn btn-block btn-ghost" id="btn-deck-manager">管理卡牌資料</button>
@@ -320,6 +326,43 @@
       </header>
       <div class="modal-body" id="card-body"></div>
       <footer class="modal-foot" id="card-foot"></footer>
+    </div>
+  </div>
+
+  <!-- Origin (起始點／回歸初心) quick-score modal -->
+  <div id="origin-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="origin-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h2 id="origin-title">起始點 · 回歸初心</h2>
+        <button class="icon-btn" id="origin-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body">
+        <fieldset class="setup-section">
+          <legend>① 哪位玩家經過起始點</legend>
+          <div id="origin-players" class="origin-players"></div>
+        </fieldset>
+
+        <fieldset class="setup-section">
+          <legend>② 落點</legend>
+          <div class="origin-seg" id="origin-landing" role="tablist">
+            <button class="origin-seg-btn active" data-stop="0" type="button">經過<span class="origin-seg-sub">路過不停</span></button>
+            <button class="origin-seg-btn" data-stop="1" type="button">停格<span class="origin-seg-sub">停在這格</span></button>
+          </div>
+        </fieldset>
+
+        <fieldset class="setup-section">
+          <legend>③ 自動加成（依玩家持有卡與是否衝刺）</legend>
+          <div class="origin-auto" id="origin-auto"></div>
+          <p class="hint">豐盛／覺醒在玩家卡上標記，衝刺 ×2 於最後 15 分鐘自動判斷——這裡不需手動勾選。</p>
+        </fieldset>
+
+        <div class="origin-preview" id="origin-preview"></div>
+      </div>
+      <footer class="modal-foot">
+        <button class="btn btn-ghost" id="origin-cancel">取消</button>
+        <button class="btn btn-primary" id="origin-apply">套用加分</button>
+      </footer>
     </div>
   </div>
 
