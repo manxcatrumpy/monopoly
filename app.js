@@ -172,7 +172,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 41)';
+const APP_VERSION = '1.0.0 (build 42)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -857,9 +857,9 @@ function buildPlayerCard(p) {
     <div class="pc-buffs">
       <span class="pc-buffs-label">持有卡</span>
       <button class="pc-buff${p.abundance ? ' on' : ''}" data-act="buff-abundance"
-        title="豐盛卡：每次經過起始點額外 福報 +4（永久，再點取消）">豐盛</button>
+        title="豐盛卡：取得時 其他玩家各福報+2（自付）、自己文明+4；之後每次經過起始點額外 福報+4（永久，再點取消）">豐盛</button>
       <button class="pc-buff${p.awaken ? ' on' : ''}" data-act="buff-awaken"
-        title="覺醒卡：起始點正收益 ×2（3 回合後請自行再點取消）">覺醒${p.awaken ? ' ×2' : ''}</button>
+        title="覺醒卡：取得時 福報+4·智慧+4·文明+4；起始點正收益 ×2（3 回合後請自行再點取消）">覺醒${p.awaken ? ' ×2' : ''}</button>
     </div>
 
     <footer class="pc-foot">
@@ -941,19 +941,49 @@ function adjustStat(playerId, stat, delta) {
   setStat(playerId, stat, (p[stat] || 0) + delta);
 }
 
-// 持有卡標記（起始點加分會自動套用）。豐盛與覺醒都是開/關，由主持人手動掛上／移除。
+// 持有卡標記（起始點加分會自動套用永久效果）。開＝取得（套用當下的立即效果），關＝移除（不動分）。
+// 豐盛：福報足夠時分給其他玩家各 +2（持有者付出），自己文明+4；不足則只掛卡、不自動分。
 function toggleAbundance(playerId) {
   const p = getPlayer(playerId); if (!p) return;
-  p.abundance = !p.abundance;
-  save(); renderPlayers();
-  const m = `${p.name || '玩家'} ${p.abundance ? '取得' : '移除'}豐盛卡`;
-  toast(m, 'grad'); logEvent(m, 'grad');
+  if (p.abundance) {                     // 移除：僅取消標記
+    p.abundance = false;
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 移除豐盛卡`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+    return;
+  }
+  const others = state.players.filter(o => o.id !== p.id);
+  const cost = others.length * 2;
+  p.abundance = true;
+  if ((p.fortune || 0) >= cost) {         // 立即效果：分享福報、換得文明
+    others.forEach(o => setStat(o.id, 'fortune', (o.fortune || 0) + 2));
+    setStat(p.id, 'fortune', (p.fortune || 0) - cost);
+    setStat(p.id, 'civ', (p.civ || 0) + 4);
+    renderPlayers();
+    const m = `${p.name || '玩家'} 取得豐盛卡 — 分享福報：其他玩家各 +2（自付 ${cost}）、自己 文明+4`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+  } else {                               // 福報不足：只掛卡，立即效果請主持人自行處理
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 取得豐盛卡（福報不足 ${cost}，未自動分福，請手動處理）`;
+    toast(m, 'warn'); logEvent(m, 'grad');
+  }
 }
+// 覺醒：取得時 福報+4 · 智慧+4 · 文明+4；並掛上「起始點正收益 ×2」標記。
 function toggleAwaken(playerId) {
   const p = getPlayer(playerId); if (!p) return;
-  p.awaken = !p.awaken;
-  save(); renderPlayers();
-  const m = `${p.name || '玩家'} ${p.awaken ? '取得' : '移除'}覺醒卡`;
+  if (p.awaken) {                        // 移除：僅取消標記
+    p.awaken = false;
+    save(); renderPlayers();
+    const m = `${p.name || '玩家'} 移除覺醒卡`;
+    toast(m, 'grad'); logEvent(m, 'grad');
+    return;
+  }
+  p.awaken = true;
+  setStat(p.id, 'fortune', (p.fortune || 0) + 4);
+  setStat(p.id, 'wisdom',  (p.wisdom  || 0) + 4);
+  setStat(p.id, 'civ',     (p.civ     || 0) + 4);
+  renderPlayers();
+  const m = `${p.name || '玩家'} 取得覺醒卡 — 福報+4 · 智慧+4 · 文明+4，起始點正收益 ×2`;
   toast(m, 'grad'); logEvent(m, 'grad');
 }
 function setStat(playerId, stat, value) {
