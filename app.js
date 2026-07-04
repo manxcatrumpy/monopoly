@@ -172,7 +172,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 37)';
+const APP_VERSION = '1.0.0 (build 38)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -852,6 +852,16 @@ function buildPlayerCard(p) {
 
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
+    <div class="pc-origin" data-picking="0">
+      <button class="pc-origin-open" data-act="origin-open" title="經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）">起始點加分</button>
+      <div class="pc-origin-pick">
+        <span class="pc-origin-label">起始點</span>
+        <button class="pc-origin-choice" data-act="origin-pass">經過</button>
+        <button class="pc-origin-choice stop" data-act="origin-stop">停格</button>
+        <button class="pc-origin-x" data-act="origin-cancel" aria-label="取消">✕</button>
+      </div>
+    </div>
+
     <footer class="pc-foot">
       <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
       <button class="pc-remove" data-act="remove">移除</button>
@@ -865,6 +875,16 @@ function buildPlayerCard(p) {
       const stat = t.dataset.stat;
       const delta = parseInt(t.dataset.delta, 10);
       adjustStat(p.id, stat, delta);
+    } else if (t.closest('[data-act="origin-open"]')) {
+      card.querySelector('.pc-origin').dataset.picking = '1';
+    } else if (t.closest('[data-act="origin-cancel"]')) {
+      card.querySelector('.pc-origin').dataset.picking = '0';
+    } else if (t.closest('[data-act="origin-pass"]')) {
+      scoreOrigin(p.id, false);
+      card.querySelector('.pc-origin').dataset.picking = '0';
+    } else if (t.closest('[data-act="origin-stop"]')) {
+      scoreOrigin(p.id, true);
+      card.querySelector('.pc-origin').dataset.picking = '0';
     } else if (t.matches('[data-act="remove"]')) {
       confirmModal({ title: '移除玩家', message: `確定要移除「${p.name || '玩家'}」？`, confirmText: '移除', danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
@@ -925,6 +945,22 @@ function getPlayer(id) { return state.players.find(p => p.id === id); }
 function adjustStat(playerId, stat, delta) {
   const p = getPlayer(playerId); if (!p) return;
   setStat(playerId, stat, (p[stat] || 0) + delta);
+}
+
+// 起始點 · 回歸初心 快捷加分（基本表）。停格＝經過兩倍（福/慧）；畢業才加文明（自動判斷）。
+// 卡片加成（豐盛/覺醒）此版不處理，若玩家持有請主持人手動補。
+function scoreOrigin(playerId, stop) {
+  const p = getPlayer(playerId); if (!p) return;
+  const graduated = !!p.graduated;
+  const r = {
+    fortune: stop ? 2 : 1,
+    wisdom:  stop ? 2 : 1,
+    civ:     (stop ? 1 : 0) + (graduated ? 1 : 0),
+  };
+  STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, (p[stat] || 0) + r[stat]); });
+  const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}`;
+  toast(msg, 'grad');
+  logEvent(msg, 'grad');
 }
 function setStat(playerId, stat, value) {
   const p = getPlayer(playerId); if (!p) return;

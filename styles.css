@@ -628,6 +628,40 @@ button { font-family: inherit; }
 }
 .pc-remove:hover { color: var(--danger-deep); background: #FBEEEA; }
 
+/* 起始點加分：卡上一顆按鈕，點開後就地選 經過/停格。 */
+.pc-origin { padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line); }
+.pc-origin-open {
+  width: 100%;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  color: var(--ink-dim); cursor: pointer;
+  padding: 10px 14px; border-radius: var(--r-pill);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+  min-height: 44px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.pc-origin-open:hover { background: var(--fortune-tint); color: var(--fortune-ink); border-color: var(--fortune-soft); }
+.pc-origin-pick { display: none; align-items: center; gap: 8px; }
+.pc-origin[data-picking="1"] .pc-origin-open { display: none; }
+.pc-origin[data-picking="1"] .pc-origin-pick { display: flex; }
+.pc-origin-label { font-size: 10px; letter-spacing: 0.16em; color: var(--ink-mute); white-space: nowrap; }
+.pc-origin-choice {
+  flex: 1;
+  background: linear-gradient(165deg, #A7CF9E, var(--primary));
+  border: 1px solid transparent; color: #243024; cursor: pointer;
+  padding: 10px 8px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; min-height: 44px;
+  box-shadow: 0 3px 10px rgba(123,174,115,0.26);
+  transition: transform 0.12s ease, filter 0.15s ease;
+}
+.pc-origin-choice.stop { background: linear-gradient(165deg, #EBCB78, var(--fortune)); box-shadow: 0 3px 10px rgba(216,169,78,0.28); }
+.pc-origin-choice:hover { filter: brightness(1.03); transform: translateY(-1px); }
+.pc-origin-x {
+  background: transparent; border: none; color: var(--ink-mute);
+  cursor: pointer; font-size: 14px; padding: 6px 8px; min-height: 44px;
+  border-radius: var(--r-sm);
+}
+.pc-origin-x:hover { color: var(--danger-deep); background: #FBEEEA; }
+
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
 
 /* ───────────── Tools sidebar ───────────── */
