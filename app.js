@@ -154,7 +154,14 @@ function rebuildDecks() {
 }
 
 const STORAGE_KEY = 'fuhui-dashboard-state-v1';
-const MAX_GAME_SECONDS = 100 * 60;
+// 遊戲時間依人數而定：4人/100 分、5人/105 分、6人/110 分（每多一人 +5 分）。
+function gameMinutes() {
+  const count = state.players.length || setupTmp.count || 4;
+  return 100 + Math.max(0, count - 4) * 5;
+}
+function maxGameSeconds() {
+  return gameMinutes() * 60;
+}
 const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊發」：卡牌得分／扣分 ×2
 const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
@@ -172,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 38)';
+const APP_VERSION = '1.0.0 (build 40)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -575,7 +582,7 @@ function resetTimer() {
 // ─────────── 倒數衝刺：無常與恩典齊發 ───────────
 // 在最後 SPRINT_SECONDS（15 分鐘）內，所有卡牌的得分與扣分一律 ×2。
 function sprintActive() {
-  return elapsedSeconds() >= MAX_GAME_SECONDS - SPRINT_SECONDS;
+  return elapsedSeconds() >= maxGameSeconds() - SPRINT_SECONDS;
 }
 function scoreMultiplier() {
   return sprintActive() ? SPRINT_MULTIPLIER : 1;
@@ -782,8 +789,10 @@ function updateTopbar() {
   const sec = elapsedSeconds();
   $('#timer').textContent = fmt(sec);
   const timerEl = $('.timer-item .timer');
-  timerEl.classList.toggle('warn', sec >= 80 * 60 && sec < MAX_GAME_SECONDS);
-  timerEl.classList.toggle('over', sec >= MAX_GAME_SECONDS);
+  const maxSec = maxGameSeconds();
+  $('#timer-max').textContent = '/ ' + fmt(maxSec);
+  timerEl.classList.toggle('warn', sec >= maxSec - 20 * 60 && sec < maxSec);
+  timerEl.classList.toggle('over', sec >= maxSec);
 
   // Final-15-minute sprint: surface it in the timer and a top banner.
   const sprint = sprintActive();
@@ -800,10 +809,10 @@ function updateTopbar() {
     logEvent('無常與恩典齊發啟動 — 卡牌得分／扣分 ×2', 'grad');
   }
 
-  if (sec >= MAX_GAME_SECONDS && !state._timeUpNoticed) {
+  if (sec >= maxSec && !state._timeUpNoticed) {
     state._timeUpNoticed = true;
     pauseTimer();
-    toast('100 分鐘到、請進行最終結算', 'grad');
+    toast(`${gameMinutes()} 分鐘到、請進行最終結算`, 'grad');
     logEvent('時間到 — 進行最終結算', 'grad');
   }
 }
@@ -1278,7 +1287,7 @@ async function restoreRound(idx) {
   // count is unchanged and no round disappears.
   state.history[idx] = leaving;
 
-  state._timeUpNoticed = elapsedSeconds() >= MAX_GAME_SECONDS;
+  state._timeUpNoticed = elapsedSeconds() >= maxGameSeconds();
   state._sprintNoticed = sprintActive();
   state._civGoalNoticed = totalCiv() >= state.civGoal;
   state._allGradNoticed = state.players.length > 0 && state.players.every(p => p.graduated);
