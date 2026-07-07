@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 39)';
+const APP_VERSION = '1.0.0 (build 40)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -790,6 +790,7 @@ function updateTopbar() {
   $('#timer').textContent = fmt(sec);
   const timerEl = $('.timer-item .timer');
   const maxSec = maxGameSeconds();
+  $('#timer-max').textContent = '/ ' + fmt(maxSec);
   timerEl.classList.toggle('warn', sec >= maxSec - 20 * 60 && sec < maxSec);
   timerEl.classList.toggle('over', sec >= maxSec);
 

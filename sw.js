@@ -1,4 +1,4 @@
-const CACHE = 'fuhui-dashboard-v39';
+const CACHE = 'fuhui-dashboard-v40';
 const ASSETS = [
   './',
   './index.html',
