@@ -485,12 +485,14 @@
   .logo { width: 40px; height: 40px; }
   .logo svg { width: 30px; height: 30px; }
   .brand-text .title    { font-size: 17px; letter-spacing: 0.08em; }
-  .brand-text .subtitle { display: none; }
+  /* Hide only the descriptive text; keep the build version visible on mobile. */
+  .brand-text .subtitle      { margin-top: 2px; letter-spacing: 0.12em; }
+  .brand-text .subtitle-text { display: none; }
   .meta-item { padding: 2px 4px; min-width: 0; flex: 1; }
   .meta-item + .meta-item::before { display: none; }
   .meta-item label { font-size: 9px; letter-spacing: 0.18em; margin-bottom: 2px; }
   .meta-value { font-size: 17px; }
-  .meta-cap   { display: none; }
+  .meta-cap   { font-size: 10px; margin-left: 4px; }
   .civ-progress { padding: 14px 16px 0; max-width: none; }
   .dashboard    { padding: 14px 16px 24px; gap: 16px; }
   .section-head { flex-wrap: wrap; gap: 8px; }
