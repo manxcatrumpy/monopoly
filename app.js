@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 40)';
+const APP_VERSION = '1.0.0 (build 41)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -749,7 +749,9 @@ function flashCard(playerId, cls = 'pulse') {
 // ─────────── Render: Topbar & civ bar ───────────
 function updateTopbar() {
   $('#round-num').textContent = state.roundNum;
-  $('#civ-goal').textContent = state.civGoal;
+  const started = state.players.length > 0;
+  // 開局前尚未骰出文明高度目標，顯示破折號而非佔位數字。
+  $('#civ-goal').textContent = started ? state.civGoal : '—';
   const total = totalCiv();
   $('#civ-total').textContent = total;
 
