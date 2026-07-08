@@ -743,6 +743,20 @@ button { font-family: inherit; }
 .pending-draws .pd-done:hover { background: var(--fortune-soft); transform: translateY(-1px); }
 .pending-draws .pd-done:active { transform: translateY(0); }
 
+/* 抽卡里程 modal 內的待抽清單 */
+.draw-panel { width: min(440px, 100%); }
+.draw-list { list-style: none; padding: 0; margin: 2px 0; display: flex; flex-direction: column; gap: 10px; }
+.draw-list li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--fortune-tint);
+  border: 1px solid var(--fortune-soft);
+  border-left: 3px solid var(--fortune);
+  border-radius: 10px;
+}
+.draw-list .dl-text { flex: 1; font-size: 13px; line-height: 1.5; color: var(--fortune-ink); font-weight: 600; }
+.draw-list .dl-done { flex-shrink: 0; min-height: 36px; padding: 8px 18px; }
+
 .danger-card { background: var(--surface); }
 
 @keyframes toastIn {

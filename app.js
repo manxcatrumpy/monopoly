@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 43)';
+const APP_VERSION = '1.0.0 (build 44)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -683,11 +683,32 @@ function addPendingDraw(text, playerId) {
     text, playerId, t: elapsedSeconds(),
   });
   renderPendingDraws();
+  openDrawModal();   // 強制彈出、要主持人點掉才收起
 }
 function resolvePendingDraw(id) {
   state.pendingDraws = state.pendingDraws.filter(d => d.id !== id);
   save();
   renderPendingDraws();
+  renderDrawModal();
+}
+// 置中強制 modal：任一「抽卡里程」觸發即彈出，列出所有待抽卡。
+function renderDrawModal() {
+  const modal = $('#draw-modal');
+  const listEl = $('#draw-list');
+  if (!modal || !listEl) return;
+  const list = state.pendingDraws || [];
+  if (!list.length) { modal.classList.add('hidden'); return; }
+  listEl.innerHTML = list.map(d =>
+    `<li><span class="dl-text">${escapeHtml(d.text)}</span>` +
+    `<button class="btn btn-primary dl-done" data-pd-id="${d.id}" type="button">已抽</button></li>`
+  ).join('');
+  listEl.querySelectorAll('.dl-done').forEach(btn =>
+    btn.addEventListener('click', () => resolvePendingDraw(btn.dataset.pdId)));
+}
+function openDrawModal() {
+  if (!(state.pendingDraws || []).length) return;
+  renderDrawModal();
+  $('#draw-modal').classList.remove('hidden');
 }
 function renderPendingDraws() {
   const ul = $('#pending-draws');
@@ -1271,6 +1292,15 @@ function bindEvents() {
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
+
+  // 抽卡里程 modal：稍後再抽（保留面板待辦）/ 全部已抽（清空）
+  $('#draw-later').addEventListener('click', () => $('#draw-modal').classList.add('hidden'));
+  $('#draw-all-done').addEventListener('click', () => {
+    state.pendingDraws = [];
+    save();
+    renderPendingDraws();
+    $('#draw-modal').classList.add('hidden');
+  });
 
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
