@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 42)';
+const APP_VERSION = '1.0.0 (build 43)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -191,6 +191,7 @@ const defaultState = () => ({
   timer: { accumulated: 0, lastStartedAt: null, running: false },
   players: [],
   log: [],
+  pendingDraws: [],   // 尚未處理的「抽卡」里程：主持人抽完卡後手動清除
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
@@ -216,6 +217,8 @@ function load() {
     }
     // Ensure navigatorClaimed shape (older saves predate this field)
     state.navigatorClaimed = Object.assign(emptyNavClaim(), state.navigatorClaimed || {});
+    // Ensure pendingDraws shape (older saves predate this field)
+    if (!Array.isArray(state.pendingDraws)) state.pendingDraws = [];
     // Ensure customDecks shape (older saves predate this field)
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.timer.running) {
@@ -671,6 +674,37 @@ function escapeHtml(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// ─────────── 待處理抽卡佇列 ───────────
+// 需要主持人「去抽一張卡」的里程（領航者 / 自我突破 / 接近畢業）在觸發時，
+// 除了 toast + log，還在面板上留一條待辦；主持人抽完卡點「已抽」才消失，避免漏抽。
+function addPendingDraw(text, playerId) {
+  state.pendingDraws.push({
+    id: 'pd_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    text, playerId, t: elapsedSeconds(),
+  });
+  renderPendingDraws();
+}
+function resolvePendingDraw(id) {
+  state.pendingDraws = state.pendingDraws.filter(d => d.id !== id);
+  save();
+  renderPendingDraws();
+}
+function renderPendingDraws() {
+  const ul = $('#pending-draws');
+  if (!ul) return;
+  const list = state.pendingDraws || [];
+  const wrap = $('#pending-wrap');
+  if (wrap) wrap.classList.toggle('hidden', list.length === 0);
+  ul.innerHTML = list.map(d => `
+    <li>
+      <span class="pd-text">${escapeHtml(d.text)}</span>
+      <span class="pd-time">${fmt(d.t)}</span>
+      <button class="pd-done" data-pd-id="${d.id}" aria-label="已抽卡、清除待辦">已抽</button>
+    </li>`).join('');
+  ul.querySelectorAll('.pd-done').forEach(btn =>
+    btn.addEventListener('click', () => resolvePendingDraw(btn.dataset.pdId)));
+}
+
 // ─────────── Milestones & Graduation ───────────
 function key(stat, m) { return stat[0] + m; } // e.g. f25, w50
 
@@ -686,6 +720,7 @@ function processStatChange(player, stat, oldVal, newVal) {
     const msg = `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽卡、可宣告畢業`;
     toast(msg, 'grad');
     logEvent(msg, 'grad');
+    addPendingDraw(`${player.name || '玩家'}　${STAT_LABEL[stat]}達 ${m}　抽卡、可宣告畢業`, player.id);
     flashCard(player.id);
   }
   checkGraduation(player);
@@ -702,6 +737,7 @@ function checkDualMilestones(player) {
       const msg = `領航者際遇　${player.name || '玩家'} 率先 福慧雙達 ${n}　抽 1 張`;
       toast(msg, 'grad');
       logEvent(msg, 'grad');
+      addPendingDraw(`領航者際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`, player.id);
       flashCard(player.id, 'grad');
     }
   }
@@ -714,6 +750,7 @@ function checkDualMilestones(player) {
       const msg = `自我突破際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`;
       toast(msg);
       logEvent(msg, 'milestone');
+      addPendingDraw(`自我突破際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`, player.id);
       flashCard(player.id);
     } else if (both < n && player.notified[k]) {
       player.notified[k] = false;
@@ -1189,6 +1226,7 @@ async function applySetup() {
     if (first) state.navigatorClaimed[n] = first.id;
   });
   state.log = [];
+  state.pendingDraws = [];
   logEvent(isNext
     ? `進入第 ${state.roundNum} 局 · 文明高度 ${state.civGoal}`
     : `第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
@@ -1839,6 +1877,7 @@ function applyCardReward(playerIds, card) {
 function renderAll() {
   updateTopbar();
   renderPlayers();
+  renderPendingDraws();
   renderLog();
   refreshHistoryButton();
 }

@@ -712,6 +712,37 @@ button { font-family: inherit; }
   letter-spacing: 0.06em; flex-shrink: 0;
 }
 
+/* 待抽卡佇列 — 需要主持人接著抽一張卡的里程，醒目留存直到清除 */
+.pending-wrap { margin: 0 0 14px; }
+.pending-wrap.hidden { display: none; }
+.pending-head {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--fortune-ink); margin-bottom: 8px;
+}
+.pending-note { font-weight: 400; letter-spacing: 0.04em; color: var(--ink-mute); }
+.pending-draws { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.pending-draws li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--fortune-tint);
+  border: 1px solid var(--fortune-soft);
+  border-left: 3px solid var(--fortune);
+  border-radius: 10px;
+}
+.pending-draws .pd-text { flex: 1; font-size: 12px; line-height: 1.5; color: var(--fortune-ink); font-weight: 600; }
+.pending-draws .pd-time { font-size: 10px; color: var(--ink-mute); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.pending-draws .pd-done {
+  flex-shrink: 0; cursor: pointer;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+  padding: 6px 12px; min-height: 32px;
+  color: var(--fortune-ink);
+  background: var(--surface);
+  border: 1px solid var(--fortune); border-radius: 8px;
+  transition: background 0.15s, transform 0.1s;
+}
+.pending-draws .pd-done:hover { background: var(--fortune-soft); transform: translateY(-1px); }
+.pending-draws .pd-done:active { transform: translateY(0); }
+
 .danger-card { background: var(--surface); }
 
 @keyframes toastIn {
