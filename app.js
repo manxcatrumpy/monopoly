@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 45)';
+const APP_VERSION = '1.0.0 (build 46)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1292,6 +1292,11 @@ function bindEvents() {
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
+
+  // 遊戲說明 modal
+  $('#btn-guide').addEventListener('click', () => $('#guide-modal').classList.remove('hidden'));
+  $('#guide-close').addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
+  $('.modal-backdrop', $('#guide-modal')).addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
 
   // 抽卡里程 modal：稍後再抽（保留面板待辦）/ 全部已抽（清空）
   $('#draw-later').addEventListener('click', () => $('#draw-modal').classList.add('hidden'));
