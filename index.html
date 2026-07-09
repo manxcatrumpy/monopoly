@@ -123,6 +123,10 @@
           領航者　雙達 15 / 35 / 55　首位抽<br />
           自我突破　雙達 25 / 45　各人抽
         </p>
+        <div class="pending-wrap hidden" id="pending-wrap">
+          <div class="pending-head">待抽卡　<span class="pending-note">抽完點「已抽」清除</span></div>
+          <ul class="pending-draws" id="pending-draws"></ul>
+        </div>
         <ul class="milestone-log" id="milestone-log">
           <li class="empty">尚無觸發</li>
         </ul>
@@ -347,6 +351,20 @@
       <div class="confirm-actions">
         <button class="btn" id="confirm-cancel" type="button">取消</button>
         <button class="btn btn-primary" id="confirm-ok" type="button">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 抽卡里程 — 強制確認 modal -->
+  <div id="draw-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="draw-title" aria-describedby="draw-message">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel confirm-panel draw-panel">
+      <h2 id="draw-title" class="confirm-title">抽卡里程</h2>
+      <p id="draw-message" class="confirm-message">達成以下里程，請各抽 1 張<strong>機會卡</strong>，抽完點「已抽」。</p>
+      <ul class="draw-list" id="draw-list"></ul>
+      <div class="confirm-actions">
+        <button class="btn" id="draw-later" type="button">稍後再抽</button>
+        <button class="btn btn-primary" id="draw-all-done" type="button">全部已抽</button>
       </div>
     </div>
   </div>
