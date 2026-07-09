@@ -57,6 +57,41 @@
   letter-spacing: 0.12em;
 }
 
+/* 遊戲說明 — 手風琴式說明 modal */
+.guide-panel { width: min(640px, 100%); }
+.guide-body { padding: 20px 24px 26px; }
+.guide-lead {
+  margin: 0 0 16px; font-size: 12px; letter-spacing: 0.06em;
+  color: var(--ink-mute); text-align: center;
+}
+.guide-sec { border-top: 1px solid var(--line); }
+.guide-sec:last-child { border-bottom: 1px solid var(--line); }
+.guide-sec > summary {
+  cursor: pointer; list-style: none;
+  padding: 14px 4px; padding-right: 26px; position: relative;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink);
+}
+.guide-sec > summary::-webkit-details-marker { display: none; }
+.guide-sec > summary::after {
+  content: "＋"; position: absolute; right: 6px; top: 50%;
+  transform: translateY(-50%); color: var(--ink-mute); font-weight: 400;
+}
+.guide-sec[open] > summary::after { content: "－"; }
+.guide-sec > summary:hover { color: var(--fortune-ink); }
+.guide-sec-body { padding: 2px 4px 16px; font-size: 13.5px; line-height: 1.75; color: var(--ink-dim); }
+.guide-sec-body p { margin: 0 0 10px; }
+.guide-sec-body ul { margin: 0 0 10px; padding-left: 20px; }
+.guide-sec-body > ul > li { margin-bottom: 5px; }
+.guide-sec-body ul ul { margin: 6px 0 4px; }
+.guide-sec-body strong { color: var(--ink); font-weight: 700; }
+.guide-sub { font-weight: 700; color: var(--ink); margin-top: 4px; }
+.guide-note { color: var(--ink-mute); font-size: 12px; }
+.guide-formula {
+  background: var(--fortune-tint); border-left: 3px solid var(--fortune);
+  border-radius: 8px; padding: 10px 14px; margin: 4px 0 12px;
+  font-weight: 700; color: var(--fortune-ink); letter-spacing: 0.02em;
+}
+
 /* Confirm dialog — compact centered panel */
 .confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
 .confirm-title { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }

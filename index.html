@@ -75,6 +75,7 @@
       <button id="btn-next-round" class="btn" title="進入下一局">下一局</button>
       <button id="btn-history" class="btn btn-ghost" title="查看 / 復原歷史局" hidden>歷史紀錄</button>
       <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定">設定</button>
+      <button id="btn-guide" class="btn btn-ghost" title="遊戲說明">說明</button>
     </div>
   </header>
 
@@ -351,6 +352,131 @@
       <div class="confirm-actions">
         <button class="btn" id="confirm-cancel" type="button">取消</button>
         <button class="btn btn-primary" id="confirm-ok" type="button">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊戲說明 modal -->
+  <div id="guide-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel guide-panel">
+      <header class="modal-head">
+        <h2 id="guide-title">遊戲說明</h2>
+        <button class="icon-btn" id="guide-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body guide-body">
+        <p class="guide-lead">《福慧大富翁》· 青年啟航計劃　—　把人生擺上桌</p>
+
+        <details class="guide-sec" open>
+          <summary>遊戲目的</summary>
+          <div class="guide-sec-body">
+            <p><strong>目的：</strong>讓參與者認識生命兩大基本元素「福報與智慧」，進一步知道如何在生活中累積，建立自利利他、和諧成長的文明觀念。</p>
+            <ul>
+              <li>福報來自「自利利他」的無害積累。</li>
+              <li>智慧來自「自覺覺他」的無漏覺察。</li>
+            </ul>
+            <p><strong>目標：</strong>認識福報與智慧，並幫助自己與別人從遊戲中畢業，才是真正的贏家。</p>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>基本設定</summary>
+          <div class="guide-sec-body">
+            <ul>
+              <li><strong>人數：</strong>4–6 人</li>
+              <li><strong>時間：</strong>至多 100 分鐘<span class="guide-note">（本 App 依人數調整：4 人 100 分、5 人 105 分、6 人 110 分）</span></li>
+              <li><strong>配件：</strong>遊戲棋盤、棋子 ×6、畢業禮帽 ×6、白骰子 ×2、黑骰子 ×1、十面骰子 ×1、積分表 ×1</li>
+            </ul>
+            <p class="guide-sub">牌庫</p>
+            <ul>
+              <li>機會｜功德卡 ×9 款、無常卡 ×5 款</li>
+              <li>命運｜命運牌 ×24 張</li>
+              <li>行動｜行動指令牌 ×24 張</li>
+              <li>共好加速器 ×10 張</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>遊戲開始與結束</summary>
+          <div class="guide-sec-body">
+            <p><strong>遊戲開始：</strong>玩家用十面骰子擲點兩次，分別決定自己的福報與智慧起始點數。</p>
+            <p><strong>遊戲結束：</strong>符合以下任一條件時即宣告結束，並進入結算。</p>
+            <p class="guide-sub">條件一：文明高度達標</p>
+            <ul>
+              <li>全體「文明積分」總和達本局設定之「文明高度」。</li>
+              <li>文明高度設定：由初始福慧點數合計最高的玩家擲骰決定。</li>
+              <li>本局「文明高度」＝ 一顆白骰點數 × 黑骰點數 ＋ 基礎 40 點。</li>
+            </ul>
+            <p class="guide-sub">條件二：全員畢業</p>
+            <ul>
+              <li>畢業宣告：福慧雙項皆 ≥ 55 即可宣告畢業，棋子戴上禮帽。</li>
+              <li>持續共好：畢業後仍須擲骰移動，參與至遊戲結束。</li>
+              <li>點數轉移：畢業者所獲「福慧點」可贈予任一玩家，文明 +1；「扣分」須自行承擔。</li>
+              <li>資格降級：福慧任一數值跌破 55 即摘帽恢復一般身分，重新達標可再次畢業。</li>
+            </ul>
+            <p class="guide-sub">條件三：時間終止</p>
+            <ul>
+              <li>遊戲進行達時間上限，當前玩家回合結束後，即宣告終止並進入結算。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>勝利機制</summary>
+          <div class="guide-sec-body">
+            <p>遊戲結束後結算每位玩家的綜合積分，最高者即為本局最終贏家——「福慧大富翁」。</p>
+            <p class="guide-formula">綜合積分 ＝ 福報總計 ＋ 智慧總計 ＋（文明 × 2）</p>
+            <p><strong>範例：</strong>玩家 A 福報 30、智慧 40、文明 10 → 30 ＋ 40 ＋（10 × 2）＝ <strong>90 分</strong>。</p>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>機會牌 — 取得方式</summary>
+          <div class="guide-sec-body">
+            <p>機會牌庫代表真實世界的「機緣」：隨福慧積累，會遇到貴人善緣（功德卡），也會遭遇不可控的意外（無常卡）。高度越高，機緣的影響越深刻。</p>
+            <ul>
+              <li><strong>踩格觸發（日常機緣）：</strong>棋子停留在「機會」格時，可抽取 1 張。</li>
+              <li><strong>境界突破（里程碑際遇）：</strong>福報與智慧同時達到特定分數時，觸發「升級考驗」或「強力加持」，達標當下可立即抽取對應數量的機會牌：
+                <ul>
+                  <li>領航者際遇：場上「第一位」福慧雙雙 ≥ 15 / 35 / 55 分的玩家，達標當下各抽 1 張。</li>
+                  <li>自我突破際遇：「任一玩家」福慧雙雙 ≥ 25 / 45 分時，達標當下各抽 1 張。</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>機會牌 — 使用方式</summary>
+          <div class="guide-sec-body">
+            <p class="guide-sub">無常卡</p>
+            <ul>
+              <li>抽到時必須立即翻開並執行效果。</li>
+              <li>不可預測也不可囤積，立即執行完畢（含選擇是否接受無常的禮物挑戰）即繳回牌庫。</li>
+            </ul>
+            <p class="guide-sub">功德卡</p>
+            <ul>
+              <li>單次消耗品，可不立即使用，使用後即繳回。</li>
+              <li>每位玩家手中最多持有 2 張；超額時須立即使用 1 張或棄掉 1 張。</li>
+              <li>請依牌面說明，在正確時機大聲宣告並出示卡牌。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary>積分表與里程碑</summary>
+          <div class="guide-sec-body">
+            <p>每局記錄各玩家的福報、智慧、文明點數與畢業情況，並標記自我突破獎勵（□雙 25 □雙 45）與超拔加分。</p>
+            <p class="guide-sub">里程碑得獎者（領跑得主）</p>
+            <ul>
+              <li>福慧雙雙 ≥ 15 分 🏆 領跑得主</li>
+              <li>福慧雙雙 ≥ 35 分 🏆 領跑得主</li>
+              <li>福慧雙雙 ≥ 55 分 🏆 領跑得主</li>
+            </ul>
+            <p>結算時填上「福慧大富翁」獲勝者與其綜合積分。</p>
+          </div>
+        </details>
       </div>
     </div>
   </div>
