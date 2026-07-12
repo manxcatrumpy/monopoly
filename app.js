@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 48)';
+const APP_VERSION = '1.0.0 (build 49)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -921,17 +921,10 @@ function buildPlayerCard(p) {
 
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
-    <div class="pc-origin" data-picking="0">
-      <button class="pc-origin-open" data-act="origin-open" title="經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）">起始點加分</button>
-      <div class="pc-origin-pick">
-        <span class="pc-origin-label">起始點</span>
-        <button class="pc-origin-choice" data-act="origin-pass">經過</button>
-        <button class="pc-origin-choice stop" data-act="origin-stop">停格</button>
-        <button class="pc-origin-x" data-act="origin-cancel" aria-label="取消">✕</button>
-      </div>
+    <div class="pc-actions">
+      <button class="pc-origin-open" data-act="origin" title="經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）">起始點加分</button>
+      <button class="pc-adjust" data-act="adjust" title="一次調整 福報／智慧／文明">批次調分</button>
     </div>
-
-    <button class="pc-adjust" data-act="adjust" title="一次調整 福報／智慧／文明">批次調分</button>
 
     <footer class="pc-foot">
       <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
@@ -946,16 +939,8 @@ function buildPlayerCard(p) {
       const stat = t.dataset.stat;
       const delta = parseInt(t.dataset.delta, 10);
       adjustStat(p.id, stat, delta);
-    } else if (t.closest('[data-act="origin-open"]')) {
-      card.querySelector('.pc-origin').dataset.picking = '1';
-    } else if (t.closest('[data-act="origin-cancel"]')) {
-      card.querySelector('.pc-origin').dataset.picking = '0';
-    } else if (t.closest('[data-act="origin-pass"]')) {
-      scoreOrigin(p.id, false);
-      card.querySelector('.pc-origin').dataset.picking = '0';
-    } else if (t.closest('[data-act="origin-stop"]')) {
-      scoreOrigin(p.id, true);
-      card.querySelector('.pc-origin').dataset.picking = '0';
+    } else if (t.closest('[data-act="origin"]')) {
+      openOriginModal(p.id);
     } else if (t.closest('[data-act="adjust"]')) {
       openAdjustModal(p.id);
     } else if (t.matches('[data-act="remove"]')) {
@@ -1083,22 +1068,47 @@ function applyAdjust() {
 
 // 起始點 · 回歸初心 快捷加分（基本表）。停格＝經過兩倍（福/慧）；畢業才加文明（自動判斷）。
 // 卡片加成（豐盛/覺醒）此版不處理，若玩家持有請主持人手動補。
-function scoreOrigin(playerId, stop) {
-  const p = getPlayer(playerId); if (!p) return;
+// 起始點加分的基礎獎勵（停格＝經過兩倍福慧；畢業才加文明）。
+function originReward(p, stop) {
   const graduated = !!p.graduated;
-  const base = {
+  return {
     fortune: stop ? 2 : 1,
     wisdom:  stop ? 2 : 1,
     civ:     (stop ? 1 : 0) + (graduated ? 1 : 0),
   };
+}
+function scoreOrigin(playerId, stop) {
+  const p = getPlayer(playerId); if (!p) return;
   const mult = scoreMultiplier();
-  const r = scaleReward(base, mult);   // 衝刺階段自動 ×2
+  const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
   const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
   const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
+}
+
+// 起始點加分 modal：選 經過／停格，衝刺階段顯示 ×2 提示與加倍後的獎勵。
+let originTargetId = null;
+function openOriginModal(id) {
+  const p = getPlayer(id); if (!p) return;
+  originTargetId = id;
+  const mult = scoreMultiplier();
+  $('#origin-sub').textContent = p.name || '玩家';
+  $('#origin-sprint').classList.toggle('hidden', mult <= 1);
+  $('#origin-pass-desc').textContent = describeReward(scaleReward(originReward(p, false), mult));
+  $('#origin-stop-desc').textContent = describeReward(scaleReward(originReward(p, true), mult));
+  $('#origin-modal').classList.remove('hidden');
+}
+function closeOriginModal() {
+  $('#origin-modal').classList.add('hidden');
+  originTargetId = null;
+}
+function pickOrigin(stop) {
+  const id = originTargetId;
+  closeOriginModal();      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
+  if (id != null) scoreOrigin(id, stop);
 }
 function setStat(playerId, stat, value) {
   const p = getPlayer(playerId); if (!p) return;
@@ -1361,6 +1371,13 @@ function bindEvents() {
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
+
+  // 起始點加分 modal
+  $('#origin-close').addEventListener('click', closeOriginModal);
+  $('#origin-cancel').addEventListener('click', closeOriginModal);
+  $('.modal-backdrop', $('#origin-modal')).addEventListener('click', closeOriginModal);
+  $('#origin-pass-btn').addEventListener('click', () => pickOrigin(false));
+  $('#origin-stop-btn').addEventListener('click', () => pickOrigin(true));
 
   // 批次調分 modal
   $('#adjust-close').addEventListener('click', closeAdjustModal);

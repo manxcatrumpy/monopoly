@@ -628,34 +628,40 @@ button { font-family: inherit; }
 }
 .pc-remove:hover { color: var(--danger-deep); background: #FBEEEA; }
 
-/* 起始點加分：卡上一顆按鈕，點開後就地選 經過/停格。 */
-.pc-origin { padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line); }
-.pc-origin-open {
-  width: 100%;
-  background: var(--surface-2); border: 1px solid var(--line-strong);
-  color: var(--ink-dim); cursor: pointer;
+/* 卡片底部動作：起始點加分 / 批次調分（皆開啟 modal） */
+.pc-actions {
+  padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pc-origin-open, .pc-adjust {
+  width: 100%; cursor: pointer;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-dim);
   padding: 10px 14px; border-radius: var(--r-pill);
   font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
   min-height: 44px;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
+.pc-origin-open { background: var(--surface-2); }
 .pc-origin-open:hover { background: var(--fortune-tint); color: var(--fortune-ink); border-color: var(--fortune-soft); }
-.pc-origin-pick { display: none; align-items: center; gap: 8px; }
-.pc-origin[data-picking="1"] .pc-origin-open { display: none; }
-.pc-origin[data-picking="1"] .pc-origin-pick { display: flex; }
-.pc-origin-label { font-size: 10px; letter-spacing: 0.16em; color: var(--ink-mute); white-space: nowrap; }
-
-/* 批次調分：卡上一顆按鈕，開啟 modal 一次調整三項 */
-.pc-adjust {
-  width: 100%; margin-top: 8px;
-  background: var(--surface); border: 1px solid var(--line-strong);
-  color: var(--ink-dim); cursor: pointer;
-  padding: 10px 14px; border-radius: var(--r-pill);
-  font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
-  min-height: 44px;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
+.pc-adjust { background: var(--surface); }
 .pc-adjust:hover { background: var(--wisdom-tint); color: var(--wisdom-ink); border-color: var(--wisdom-soft); }
+
+/* 起始點加分 modal：兩個選項按鈕 */
+.origin-hint { margin: 0 0 14px; font-size: 12.5px; line-height: 1.6; color: var(--ink-mute); }
+.origin-choices { display: flex; flex-direction: column; gap: 10px; }
+.origin-choice-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  width: 100%; cursor: pointer; text-align: left;
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.origin-choice-btn:hover { background: var(--fortune-tint); border-color: var(--fortune-soft); transform: translateY(-1px); }
+.origin-choice-btn.stop:hover { background: var(--wisdom-tint); border-color: var(--wisdom-soft); }
+.origin-choice-btn .oc-title { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.origin-choice-btn .oc-desc { font-size: 13px; color: var(--fortune-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.origin-choice-btn.stop .oc-desc { color: var(--wisdom-ink); }
 
 /* 批次調分 modal */
 .modal-panel.adjust-panel { width: min(420px, 100%); }
