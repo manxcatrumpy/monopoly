@@ -356,6 +356,35 @@
     </div>
   </div>
 
+  <!-- 起始點加分 modal -->
+  <div id="origin-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="origin-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel adjust-panel">
+      <header class="modal-head">
+        <h2 id="origin-title">起始點加分</h2>
+        <button class="icon-btn" id="origin-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="adjust-sub" id="origin-sub">玩家</p>
+        <div class="adjust-sprint hidden" id="origin-sprint">無常與恩典齊發 — 選擇後自動 ×2</div>
+        <p class="origin-hint">經過或停在起始點時，一鍵套用福慧文明加分（畢業者自動加文明）。</p>
+        <div class="origin-choices">
+          <button class="origin-choice-btn" id="origin-pass-btn" type="button">
+            <span class="oc-title">經過起始點</span>
+            <span class="oc-desc" id="origin-pass-desc"></span>
+          </button>
+          <button class="origin-choice-btn stop" id="origin-stop-btn" type="button">
+            <span class="oc-title">停在起始點</span>
+            <span class="oc-desc" id="origin-stop-desc"></span>
+          </button>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <button class="btn" id="origin-cancel" type="button">取消</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- 批次調分 modal -->
   <div id="adjust-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adjust-title">
     <div class="modal-backdrop"></div>
