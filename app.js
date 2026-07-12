@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 47)';
+const APP_VERSION = '1.0.0 (build 48)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1086,13 +1086,17 @@ function applyAdjust() {
 function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
   const graduated = !!p.graduated;
-  const r = {
+  const base = {
     fortune: stop ? 2 : 1,
     wisdom:  stop ? 2 : 1,
     civ:     (stop ? 1 : 0) + (graduated ? 1 : 0),
   };
-  STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, (p[stat] || 0) + r[stat]); });
-  const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}`;
+  const mult = scoreMultiplier();
+  const r = scaleReward(base, mult);   // 衝刺階段自動 ×2
+  const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
+  STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
+  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
 }
