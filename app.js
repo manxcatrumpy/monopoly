@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 46)';
+const APP_VERSION = '1.0.0 (build 47)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -931,6 +931,8 @@ function buildPlayerCard(p) {
       </div>
     </div>
 
+    <button class="pc-adjust" data-act="adjust" title="一次調整 福報／智慧／文明">批次調分</button>
+
     <footer class="pc-foot">
       <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
       <button class="pc-remove" data-act="remove">移除</button>
@@ -954,6 +956,8 @@ function buildPlayerCard(p) {
     } else if (t.closest('[data-act="origin-stop"]')) {
       scoreOrigin(p.id, true);
       card.querySelector('.pc-origin').dataset.picking = '0';
+    } else if (t.closest('[data-act="adjust"]')) {
+      openAdjustModal(p.id);
     } else if (t.matches('[data-act="remove"]')) {
       confirmModal({ title: '移除玩家', message: `確定要移除「${p.name || '玩家'}」？`, confirmText: '移除', danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
@@ -1014,6 +1018,67 @@ function getPlayer(id) { return state.players.find(p => p.id === id); }
 function adjustStat(playerId, stat, delta) {
   const p = getPlayer(playerId); if (!p) return;
   setStat(playerId, stat, (p[stat] || 0) + delta);
+}
+
+// ─────────── 批次調分 ───────────
+// 一次設定 福/慧/文明 的增減量，送出後套用；衝刺階段三項自動 ×2。
+let adjustTargetId = null;
+function adjustInputs() {
+  const out = {};
+  STATS.forEach(stat => {
+    const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
+    out[stat] = inp ? (parseInt(inp.value, 10) || 0) : 0;
+  });
+  return out;
+}
+function renderAdjustPreview() {
+  const p = getPlayer(adjustTargetId); if (!p) return;
+  const mult = scoreMultiplier();
+  const raw = adjustInputs();
+  STATS.forEach(stat => {
+    const row = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"]`);
+    if (!row) return;
+    const applied = raw[stat] * mult;
+    const next = Math.max(0, (p[stat] || 0) + applied);
+    const prev = row.querySelector('.adjust-preview');
+    if (raw[stat] === 0) {
+      prev.textContent = `目前 ${p[stat] || 0}`;
+    } else {
+      const sign = applied > 0 ? '+' : '';
+      prev.textContent = `${p[stat] || 0} → ${next}　(${sign}${applied})`;
+    }
+  });
+}
+function openAdjustModal(id) {
+  const p = getPlayer(id); if (!p) return;
+  adjustTargetId = id;
+  $('#adjust-sub').textContent = p.name || '玩家';
+  STATS.forEach(stat => {
+    const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
+    if (inp) inp.value = '0';
+  });
+  $('#adjust-sprint').classList.toggle('hidden', !sprintActive());
+  renderAdjustPreview();
+  $('#adjust-modal').classList.remove('hidden');
+}
+function closeAdjustModal() {
+  $('#adjust-modal').classList.add('hidden');
+  adjustTargetId = null;
+}
+function applyAdjust() {
+  const p = getPlayer(adjustTargetId); if (!p) { closeAdjustModal(); return; }
+  const name = p.name || '玩家';
+  const mult = scoreMultiplier();
+  const scaled = scaleReward(adjustInputs(), mult);      // 衝刺階段三項 ×2
+  const hasChange = STATS.some(stat => scaled[stat]);
+  if (!hasChange) { closeAdjustModal(); return; }
+  closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
+  const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
+  STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
+  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const msg = `${name} 批次調分　${describeReward(scaled)}${tag}`;
+  toast(msg, 'grad');
+  logEvent(msg, 'grad');
 }
 
 // 起始點 · 回歸初心 快捷加分（基本表）。停格＝經過兩倍（福/慧）；畢業才加文明（自動判斷）。
@@ -1292,6 +1357,21 @@ function bindEvents() {
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
+
+  // 批次調分 modal
+  $('#adjust-close').addEventListener('click', closeAdjustModal);
+  $('#adjust-cancel').addEventListener('click', closeAdjustModal);
+  $('.modal-backdrop', $('#adjust-modal')).addEventListener('click', closeAdjustModal);
+  $('#adjust-apply').addEventListener('click', applyAdjust);
+  $('#adjust-rows').addEventListener('click', (e) => {
+    const b = e.target.closest('.adjust-step'); if (!b) return;
+    const inp = b.closest('.adjust-row').querySelector('.adjust-input');
+    inp.value = String((parseInt(inp.value, 10) || 0) + parseInt(b.dataset.step, 10));
+    renderAdjustPreview();
+  });
+  $('#adjust-rows').addEventListener('input', (e) => {
+    if (e.target.classList.contains('adjust-input')) renderAdjustPreview();
+  });
 
   // 遊戲說明 modal
   $('#btn-guide').addEventListener('click', () => $('#guide-modal').classList.remove('hidden'));

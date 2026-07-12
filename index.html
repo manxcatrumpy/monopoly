@@ -356,6 +356,54 @@
     </div>
   </div>
 
+  <!-- 批次調分 modal -->
+  <div id="adjust-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adjust-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel adjust-panel">
+      <header class="modal-head">
+        <h2 id="adjust-title">批次調分</h2>
+        <button class="icon-btn" id="adjust-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="adjust-sub" id="adjust-sub">玩家</p>
+        <div class="adjust-sprint hidden" id="adjust-sprint">無常與恩典齊發 — 送出後三項自動 ×2</div>
+        <div class="adjust-rows" id="adjust-rows">
+          <div class="adjust-row" data-stat="fortune">
+            <span class="adjust-label"><span class="dot dot-fortune"></span>福報</span>
+            <div class="adjust-ctrl">
+              <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
+              <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="福報增減量" />
+              <button class="adjust-step" data-step="1" type="button" aria-label="增加">＋</button>
+            </div>
+            <span class="adjust-preview"></span>
+          </div>
+          <div class="adjust-row" data-stat="wisdom">
+            <span class="adjust-label"><span class="dot dot-wisdom"></span>智慧</span>
+            <div class="adjust-ctrl">
+              <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
+              <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="智慧增減量" />
+              <button class="adjust-step" data-step="1" type="button" aria-label="增加">＋</button>
+            </div>
+            <span class="adjust-preview"></span>
+          </div>
+          <div class="adjust-row" data-stat="civ">
+            <span class="adjust-label"><span class="dot dot-civ"></span>文明</span>
+            <div class="adjust-ctrl">
+              <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
+              <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="文明增減量" />
+              <button class="adjust-step" data-step="1" type="button" aria-label="增加">＋</button>
+            </div>
+            <span class="adjust-preview"></span>
+          </div>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <button class="btn" id="adjust-cancel" type="button">取消</button>
+        <button class="btn btn-primary" id="adjust-apply" type="button">套用</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- 遊戲說明 modal -->
   <div id="guide-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
     <div class="modal-backdrop"></div>
