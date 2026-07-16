@@ -179,7 +179,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.0.0 (build 49)';
+const APP_VERSION = '1.0.0 (build 50)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1110,6 +1110,101 @@ function pickOrigin(stop) {
   closeOriginModal();      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   if (id != null) scoreOrigin(id, stop);
 }
+
+// ─────────── 命運升級卡 ───────────
+// 實體命運牌的特殊卡：讓自己（或已畢業者贈予的對象）直接進入畢業模式。
+// 智慧／福報／文明 +6（衝刺階段 ×2 → +12），福慧至少直達畢業門檻 55。
+// 「直達」屬特殊通道：途中跨過的里程不另觸發待抽卡提醒 —
+// 比照開局預標：單項與自我突破預先標記、領航者靜默認領。
+let destinyDrawerId = null;
+let destinyTargetId = null;
+function destinyBonus() { return 6 * scoreMultiplier(); }
+function openDestinyModal() {
+  if (!state.players.length) { toast('尚未開局'); return; }
+  destinyDrawerId = null;
+  destinyTargetId = null;
+  $('#destiny-sprint').classList.toggle('hidden', !sprintActive());
+  renderDestinyBody();
+  $('#destiny-modal').classList.remove('hidden');
+}
+function closeDestinyModal() {
+  $('#destiny-modal').classList.add('hidden');
+  destinyDrawerId = null;
+  destinyTargetId = null;
+}
+function destinyPlayerButtons(players, act) {
+  return `<div class="destiny-players">` + players.map(p =>
+    `<button class="destiny-player-btn" data-${act}="${p.id}" type="button">` +
+    `${escapeHtml(p.name || '玩家')}${p.graduated ? '<span class="dp-grad">已畢業</span>' : ''}</button>`
+  ).join('') + `</div>`;
+}
+function destinyPreviewHtml(p) {
+  const b = destinyBonus();
+  const nf = Math.max((p.fortune || 0) + b, GRAD_THRESHOLD);
+  const nw = Math.max((p.wisdom || 0) + b, GRAD_THRESHOLD);
+  const nc = (p.civ || 0) + b;
+  return `
+    <ul class="destiny-preview">
+      <li><span>福報</span>${p.fortune || 0} → <strong>${nf}</strong></li>
+      <li><span>智慧</span>${p.wisdom || 0} → <strong>${nw}</strong></li>
+      <li><span>文明</span>${p.civ || 0} → <strong>${nc}</strong></li>
+    </ul>
+    <p class="destiny-note">福慧直達畢業門檻 ${GRAD_THRESHOLD}，進入畢業模式。</p>`;
+}
+function renderDestinyBody() {
+  const box = $('#destiny-body');
+  if (!box) return;
+  const drawer = getPlayer(destinyDrawerId);
+  if (!drawer) {
+    box.innerHTML = `<p class="destiny-q">誰抽到了命運升級卡？</p>` +
+      destinyPlayerButtons(state.players, 'pick');
+    return;
+  }
+  const target = getPlayer(destinyTargetId);
+  if (drawer.graduated && !target) {
+    box.innerHTML =
+      `<p class="destiny-q"><strong>${escapeHtml(drawer.name || '玩家')}</strong> 已畢業 — 可將此卡贈予任一玩家（對方可婉拒）</p>` +
+      destinyPlayerButtons(state.players.filter(p => p.id !== drawer.id), 'gift') +
+      `<div class="destiny-actions"><button class="btn" data-back="1" type="button">返回</button></div>`;
+    return;
+  }
+  const to = target || drawer;
+  const giftNote = target ? `<p class="destiny-q">由 ${escapeHtml(drawer.name || '玩家')} 贈予 <strong>${escapeHtml(to.name || '玩家')}</strong></p>`
+                          : `<p class="destiny-q">套用給 <strong>${escapeHtml(to.name || '玩家')}</strong></p>`;
+  box.innerHTML = giftNote + destinyPreviewHtml(to) +
+    `<div class="destiny-actions">` +
+    `<button class="btn" data-back="1" type="button">返回</button>` +
+    `<button class="btn btn-primary" data-apply="${to.id}" type="button">套用</button></div>`;
+}
+function applyDestinyUpgrade(targetId, drawerId) {
+  const p = getPlayer(targetId); if (!p) { closeDestinyModal(); return; }
+  const drawer = getPlayer(drawerId);
+  const mult = scoreMultiplier();
+  const b = 6 * mult;
+  const of = p.fortune || 0, ow = p.wisdom || 0, oc = p.civ || 0;
+  p.fortune = Math.max(of + b, GRAD_THRESHOLD);
+  p.wisdom  = Math.max(ow + b, GRAD_THRESHOLD);
+  p.civ     = oc + b;
+  // 特殊通道：途中里程不觸發（預標單項／自我突破；領航者靜默認領，比照開局）
+  ['fortune', 'wisdom'].forEach(stat => {
+    MILESTONES.forEach(m => { if (p[stat] >= m) p.notified[key(stat, m)] = true; });
+  });
+  SELF_THRESHOLDS.forEach(n => { if (Math.min(p.fortune, p.wisdom) >= n) p.notified['self' + n] = true; });
+  NAV_THRESHOLDS.forEach(n => {
+    if (state.navigatorClaimed[n] == null && Math.min(p.fortune, p.wisdom) >= n) state.navigatorClaimed[n] = p.id;
+  });
+  closeDestinyModal();
+  checkGraduation(p);          // 戴帽＋畢業通知
+  save();
+  updatePlayerCard(p);
+  updateTopbar();
+  const delta = { fortune: p.fortune - of, wisdom: p.wisdom - ow, civ: p.civ - oc };
+  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const gift = drawer && drawer.id !== p.id ? `${drawer.name || '玩家'} 贈予 ` : '';
+  const msg = `命運升級卡　${gift}${p.name || '玩家'} 直入畢業模式　${describeReward(delta)}${tag}`;
+  toast(msg, 'grad');
+  logEvent(msg, 'grad');
+}
 function setStat(playerId, stat, value) {
   const p = getPlayer(playerId); if (!p) return;
   const old = p[stat] || 0;
@@ -1371,6 +1466,26 @@ function bindEvents() {
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
+
+  // 命運升級卡 modal
+  $('#btn-destiny').addEventListener('click', openDestinyModal);
+  $('#destiny-close').addEventListener('click', closeDestinyModal);
+  $('#destiny-cancel').addEventListener('click', closeDestinyModal);
+  $('.modal-backdrop', $('#destiny-modal')).addEventListener('click', closeDestinyModal);
+  $('#destiny-body').addEventListener('click', (e) => {
+    const pick = e.target.closest('[data-pick]');
+    const gift = e.target.closest('[data-gift]');
+    const back = e.target.closest('[data-back]');
+    const apply = e.target.closest('[data-apply]');
+    if (pick) { destinyDrawerId = pick.dataset.pick; destinyTargetId = null; renderDestinyBody(); }
+    else if (gift) { destinyTargetId = gift.dataset.gift; renderDestinyBody(); }
+    else if (back) {
+      if (destinyTargetId) destinyTargetId = null;
+      else destinyDrawerId = null;
+      renderDestinyBody();
+    }
+    else if (apply) { applyDestinyUpgrade(apply.dataset.apply, destinyDrawerId); }
+  });
 
   // 起始點加分 modal
   $('#origin-close').addEventListener('click', closeOriginModal);
