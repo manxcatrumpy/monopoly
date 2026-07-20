@@ -824,3 +824,47 @@ button { font-family: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ─────────── 集體文明池標註（頂部看板） ─────────── */
+.civ-pool {
+  margin-left: 8px; font-size: 11px; font-weight: 600;
+  color: var(--civ-ink, #3F7A43); letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.civ-pool.hidden { display: none; }
+
+/* ─────────── 抉擇卡（文明反思／文明扣分） ─────────── */
+.card-display.dilemma { text-align: left; }
+.dilemma-cond {
+  margin: 10px 0 0; font-size: 13.5px; color: var(--ink);
+  background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px;
+}
+.dilemma-options { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.dilemma-opt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  border: 2px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2); padding: 12px 14px;
+  font: inherit; color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.dilemma-opt:not(.disabled):hover { border-color: var(--fortune); }
+.dilemma-opt.selected {
+  border-color: var(--fortune);
+  background: var(--fortune-tint);
+  box-shadow: 0 0 0 3px var(--fortune-soft);
+}
+.dilemma-opt.disabled { opacity: 0.45; cursor: not-allowed; }
+.do-label { display: block; font-weight: 700; font-size: 14.5px; letter-spacing: 0.02em; }
+.do-effects { display: block; margin-top: 5px; font-size: 13.5px; font-weight: 600; color: var(--fortune-ink); }
+.do-side { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-dim); }
+.do-insight { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.7; color: var(--ink-mute); }
+.dilemma-note { margin: 12px 0 0; font-size: 12px; color: var(--ink-mute); }
+
+/* 目錄裡的抉擇卡 */
+.cc-opt { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.cc-insight { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--ink-mute); }
+.cc-both {
+  font-size: 11px; font-weight: 600; vertical-align: 2px;
+  color: var(--fortune-ink);
+  border: 1px solid currentColor; border-radius: var(--r-pill); padding: 1px 7px;
+}
