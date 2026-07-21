@@ -73,7 +73,7 @@ const DEFAULT_ACTION_DECK = {
     ],
   },
   // 文明扣分：單人抉擇卡（行動後果 vs 補救機會）。此類卡以 options 呈現，
-  // 不套用分類 reward；「集體文明 -1」記在集體文明池，「免扣文明」＝補救選項無 pool。
+  // 不套用分類 reward；「集體文明 -1」＝場上所有玩家文明 -1（civAll），「免扣文明」＝補救選項無 civAll。
   '文明扣分': {
     reward: { fortune: 0, wisdom: 0, civ: 0 },
     rewardText: '依抉擇套用',
@@ -81,7 +81,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '廚房無名氏',
         scene: '用過的碗盤，沒洗就在水槽放著，打算等著哪個好心人幫你清理。',
         options: [
-          { label: '行動後果　放著不管', pool: -1,
+          { label: '行動後果　放著不管', civAll: -1,
             insight: '精緻的利己主義，將自己善後責任轉嫁給環境，導致集體文明倒退。' },
           { label: '補救機會　順手把旁邊積累的杯子也洗乾淨', each: { fortune: -2, wisdom: 1, civ: 1 },
             insight: '主動補漏的人，是集體文明的守護者。這種「多做一點」的覺悟，是文明進步的基石。' },
@@ -89,7 +89,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '已讀不回',
         scene: '群組裡主管或家人發出重要詢問，你明明看到了卻因為懶得思考，而假裝沒看見。',
         options: [
-          { label: '行動後果　假裝沒看見', pool: -1,
+          { label: '行動後果　假裝沒看見', civAll: -1,
             insight: '大家都等著別人當英雄時，溝通成本將大幅增加，團隊的信任與效率（文明）隨之癱瘓。' },
           { label: '補救機會　立刻回覆並提供力所能及的協助（免扣文明）', each: { fortune: -1, wisdom: -2 },
             insight: '強迫自己跳脫舒適圈，消耗心神（智慧）去思考解方，並付出行動（福報），及時拯救了團隊的運作。' },
@@ -97,7 +97,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '正義魔人',
         scene: '在大群組中，不留情面地指出同事的低級錯誤，雖然你講的沒錯，卻間接傷害彼此的關係。',
         options: [
-          { label: '行動後果　公開羞辱式指正', pool: -1,
+          { label: '行動後果　公開羞辱式指正', civAll: -1,
             insight: '帶著指責的「對」，往往比「錯」更傷人。以正義之名行羞辱之實，撕裂了群體的心理安全感。' },
           { label: '補救機會　顧全對方尊嚴、私下溝通（免扣文明）', each: { wisdom: -2 },
             insight: '用智慧包容他人的尊嚴，才是高維度的職場文明。' },
@@ -105,7 +105,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '冷氣／電燈忘記關',
         scene: '著急離開，卻因為不細心而「忘記」關閉冷氣與所有電燈。',
         options: [
-          { label: '行動後果　直接離開', pool: -1,
+          { label: '行動後果　直接離開', civAll: -1,
             insight: '無意識的粗心大意，造成了公用能源的虛耗，直接損害了群體的永續生存空間。' },
           { label: '補救機會　回頭關閉、額外付出止漏（免扣文明）', each: { fortune: -2, wisdom: -1 },
             insight: '用額外付出來彌補自己的缺失（福報），並找回當下的專注與覺知（智慧）來完成止漏。' },
@@ -113,7 +113,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '垃圾疊疊樂',
         scene: '公用垃圾桶已經滿到快要掉出來，你小心翼翼地把自己的垃圾疊在最頂端。',
         options: [
-          { label: '行動後果　疊上去就走', pool: -1,
+          { label: '行動後果　疊上去就走', civAll: -1,
             insight: '逃避眼前的麻煩，將爆發的風險推給下一個人，這種苟且的心態是文明衰退的縮影。' },
           { label: '補救機會　清運垃圾，並承諾未來將垃圾體積最小化', each: { fortune: -1, civ: 1 },
             insight: '承擔大家都不想做的髒活，並透過承諾改變未來的行為模式，這份願力能直接提升自我文明。' },
@@ -121,7 +121,7 @@ const DEFAULT_ACTION_DECK = {
       { name: '冰箱大地主',
         scene: '買了一堆東西，佔用公用冰箱資源，又常把東西放到過期，不僅浪費電力，更浪費食物與資源。',
         options: [
-          { label: '行動後果　繼續囤積到過期', each: { fortune: -2 }, pool: -1,
+          { label: '行動後果　繼續囤積到過期', each: { fortune: -2 }, civAll: -1,
             insight: '貪心與過度囤積，浪費食物即消耗了自身的福報，更擠壓了他人的公共空間，是損害文明的行為。' },
           { label: '補救機會　在群組坦白並承諾補上一瓶，將尷尬化為幽默（免扣文明）', each: { wisdom: -1 },
             insight: '放下身段承認錯誤需要極大的心理素質（智慧），透過真誠的溝通來修復被佔用的公共關係。' },
@@ -214,7 +214,7 @@ const DEFAULT_BOOST_DECK = [
   { name: '情緒修剪師', series: '文明反思', both: true,
     scene: '雙方因專案意見不合快要吵起來，若直接爆發將嚴重打擊團隊合作的氣氛。',
     options: [
-      { label: '選項 A　各自堅持，情緒宣洩', each: { fortune: -1, wisdom: -1 }, pool: -2,
+      { label: '選項 A　各自堅持，情緒宣洩', each: { fortune: -1, wisdom: -1 }, civAll: -2,
         insight: '放任情緒不僅內耗雙方的能量，更會破壞團隊的安全感，導致集體文明倒退。' },
       { label: '選項 B（減傷）　主動叫停、各自冷靜', each: { fortune: -1, wisdom: -3 },
         insight: '運用「智慧」按下暫停鍵。看似個人付出了忍耐的代價，卻成功為團隊止漏，守護了集體的和諧。' },
@@ -222,16 +222,16 @@ const DEFAULT_BOOST_DECK = [
   { name: '職場擋箭牌', series: '文明反思', both: true,
     scene: '團隊出包，主管正在氣頭上。你們兩位身為資深同仁，面臨是否出來扛責的抉擇。',
     options: [
-      { label: '選項 A　明哲保身：讓犯錯的新人單獨面對', pool: -1,
+      { label: '選項 A　明哲保身：讓犯錯的新人單獨面對', civAll: -1,
         insight: '沉默雖然能保全自己的能量，卻失去團隊的信任與擔當，無法建立文明團隊，團隊文化基石將迅速崩塌。' },
-      { label: '選項 B　承擔共好：共同出面承擔、緩衝主管情緒', each: { fortune: -1 }, pool: 1,
+      { label: '選項 B　承擔共好：共同出面承擔、緩衝主管情緒', each: { fortune: -1 }, civAll: 1,
         side: '新人（福＋慧最低者）智慧 +1',
         insight: '有意識地消耗自身的「福報」為他人遮風擋雨。這份利他精神不僅能提升集體文明，還能轉化為後輩成長的智慧。' },
     ] },
   { name: '流言止於智者', series: '文明反思', both: true,
     scene: '八卦流言傳到你們耳中，內容涉及另一位夥伴的私生活，大家都在等著你們接話。',
     options: [
-      { label: '選項 A　順口搭腔：加入討論', pool: -1,
+      { label: '選項 A　順口搭腔：加入討論', civAll: -1,
         insight: '不需付出個人成本的附和，卻是在消費他人的隱私，這會讓環境變得冷漠猜忌（信任瓦解）。' },
       { label: '選項 B　智慧止漏：用幽默轉移話題', each: { wisdom: -2 },
         insight: '消耗「智慧」來化解尷尬、不隨波逐流。主動截斷負能量的傳播，是建立高信任文明的關鍵。' },
@@ -239,7 +239,7 @@ const DEFAULT_BOOST_DECK = [
   { name: '家務大和解', series: '文明反思', both: true,
     scene: '家裡家務事堆積如山，你們兩位都累了一整天，本來想推給對方，氣氛逐漸緊繃。',
     options: [
-      { label: '選項 A　計較對錯：開始計較誰做得多', each: { fortune: -1 }, pool: -1,
+      { label: '選項 A　計較對錯：開始計較誰做得多', each: { fortune: -1 }, civAll: -1,
         insight: '在關係中爭輸贏，是最嚴重的能量消耗，既傷了彼此的福報，也破壞了家庭的文明品質。' },
       { label: '選項 B　福報止損：共同分工，或決定點外賣放鬆', each: { fortune: -3 },
         insight: '願意放下自我堅持、付出勞力或金錢，換來的是衝突的消弭與關係的維持。' },
@@ -257,7 +257,7 @@ const DEFAULT_BOOST_DECK = [
     options: [
       { label: '選項 A　婉言拒絕：保全自己',
         insight: '守住邊界並沒有錯，但社會也因此失去了互助躍升的機會，維持現狀（雙方無損、文明不變）。' },
-      { label: '選項 B　共好利他：花休息時間，幫忙理清思路', each: { fortune: -2, wisdom: -2 }, pool: 1,
+      { label: '選項 B　共好利他：花休息時間，幫忙理清思路', each: { fortune: -2, wisdom: -2 }, civAll: 1,
         insight: '將個人的「福報與智慧」跨界輸出。打破本位主義的互助，能創造出強大的集體文明共振。' },
     ] },
 ];
@@ -297,7 +297,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.1.0 (build 52)';
+const APP_VERSION = '1.1.0 (build 53)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -310,7 +310,6 @@ const defaultState = () => ({
   players: [],
   log: [],
   pendingDraws: [],   // 尚未處理的「抽卡」里程：主持人抽完卡後手動清除
-  civPool: 0,         // 集體文明池：不屬於任何個人的集體文明增減（總集體文明＝全員文明 ＋ 此池）
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
@@ -338,8 +337,6 @@ function load() {
     state.navigatorClaimed = Object.assign(emptyNavClaim(), state.navigatorClaimed || {});
     // Ensure pendingDraws shape (older saves predate this field)
     if (!Array.isArray(state.pendingDraws)) state.pendingDraws = [];
-    // Ensure civPool exists (older saves predate the collective-civ pool)
-    if (typeof state.civPool !== 'number') state.civPool = 0;
     // Ensure customDecks shape (older saves predate this field)
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.timer.running) {
@@ -364,7 +361,7 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
 }
 
 function totalCiv() {
-  return state.players.reduce((s, p) => s + (p.civ || 0), 0) + (state.civPool || 0);
+  return state.players.reduce((s, p) => s + (p.civ || 0), 0);
 }
 function totalFortune() {
   return state.players.reduce((s, p) => s + (p.fortune || 0), 0);
@@ -934,15 +931,7 @@ function updateTopbar() {
   const total = totalCiv();
   $('#civ-total').textContent = total;
 
-  // 集體文明池標註：不為 0 時顯示公共貢獻（＋n / −n）。
-  const poolEl = $('#civ-pool');
-  if (poolEl) {
-    const pool = state.civPool || 0;
-    poolEl.textContent = pool ? `含公共 ${pool > 0 ? '+' : ''}${pool}` : '';
-    poolEl.classList.toggle('hidden', !started || pool === 0);
-  }
-
-  const pct = Math.max(0, Math.min(100, (total / Math.max(1, state.civGoal)) * 100));
+  const pct = Math.min(100, (total / Math.max(1, state.civGoal)) * 100);
   $('#civ-bar-fill').style.width = pct + '%';
 
   // 集體文明達標＝勝利：進度條轉金、跳通知並記 log。旗標在回落時清除，
@@ -1456,7 +1445,6 @@ async function applySetup() {
   });
   state.log = [];
   state.pendingDraws = [];
-  state.civPool = 0;
   logEvent(isNext
     ? `進入第 ${state.roundNum} 局 · 文明高度 ${state.civGoal}`
     : `第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
@@ -1556,7 +1544,6 @@ function snapshotRound() {
   return JSON.parse(JSON.stringify({
     roundNum: state.roundNum,
     civGoal: state.civGoal,
-    civPool: state.civPool || 0,
     timer: state.timer,
     players: state.players,
     log: state.log,
@@ -1585,7 +1572,6 @@ async function restoreRound(idx) {
   // Load the chosen past round as the live game.
   state.roundNum = entry.roundNum;
   state.civGoal = entry.civGoal;
-  state.civPool = entry.civPool || 0;
   state.timer = entry.timer;
   state.players = entry.players;
   state.log = entry.log;
@@ -1691,7 +1677,7 @@ function viewRound(idx) {
     : '—';
   const players = entry.players || [];
   const sum = (k) => players.reduce((s, p) => s + (p[k] || 0), 0);
-  const totalCiv = sum('civ') + (entry.civPool || 0), reached = totalCiv >= (entry.civGoal || 0);
+  const totalCiv = sum('civ'), reached = totalCiv >= (entry.civGoal || 0);
 
   const playerCards = players.map(p => `
     <div class="hd-player ${p.graduated ? 'graduated' : ''}">
@@ -1899,21 +1885,21 @@ function renderBoostBody(c) {
 
 // ─────────── 抉擇卡（文明反思／文明扣分）渲染與套用 ───────────
 // 每張卡兩個選項；主持人依玩家實際抉擇點選其一再套用。`each` 套到每位收受者
-// （含個人文明 each.civ），`pool` 為集體文明池的增減。條件卡（生態紅利）依當前
-// 集體文明自動鎖定分支。衝刺階段所有增減自動 ×2。
+// （含個人文明 each.civ），`civAll` 為套用到場上所有玩家的文明增減。條件卡（生態紅利）
+// 依當前集體文明自動鎖定分支。衝刺階段所有增減自動 ×2。
 
-// 一個選項在目前衝刺倍率下的實際效果。
+// 一個選項在目前衝刺倍率下的實際效果。civAll＝套用到「場上所有玩家」的文明增減。
 function choiceEffects(opt) {
   const mult = scoreMultiplier();
-  return { each: scaleReward(opt.each || {}, mult), pool: (opt.pool || 0) * mult, mult };
+  return { each: scaleReward(opt.each || {}, mult), civAll: (opt.civAll || 0) * mult, mult };
 }
-// 「雙方各 福報 -1 · 智慧 -1　·　集體文明 -2」— 一行描述一個選項的效果。
+// 「雙方各 福報 -1 · 智慧 -1　·　全體文明 -2」— 一行描述一個選項的效果。
 function describeChoiceOption(card, opt) {
-  const { each, pool } = choiceEffects(opt);
+  const { each, civAll } = choiceEffects(opt);
   const parts = [];
   const eachTxt = describeReward(each);
   if (eachTxt) parts.push((card.both ? '雙方各　' : '') + eachTxt);
-  if (pool) parts.push(`集體文明 ${pool > 0 ? '+' : ''}${pool}`);
+  if (civAll) parts.push(`全體文明 ${civAll > 0 ? '+' : ''}${civAll}`);
   return parts.length ? parts.join('　·　') : '無點數變化';
 }
 
@@ -1956,7 +1942,7 @@ function renderChoiceCard(c) {
       ${condHtml}
       <div class="dilemma-options">${optionsHtml}</div>
       ${sprintHtml}
-      <p class="dilemma-note">「集體文明」增減記入公共池（總集體文明＝全員文明 ＋ 公共池）。</p>
+      <p class="dilemma-note">標示「全體文明」的增減會套用到場上每一位玩家的文明。</p>
     </div>
   `;
 
@@ -2014,12 +2000,13 @@ function renderChoiceCard(c) {
   });
 }
 
-// 套用抉擇：`each`（含個人文明）給每位收受者；`pool` 進集體文明池。負分安全（setStat 夾 0）。
+// 套用抉擇：`each`（含個人文明 each.civ）給每位收受者；`civAll` 套用到場上所有玩家的文明。
+// 負分安全（setStat 夾 0）。
 function applyChoiceCard(playerIds, card, optIdx) {
   const opt = (card.options || [])[optIdx];
   if (!opt) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
-  const { each, pool, mult } = choiceEffects(opt);
+  const { each, civAll, mult } = choiceEffects(opt);
   const names = [];
   ids.forEach(pid => {
     const p = getPlayer(pid);
@@ -2028,15 +2015,13 @@ function applyChoiceCard(playerIds, card, optIdx) {
     names.push(p.name || '玩家');
   });
   if (!names.length) return;
-  if (pool) {
-    state.civPool = (state.civPool || 0) + pool;
-    save();
-    updateTopbar();
+  if (civAll) {
+    state.players.forEach(p => setStat(p.id, 'civ', (p.civ || 0) + civAll));   // 集體文明＝場上所有玩家
   }
   const fx = describeChoiceOption(card, opt);
   const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
   const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
-  const positive = describeReward(each).indexOf('-') === -1 && pool >= 0;
+  const positive = describeReward(each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
@@ -2104,7 +2089,7 @@ function catalogChoiceCardHtml(c) {
     const parts = [];
     const eachTxt = describeReward(o.each || {});
     if (eachTxt) parts.push((c.both ? '雙方各　' : '') + eachTxt);
-    if (o.pool) parts.push(`集體文明 ${o.pool > 0 ? '+' : ''}${o.pool}`);
+    if (o.civAll) parts.push(`全體文明 ${o.civAll > 0 ? '+' : ''}${o.civAll}`);
     const fx = parts.length ? parts.join('　·　') : '無點數變化';
     return `
       <div class="cc-opt">
@@ -2243,7 +2228,7 @@ function validateChoiceCard(c, group) {
   for (const o of c.options) {
     if (!o || typeof o.label !== 'string' || !o.label)   return `「${c.name}」某選項缺 label`;
     if (o.each !== undefined && (typeof o.each !== 'object' || o.each === null)) return `「${c.name}」選項 each 需為物件`;
-    if (o.pool !== undefined && !Number.isFinite(o.pool)) return `「${c.name}」選項 pool 需為數字`;
+    if (o.civAll !== undefined && !Number.isFinite(o.civAll)) return `「${c.name}」選項 civAll 需為數字`;
   }
   return null;
 }

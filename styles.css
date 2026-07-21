@@ -825,14 +825,6 @@ button { font-family: inherit; }
   }
 }
 
-/* ─────────── 集體文明池標註（頂部看板） ─────────── */
-.civ-pool {
-  margin-left: 8px; font-size: 11px; font-weight: 600;
-  color: var(--civ-ink, #3F7A43); letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.civ-pool.hidden { display: none; }
-
 /* ─────────── 抉擇卡（文明反思／文明扣分） ─────────── */
 /* 抉擇卡沿用原卡「置中的星星／分類／卡名／情境」；只有下方內文區塊靠左 */
 .card-display.dilemma .dilemma-cond,
