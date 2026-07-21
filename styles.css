@@ -834,7 +834,9 @@ button { font-family: inherit; }
 .civ-pool.hidden { display: none; }
 
 /* ─────────── 抉擇卡（文明反思／文明扣分） ─────────── */
-.card-display.dilemma { text-align: left; }
+/* 抉擇卡沿用原卡「置中的星星／分類／卡名／情境」；只有下方內文區塊靠左 */
+.card-display.dilemma .dilemma-cond,
+.card-display.dilemma .dilemma-note { text-align: left; }
 .dilemma-cond {
   margin: 10px 0 0; font-size: 13.5px; color: var(--ink);
   background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px;
