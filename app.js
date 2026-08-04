@@ -564,7 +564,7 @@ function logEvent(text, kind = '') {
 function renderLog() {
   const ul = $('#milestone-log');
   if (!state.log.length) {
-    ul.innerHTML = '<li class="empty">尚無觸發</li>';
+    ul.innerHTML = `<li class="empty">${t('messages.empty_log')}</li>`;
     return;
   }
   ul.innerHTML = state.log.map(e =>
@@ -1399,7 +1399,7 @@ function closeHistory() {
 function renderHistoryList() {
   const ul = $('#history-list');
   if (!state.history || !state.history.length) {
-    ul.innerHTML = '<li class="history-empty">尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。</li>';
+    ul.innerHTML = `<li class="history-empty">${t('messages.empty_history')}</li>`;
     return;
   }
   // Newest first
@@ -1509,7 +1509,7 @@ function backToHistoryList() {
   if (detail) detail.classList.add('hidden');
   if (list) list.classList.remove('hidden');
   const title = $('#history-title');
-  if (title) title.textContent = '歷史紀錄';
+  if (title) title.textContent = t('ui.btn_history');
 }
 
 // ─────────── Card draw ───────────

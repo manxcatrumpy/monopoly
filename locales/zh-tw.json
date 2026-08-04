@@ -254,7 +254,9 @@
     "round_started": "已進入第 {round} 局 — 上一局已存入歷史紀錄",
     "round_restored": "已切回第 {round} 局 — 第 {oldRound} 局已存入歷史",
     "round_started_log": "進入第 {round} 局 · 文明高度 {goal}",
-    "round_restored_log": "第 {round} 局開局 · 文明高度 {goal}"
+    "round_restored_log": "第 {round} 局開局 · 文明高度 {goal}",
+    "empty_log": "尚無觸發",
+    "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。"
   },
   "common": {
     "player": "玩家"
