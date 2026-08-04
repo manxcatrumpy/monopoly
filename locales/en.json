@@ -82,7 +82,11 @@
     "warn_incomplete_msg": "Some players haven't rolled stats. Start anyway?",
     "warn_incomplete_btn": "Start Anyway",
     "dice_rolling": "{name} rolling {statLabel}…",
-    "title_next": "Next Round Setup"
+    "title_next": "Next Round Setup",
+    "btn_roll_fortune": "Roll Fort",
+    "btn_roll_wisdom": "Roll Wis",
+    "aria_fortune_init": "Initial Fortune",
+    "aria_wisdom_init": "Initial Wisdom"
   },
   "dm": {
     "title": "Deck Manager",

@@ -393,7 +393,7 @@ function resetDiceStage() {
   die.style.transform = '';
   startDieIdle();             // resume the slow resting turntable
   const cap = $('#dice-caption');
-  if (cap) cap.textContent = '點玩家旁的「擲福 / 擲慧」開始擲骰';
+  if (cap) cap.textContent = t('setup.dice_caption');
 }
 
 function rollSetupDie(stat, idx) {
@@ -1129,11 +1129,11 @@ function renderSetup() {
     const isTop = top && top.i === i;
     return `
       <div class="setup-player-row ${isTop ? 'top' : ''}" data-idx="${i}">
-        <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="玩家 ${i + 1}" maxlength="10" />
-        <button class="mini-btn" data-roll="fortune">擲福</button>
-        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="" aria-label="福報初始值" />
-        <button class="mini-btn" data-roll="wisdom">擲慧</button>
-        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="" aria-label="智慧初始值" />
+        <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="${t('common.player')} ${i + 1}" maxlength="10" />
+        <button class="mini-btn" data-roll="fortune">${t('setup.btn_roll_fortune')}</button>
+        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="" aria-label="${t('setup.aria_fortune_init')}" />
+        <button class="mini-btn" data-roll="wisdom">${t('setup.btn_roll_wisdom')}</button>
+        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="" aria-label="${t('setup.aria_wisdom_init')}" />
       </div>
     `;
   }).join('');

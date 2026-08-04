@@ -82,7 +82,11 @@
     "warn_incomplete_msg": "有玩家尚未掷福慧初始值，仍要开始吗？",
     "warn_incomplete_btn": "仍要开始",
     "dice_rolling": "{name} · {statLabel} 掷骰中…",
-    "title_next": "进入下一局 — 启程准备"
+    "title_next": "进入下一局 — 启程准备",
+    "btn_roll_fortune": "掷福",
+    "btn_roll_wisdom": "掷慧",
+    "aria_fortune_init": "福报初始值",
+    "aria_wisdom_init": "智慧初始值"
   },
   "dm": {
     "title": "卡牌资料管理",
