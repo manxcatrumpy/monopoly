@@ -790,9 +790,9 @@ function renderPlayers() {
     grid.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g stroke="#E0A331" stroke-width="2.6" stroke-linecap="round"><line x1="32" y1="17" x2="32" y2="10.5"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(45 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(90 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(135 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(180 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(225 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(270 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(315 32 32)"></line></g><circle cx="32" cy="32" r="11.5" fill="#EFC158"></circle></svg></div>
-        <h3>尚未開局</h3>
-        <p>點右上「設定」開始新一局《福慧大富翁》。</p>
-        <button class="btn btn-primary" id="empty-setup-btn">開新局</button>
+        <h3>${t('messages.not_started_title')}</h3>
+        <p>${t('messages.not_started_desc')}</p>
+        <button class="btn btn-primary" id="empty-setup-btn">${t('ui.btn_new_game')}</button>
       </div>`;
     $('#empty-setup-btn').addEventListener('click', openSetup);
     return;

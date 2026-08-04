@@ -23,7 +23,8 @@
     "btn_draw_action": "抽 行動指令牌",
     "btn_draw_boost": "抽 共好加速卡",
     "btn_browse_cards": "瀏覽全部卡牌",
-    "btn_deck_manager": "管理卡牌資料"
+    "btn_deck_manager": "管理卡牌資料",
+    "btn_new_game": "開新局"
   },
   "banner": {
     "sprint_title": "無常與恩典齊發",
@@ -257,7 +258,9 @@
     "round_started_log": "進入第 {round} 局 · 文明高度 {goal}",
     "round_restored_log": "第 {round} 局開局 · 文明高度 {goal}",
     "empty_log": "尚無觸發",
-    "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。"
+    "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。",
+    "not_started_title": "尚未開局",
+    "not_started_desc": "點右上「設定」開始新一局《福慧大富翁》。"
   },
   "common": {
     "player": "玩家"

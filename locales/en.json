@@ -23,7 +23,8 @@
     "btn_draw_action": "Draw Action Card",
     "btn_draw_boost": "Draw Boost Card",
     "btn_browse_cards": "Browse Cards",
-    "btn_deck_manager": "Manage Decks"
+    "btn_deck_manager": "Manage Decks",
+    "btn_new_game": "New Game"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
@@ -257,7 +258,9 @@
     "round_started_log": "Round {round} · Civ Goal {goal}",
     "round_restored_log": "Restored Round {round} · Civ Goal {goal}",
     "empty_log": "No events",
-    "empty_history": "No history yet. Saves automatically."
+    "empty_history": "No history yet. Saves automatically.",
+    "not_started_title": "Game Not Started",
+    "not_started_desc": "Click 'Setup' on the top right to start a new game."
   },
   "common": {
     "player": "Player"
