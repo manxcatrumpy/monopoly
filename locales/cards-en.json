@@ -1,6 +1,6 @@
 {
   "actionDeck": {
-    "功德卡": {
+    "Merit Card": {
       "reward": { "fortune": 10, "wisdom": 10 },
       "rewardText": "Fortune +10 · Wisdom +10",
       "cards": [
@@ -15,7 +15,7 @@
         { "name": "Pick up trash", "desc": "You picked up litter in the park." }
       ]
     },
-    "無常卡": {
+    "Impermanence Card": {
       "reward": { "fortune": -5, "wisdom": 5 },
       "rewardText": "Fortune -5 · Wisdom +5",
       "cards": [
@@ -26,7 +26,7 @@
         { "name": "Misunderstanding", "desc": "You had a misunderstanding with a friend, causing sadness." }
       ]
     },
-    "命運牌": {
+    "Fate Card": {
       "cards": [
         {
           "name": "Unexpected Bonus",
@@ -66,7 +66,7 @@
         }
       ]
     },
-    "行動指令牌": {
+    "Action Card": {
       "cards": [
         {
           "name": "Take a deep breath",

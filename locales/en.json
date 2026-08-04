@@ -112,7 +112,22 @@
     "tab_boost": "Boost Cards"
   },
   "card": {
-    "title": "Action Card"
+    "title": "Action Card",
+    "title_action": "Action Card",
+    "title_boost": "Boost Card",
+    "btn_redraw": "Draw Another",
+    "btn_apply_reward": "Apply Reward",
+    "btn_apply_dilemma": "Apply Dilemma",
+    "lbl_apply_to": "Apply to",
+    "lbl_self": "Self",
+    "lbl_prev_player": "Prev Player",
+    "lbl_other_player": "Opponent",
+    "lbl_select_player": "— Select Player —",
+    "reward_prefix": "Reward: ",
+    "reward_sprint": "Sprint ×{mult} Reward: {reward}",
+    "reward_original": "(Orig. {reward})",
+    "side_prefix": "Side Effect: ",
+    "side_sprint_remind": "Sprint Active: Side effect is NOT auto-doubled. Apply ×2 manually."
   },
   "history": {
     "title": "History"

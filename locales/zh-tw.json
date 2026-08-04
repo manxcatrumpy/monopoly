@@ -112,7 +112,22 @@
     "tab_boost": "共好加速卡"
   },
   "card": {
-    "title": "行動指令牌"
+    "title": "行動指令牌",
+    "title_action": "行動指令牌",
+    "title_boost": "共好加速卡",
+    "btn_redraw": "再抽一張",
+    "btn_apply_reward": "套用獎勵",
+    "btn_apply_dilemma": "套用抉擇",
+    "lbl_apply_to": "套用至",
+    "lbl_self": "本人",
+    "lbl_prev_player": "上一家",
+    "lbl_other_player": "對方",
+    "lbl_select_player": "— 請選擇玩家 —",
+    "reward_prefix": "獎勵　",
+    "reward_sprint": "無常與恩典齊發 ×{mult}　獎勵　{reward}",
+    "reward_original": "（原 {reward}）",
+    "side_prefix": "附加：",
+    "side_sprint_remind": "衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用"
   },
   "history": {
     "title": "歷史紀錄"

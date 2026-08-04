@@ -1526,7 +1526,7 @@ function openCardDraw(deckKey) {
   currentDeckKey = deckKey;
   currentCard = drawFromDeck(deckKey);
   currentChoiceOpt = null;
-  $('#card-title').textContent = DECKS[deckKey].title;
+  $('#card-title').textContent = deckKey === 'action' ? t('card.title_action') : t('card.title_boost');
   renderCard();
   $('#card-modal').classList.remove('hidden');
 }
@@ -1571,27 +1571,27 @@ function renderCard() {
   $('#card-body').innerHTML = bodyHtml;
 
   const playerOpts = state.players.map(p =>
-    `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
+    `<option value="${p.id}">${escapeHtml(p.name || t('common.player'))}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
   ).join('');
   const selectHtml = (id, label) => `
       <label class="row">
         <span>${label}</span>
         <select id="${id}">
-          <option value="">— 請選擇玩家 —</option>
+          <option value="">${t('card.lbl_select_player')}</option>
           ${playerOpts}
         </select>
       </label>`;
   // 「雙方」卡（boost）要同時套用給本人與上一家，給兩個下拉；其餘卡用單一收受者。
   const recipientControls = c.both
-    ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '上一家')
-    : selectHtml('card-recipient', '套用至');
+    ? selectHtml('card-recipient', t('card.lbl_self')) + selectHtml('card-recipient2', t('card.lbl_prev_player'))
+    : selectHtml('card-recipient', t('card.lbl_apply_to'));
   $('#card-foot').innerHTML = `
     ${cardPlayersRefHtml()}
     <div class="card-actions">
       ${recipientControls}
       <div class="card-buttons">
-        <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
-        <button class="btn btn-primary" id="card-apply">套用獎勵</button>
+        <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
+        <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_reward')}</button>
       </div>
     </div>
   `;
@@ -1620,10 +1620,10 @@ function rewardLineHtml(c) {
   const mult = scoreMultiplier();
   if (mult > 1) {
     const doubled = describeReward(scaleReward(c.reward || {}, mult));
-    return `<div class="card-reward sprint">無常與恩典齊發 ×${mult}　獎勵　${escapeHtml(doubled)}` +
-           `<span class="card-reward-base">（原 ${escapeHtml(c.rewardText)}）</span></div>`;
+    return `<div class="card-reward sprint">${t('card.reward_sprint', {mult, reward: escapeHtml(doubled)})}` +
+           `<span class="card-reward-base">${t('card.reward_original', {reward: escapeHtml(c.rewardText)})}</span></div>`;
   }
-  return `<div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>`;
+  return `<div class="card-reward">${t('card.reward_prefix')}${escapeHtml(c.rewardText)}</div>`;
 }
 
 // The 附加 (side) line. Side effects are applied by hand, so during the sprint
@@ -1631,9 +1631,9 @@ function rewardLineHtml(c) {
 function sideLineHtml(c) {
   if (!c.side) return '';
   const note = scoreMultiplier() > 1
-    ? '<span class="card-side-x2">衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用</span>'
+    ? `<span class="card-side-x2">${t('card.side_sprint_remind', {mult: 2})}</span>`
     : '';
-  return `<p class="card-side">附加：${escapeHtml(c.side)}${note}</p>`;
+  return `<p class="card-side">${t('card.side_prefix')}${escapeHtml(c.side)}${note}</p>`;
 }
 
 function renderActionBody(c) {
@@ -1731,26 +1731,26 @@ function renderChoiceCard(c) {
   `;
 
   const playerOpts = state.players.map(p =>
-    `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
+    `<option value="${p.id}">${escapeHtml(p.name || t('common.player'))}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
   ).join('');
   const selectHtml = (id, lbl) => `
       <label class="row">
         <span>${lbl}</span>
         <select id="${id}">
-          <option value="">— 請選擇玩家 —</option>
+          <option value="">${t('card.lbl_select_player')}</option>
           ${playerOpts}
         </select>
       </label>`;
   const recipientControls = c.both
-    ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '對方')
-    : selectHtml('card-recipient', '套用至');
+    ? selectHtml('card-recipient', t('card.lbl_self')) + selectHtml('card-recipient2', t('card.lbl_other_player'))
+    : selectHtml('card-recipient', t('card.lbl_apply_to'));
   $('#card-foot').innerHTML = `
     ${cardPlayersRefHtml()}
     <div class="card-actions">
       ${recipientControls}
       <div class="card-buttons">
-        <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
-        <button class="btn btn-primary" id="card-apply">套用抉擇</button>
+        <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
+        <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_dilemma')}</button>
       </div>
     </div>
   `;
