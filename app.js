@@ -81,7 +81,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // with the CACHE bump in sw.js so a host can confirm the running build.
-const APP_VERSION = '1.1.0 (build 50)';
+const APP_VERSION = '1.2.0 (build 51)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1399,7 +1399,7 @@ function closeHistory() {
 function renderHistoryList() {
   const ul = $('#history-list');
   if (!state.history || !state.history.length) {
-    ul.innerHTML = `<li class="history-empty">尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。</li>`;
+    ul.innerHTML = '<li class="history-empty">尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。</li>';
     return;
   }
   // Newest first
@@ -1631,7 +1631,7 @@ function rewardLineHtml(c) {
 function sideLineHtml(c) {
   if (!c.side) return '';
   const note = scoreMultiplier() > 1
-    ? `<span class="card-side-x2">衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用</span>`
+    ? '<span class="card-side-x2">衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用</span>'
     : '';
   return `<p class="card-side">附加：${escapeHtml(c.side)}${note}</p>`;
 }

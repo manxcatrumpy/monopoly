@@ -1,6 +1,6 @@
 {
   "name": "monopoly",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "iPad 主持人控制台 — 純前端 PWA，無後端、可離線、可加到主畫面。",
   "main": "app.js",
   "scripts": {
