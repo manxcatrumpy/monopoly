@@ -127,7 +127,9 @@
     "reward_sprint": "无常与恩典齐发 ×{mult}　奖励　{reward}",
     "reward_original": "（原 {reward}）",
     "side_prefix": "附加：",
-    "side_sprint_remind": "冲刺加倍中 · 此附加效果不会自动加倍，请以 ×2 手动套用"
+    "side_sprint_remind": "冲刺加倍中 · 此附加效果不会自动加倍，请以 ×2 手动套用",
+    "lbl_instant_action": "即时行动",
+    "lbl_insight": "福慧觉察"
   },
   "history": {
     "title": "历史纪录"

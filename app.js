@@ -1651,14 +1651,14 @@ function renderActionBody(c) {
 function renderBoostBody(c) {
   return `
     <div class="card-display">
-      <div class="card-category">共好加速卡</div>
+      <div class="card-category">${t('card.title_boost')}</div>
       <h3 class="card-name">${escapeHtml(c.name)}</h3>
       <div class="card-section">
-        <div class="card-section-label">即時行動</div>
+        <div class="card-section-label">${t('card.lbl_instant_action')}</div>
         <p class="card-section-text">${escapeHtml(c.action)}</p>
       </div>
       <div class="card-section">
-        <div class="card-section-label">福慧覺察</div>
+        <div class="card-section-label">${t('card.lbl_insight')}</div>
         <p class="card-section-text">${escapeHtml(c.insight)}</p>
       </div>
       ${sideLineHtml(c)}
@@ -2065,8 +2065,8 @@ function catalogBoostCardHtml(c) {
         <h4 class="cc-name">${escapeHtml(c.name)}</h4>
         <span class="cc-reward">${escapeHtml(c.rewardText)}</span>
       </header>
-      <p class="cc-line"><span class="cc-section-label">即時行動</span>${escapeHtml(c.action)}</p>
-      <p class="cc-line"><span class="cc-section-label">福慧覺察</span>${escapeHtml(c.insight)}</p>
+      <p class="cc-line"><span class="cc-section-label">${t('card.lbl_instant_action')}</span>${escapeHtml(c.action)}</p>
+      <p class="cc-line"><span class="cc-section-label">${t('card.lbl_insight')}</span>${escapeHtml(c.insight)}</p>
       ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
     </article>
   `;

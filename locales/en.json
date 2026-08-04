@@ -127,7 +127,9 @@
     "reward_sprint": "Sprint ×{mult} Reward: {reward}",
     "reward_original": "(Orig. {reward})",
     "side_prefix": "Side Effect: ",
-    "side_sprint_remind": "Sprint Active: Side effect is NOT auto-doubled. Apply ×2 manually."
+    "side_sprint_remind": "Sprint Active: Side effect is NOT auto-doubled. Apply ×2 manually.",
+    "lbl_instant_action": "Action",
+    "lbl_insight": "Insight"
   },
   "history": {
     "title": "History"
