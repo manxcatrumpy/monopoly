@@ -54,3 +54,6 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `manifest.webmanifest` | PWA 安裝 manifest |
 | `icons/icon.svg` | App icon |
 | `.nojekyll` | 關閉 GitHub Pages 的 Jekyll 處理 |
+
+---
+Copyright (c) 2026 JHIH-WEI WU. All Rights Reserved.
