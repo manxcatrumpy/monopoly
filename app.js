@@ -763,7 +763,7 @@ function updateTopbar() {
   if (banner) banner.classList.toggle('hidden', !sprint);
 
   const btn = $('#btn-toggle-timer');
-  btn.textContent = state.timer.running ? '暫停' : '開始';
+  btn.textContent = state.timer.running ? t('ui.btn_pause_timer') : t('ui.btn_start_timer');
 
   if (sprint && !state._sprintNoticed) {
     state._sprintNoticed = true;

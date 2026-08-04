@@ -24,7 +24,8 @@
     "btn_draw_boost": "抽 共好加速卡",
     "btn_browse_cards": "浏览全部卡牌",
     "btn_deck_manager": "管理卡牌资料",
-    "btn_new_game": "开新局"
+    "btn_new_game": "开新局",
+    "btn_pause_timer": "暂停"
   },
   "banner": {
     "sprint_title": "无常与恩典齐发",

@@ -24,7 +24,8 @@
     "btn_draw_boost": "Draw Boost Card",
     "btn_browse_cards": "Browse Cards",
     "btn_deck_manager": "Manage Decks",
-    "btn_new_game": "New Game"
+    "btn_new_game": "New Game",
+    "btn_pause_timer": "Pause"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
