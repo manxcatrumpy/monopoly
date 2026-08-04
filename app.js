@@ -1104,7 +1104,7 @@ function openSetup(opts = {}) {
   $('#setup-civ-black').value = DIE_MIN;
   updateCivCalc();
   const title = $('#setup-title');
-  if (title) title.textContent = mode === 'next' ? '進入下一局 — 啟程準備' : '開新局 — 啟程準備';
+  if (title) title.textContent = mode === 'next' ? t('setup.title_next') : t('setup.title');
   renderSetup();
   if (!d10Built) buildD10();
   resetDiceStage();

@@ -81,7 +81,8 @@
     "warn_incomplete_title": "Missing Initial Stats",
     "warn_incomplete_msg": "Some players haven't rolled stats. Start anyway?",
     "warn_incomplete_btn": "Start Anyway",
-    "dice_rolling": "{name} rolling {statLabel}…"
+    "dice_rolling": "{name} rolling {statLabel}…",
+    "title_next": "Next Round Setup"
   },
   "dm": {
     "title": "Deck Manager",

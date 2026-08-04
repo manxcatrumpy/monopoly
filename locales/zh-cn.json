@@ -81,7 +81,8 @@
     "warn_incomplete_title": "尚未掷完初始值",
     "warn_incomplete_msg": "有玩家尚未掷福慧初始值，仍要开始吗？",
     "warn_incomplete_btn": "仍要开始",
-    "dice_rolling": "{name} · {statLabel} 掷骰中…"
+    "dice_rolling": "{name} · {statLabel} 掷骰中…",
+    "title_next": "进入下一局 — 启程准备"
   },
   "dm": {
     "title": "卡牌资料管理",
