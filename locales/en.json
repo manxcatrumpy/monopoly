@@ -39,7 +39,9 @@
     "btn_remove": "Remove",
     "status_near_grad": "Near Grad",
     "status_mid": "Mid Training",
-    "status_training": "In Training"
+    "status_training": "In Training",
+    "lbl_current_val": "Current {val}",
+    "history_readonly": "Read-only · Does not affect current game"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
@@ -143,7 +145,8 @@
     "side_prefix": "Side Effect: ",
     "side_sprint_remind": "Sprint Active: Side effect is NOT auto-doubled. Apply ×2 manually.",
     "lbl_instant_action": "Action",
-    "lbl_insight": "Insight"
+    "lbl_insight": "Insight",
+    "dilemma_cond_civ": "Current Total Civ <strong>{total}</strong> (Threshold {threshold}) → Apply 'Civ {op} {threshold}' branch"
   },
   "history": {
     "title": "History"
@@ -162,7 +165,8 @@
     "import_deck_msg": "Import: {parts}\\nCurrent deck will be overwritten.",
     "import": "Import",
     "reset_deck_title": "Reset to Default Decks",
-    "reset_deck_msg": "All custom cards will be cleared."
+    "reset_deck_msg": "All custom cards will be cleared.",
+    "next_round_msg": "The current Round {round} will be saved to history automatically and can be restored later."
   },
   "origin": {
     "title": "Origin Bonus",

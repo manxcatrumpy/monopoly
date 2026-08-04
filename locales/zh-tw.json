@@ -39,7 +39,9 @@
     "btn_remove": "移除",
     "status_near_grad": "即將畢業",
     "status_mid": "中段修煉",
-    "status_training": "修煉中"
+    "status_training": "修煉中",
+    "lbl_current_val": "目前 {val}",
+    "history_readonly": "唯讀檢視 · 不影響目前對局"
   },
   "banner": {
     "sprint_title": "無常與恩典齊發",
@@ -143,7 +145,8 @@
     "side_prefix": "附加：",
     "side_sprint_remind": "衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用",
     "lbl_instant_action": "即時行動",
-    "lbl_insight": "福慧覺察"
+    "lbl_insight": "福慧覺察",
+    "dilemma_cond_civ": "目前集體文明 <strong>{total}</strong>（門檻 {threshold}）　→　適用「文明 {op} {threshold}」分支"
   },
   "history": {
     "title": "歷史紀錄"
@@ -162,7 +165,8 @@
     "import_deck_msg": "匯入：{parts}\\n當前對應牌組將被覆蓋（其他保留）。",
     "import": "匯入",
     "reset_deck_title": "重置為預設牌組",
-    "reset_deck_msg": "所有自訂卡牌資料會被清除。"
+    "reset_deck_msg": "所有自訂卡牌資料會被清除。",
+    "next_round_msg": "目前的第 {round} 局會自動存進歷史，之後可隨時再切回，不會遺失。"
   },
   "origin": {
     "title": "起始點加分",

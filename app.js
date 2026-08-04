@@ -929,7 +929,7 @@ function renderAdjustPreview() {
     const next = Math.max(0, (p[stat] || 0) + applied);
     const prev = row.querySelector('.adjust-preview');
     if (raw[stat] === 0) {
-      prev.textContent = `目前 ${p[stat] || 0}`;
+      prev.textContent = t('ui.lbl_current_val', {val: p[stat] || 0});
     } else {
       const sign = applied > 0 ? '+' : '';
       prev.textContent = `${p[stat] || 0} → ${next}　(${sign}${applied})`;
@@ -1343,7 +1343,7 @@ async function restoreRound(idx) {
   if (!entry) return;
   const ok = await confirmModal({
     title: `切回第 ${entry.roundNum} 局`,
-    message: `目前的第 ${state.roundNum} 局會自動存進歷史，之後可隨時再切回，不會遺失。`,
+    message: t('confirm.next_round_msg', {round: state.roundNum}),
     confirmText: '切回此局',
   });
   if (!ok) return;
@@ -1481,7 +1481,7 @@ function viewRound(idx) {
   detail.innerHTML = `
     <div class="hd-head">
       <button class="btn btn-ghost" id="history-back">← 返回列表</button>
-      <span class="hd-readonly">唯讀檢視 · 不影響目前對局</span>
+      <span class="hd-readonly">${t('ui.history_readonly')}</span>
     </div>
     <div class="hd-title">第 ${entry.roundNum} 局</div>
     <div class="hd-meta">完成 ${when} · 時長 ${dur} · 文明高度 ${entry.civGoal}</div>
@@ -1698,8 +1698,7 @@ function renderChoiceCard(c) {
     const met = total >= c.conditional.civGte;
     forced = met ? 0 : 1;
     currentChoiceOpt = forced;
-    condHtml = `<p class="dilemma-cond">目前集體文明 <strong>${total}</strong>（門檻 ${c.conditional.civGte}）` +
-               `　→　適用「文明 ${met ? '≥ ' : '< '}${c.conditional.civGte}」分支</p>`;
+    condHtml = `<p class="dilemma-cond">${t('card.dilemma_cond_civ', { total, threshold: c.conditional.civGte, op: met ? '≥ ' : '< ' })}</p>`;
   }
 
   const optionsHtml = (c.options || []).map((opt, i) => {
