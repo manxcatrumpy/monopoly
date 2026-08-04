@@ -41,7 +41,12 @@
     "status_mid": "Mid Training",
     "status_training": "In Training",
     "lbl_current_val": "Current {val}",
-    "history_readonly": "Read-only · Does not affect current game"
+    "history_readonly": "Read-only · Does not affect current game",
+    "btn_drawn": "Drawn",
+    "aria_drawn": "Mark as drawn and clear",
+    "history_btn": "History · {n}",
+    "history_view": "View",
+    "history_restore": "Restore"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
@@ -301,7 +306,15 @@
     "empty_log": "No events",
     "empty_history": "No history yet. Saves automatically.",
     "not_started_title": "Game Not Started",
-    "not_started_desc": "Click 'Setup' on the top right to start a new game."
+    "not_started_desc": "Click 'Setup' on the top right to start a new game.",
+    "grad_draw": "{name} {stat} reached {val} - Draw card, can graduate",
+    "leader_encounter": "Leader Encounter: {name} first to reach {val} Fort & Wis - Draw 1",
+    "breakthrough_encounter": "Breakthrough Encounter: {name} reached {val} Fort & Wis - Draw 1",
+    "graduated_msg": "{name} completed Fort & Wis, Graduated",
+    "downgrade_msg": "{name} status downgraded (Fort or Wis < {threshold})",
+    "batch_adjust_msg": "{name} Batch Adjust: {reward}{tag}",
+    "origin_pass_msg": "{name} passed Origin: {reward}{tag}",
+    "origin_stop_msg": "{name} stopped at Origin: {reward}{tag}"
   },
   "common": {
     "player": "Player"
@@ -327,5 +340,6 @@
     "choice_opt_missing_label": "Option in {name} missing label",
     "choice_opt_each_object": "Option 'each' in {name} must be object",
     "choice_opt_civAll_number": "Option 'civAll' in {name} must be number"
-  }
+  },
+  "log": {}
 }

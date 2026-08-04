@@ -41,7 +41,12 @@
     "status_mid": "中段修煉",
     "status_training": "修煉中",
     "lbl_current_val": "目前 {val}",
-    "history_readonly": "唯讀檢視 · 不影響目前對局"
+    "history_readonly": "唯讀檢視 · 不影響目前對局",
+    "btn_drawn": "已抽",
+    "aria_drawn": "已抽卡、清除待辦",
+    "history_btn": "歷史 · {n}",
+    "history_view": "查看",
+    "history_restore": "切回此局"
   },
   "banner": {
     "sprint_title": "無常與恩典齊發",
@@ -301,7 +306,15 @@
     "empty_log": "尚無觸發",
     "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。",
     "not_started_title": "尚未開局",
-    "not_started_desc": "點右上「設定」開始新一局《福慧大富翁》。"
+    "not_started_desc": "點右上「設定」開始新一局《福慧大富翁》。",
+    "grad_draw": "{name} {stat} 達 {val}　抽卡、可宣告畢業",
+    "leader_encounter": "領航者際遇　{name} 率先 福慧雙達 {val}　抽 1 張",
+    "breakthrough_encounter": "自我突破際遇　{name} 福慧雙達 {val}　抽 1 張",
+    "graduated_msg": "{name} 完成福慧雙修、畢業",
+    "downgrade_msg": "{name} 資格降級（福或慧 < {threshold}）",
+    "batch_adjust_msg": "{name} 批次調分　{reward}{tag}",
+    "origin_pass_msg": "{name} 經過起始點　{reward}{tag}",
+    "origin_stop_msg": "{name} 停在起始點　{reward}{tag}"
   },
   "common": {
     "player": "玩家"
@@ -327,5 +340,6 @@
     "choice_opt_missing_label": "「{name}」某選項缺 label",
     "choice_opt_each_object": "「{name}」選項 each 需為物件",
     "choice_opt_civAll_number": "「{name}」選項 civAll 需為數字"
-  }
+  },
+  "log": {}
 }

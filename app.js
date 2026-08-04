@@ -963,7 +963,7 @@ function applyAdjust() {
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
   STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
   const tag = mult > 1 ? t('messages.sprint_tag') : '';
-  const msg = `${name} 批次調分　${describeReward(scaled)}${tag}`;
+  const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
 }
@@ -986,7 +986,9 @@ function scoreOrigin(playerId, stop) {
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
   const tag = mult > 1 ? t('messages.sprint_tag') : '';
-  const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}${tag}`;
+  const msg = stop
+    ? t('messages.origin_stop_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag})
+    : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
 }
