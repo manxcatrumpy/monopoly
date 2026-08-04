@@ -25,7 +25,21 @@
     "btn_browse_cards": "浏览全部卡牌",
     "btn_deck_manager": "管理卡牌资料",
     "btn_new_game": "开新局",
-    "btn_pause_timer": "暂停"
+    "btn_pause_timer": "暂停",
+    "player_name_placeholder": "玩家名称",
+    "graduated_badge": "毕业",
+    "fw_full": "福报 + 智慧",
+    "fw_short": "福+慧",
+    "total_score": "综合",
+    "origin_title": "经过或停在起始点时，一键套用福慧文明加分（自动判断是否毕业）",
+    "btn_origin": "起始点加分",
+    "adjust_title": "一次调整 福报／智慧／文明",
+    "btn_adjust": "批次调分",
+    "graduated_status": "已毕业　持续共好",
+    "btn_remove": "移除",
+    "status_near_grad": "即将毕业",
+    "status_mid": "中段修炼",
+    "status_training": "修炼中"
   },
   "banner": {
     "sprint_title": "无常与恩典齐发",

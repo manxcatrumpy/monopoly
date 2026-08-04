@@ -809,14 +809,14 @@ function buildPlayerCard(p) {
   const fw = (p.fortune || 0) + (p.wisdom || 0);
   card.innerHTML = `
     <header class="pc-head">
-      <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="玩家名稱" maxlength="10" />
-      <span class="pc-hat" title="已畢業">畢業</span>
-      <div class="pc-fw" title="福報 + 智慧">
-        <span>福+慧</span>
+      <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="${t('ui.player_name_placeholder')}" maxlength="10" />
+      <span class="pc-hat" title="${t('ui.graduated_badge')}">${t('ui.graduated_badge')}</span>
+      <div class="pc-fw" title="${t('ui.fw_full')}">
+        <span>${t('ui.fw_short')}</span>
         <strong>${fw}</strong>
       </div>
       <div class="pc-total">
-        <span>綜合</span>
+        <span>${t('ui.total_score')}</span>
         <strong>${total}</strong>
       </div>
     </header>
@@ -824,13 +824,13 @@ function buildPlayerCard(p) {
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
     <div class="pc-actions">
-      <button class="pc-origin-open" data-act="origin" title="經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）">起始點加分</button>
-      <button class="pc-adjust" data-act="adjust" title="一次調整 福報／智慧／文明">批次調分</button>
+      <button class="pc-origin-open" data-act="origin" title="${t('ui.origin_title')}">${t('ui.btn_origin')}</button>
+      <button class="pc-adjust" data-act="adjust" title="${t('ui.adjust_title')}">${t('ui.btn_adjust')}</button>
     </div>
 
     <footer class="pc-foot">
-      <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
-      <button class="pc-remove" data-act="remove">移除</button>
+      <span class="pc-status">${p.graduated ? t('ui.graduated_status') : statusHint(p)}</span>
+      <button class="pc-remove" data-act="remove">${t('ui.btn_remove')}</button>
     </footer>
   `;
 
@@ -872,9 +872,9 @@ function buildPlayerCard(p) {
 }
 
 function statusHint(p) {
-  if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return '即將畢業';
-  if (p.fortune >= 35 || p.wisdom >= 35) return '中段修煉';
-  return '修煉中';
+  if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return t('ui.status_near_grad');
+  if (p.fortune >= 35 || p.wisdom >= 35) return t('ui.status_mid');
+  return t('ui.status_training');
 }
 
 function statRow(p, stat) {
@@ -1049,7 +1049,7 @@ function updatePlayerCard(p) {
   });
 
   card.querySelector('.pc-status').textContent =
-    p.graduated ? '已畢業　持續共好' : statusHint(p);
+    p.graduated ? t('ui.graduated_status') : statusHint(p);
 
 }
 

@@ -25,7 +25,21 @@
     "btn_browse_cards": "Browse Cards",
     "btn_deck_manager": "Manage Decks",
     "btn_new_game": "New Game",
-    "btn_pause_timer": "Pause"
+    "btn_pause_timer": "Pause",
+    "player_name_placeholder": "Player Name",
+    "graduated_badge": "Graduated",
+    "fw_full": "Fortune + Wisdom",
+    "fw_short": "Fort+Wis",
+    "total_score": "Total",
+    "origin_title": "Apply Start Point bonuses (auto-checks graduation)",
+    "btn_origin": "Start Point Bonus",
+    "adjust_title": "Batch adjust stats",
+    "btn_adjust": "Batch Adjust",
+    "graduated_status": "Graduated, Keep Encouraging",
+    "btn_remove": "Remove",
+    "status_near_grad": "Near Grad",
+    "status_mid": "Mid Training",
+    "status_training": "In Training"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
