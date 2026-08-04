@@ -393,7 +393,7 @@ function resetDiceStage() {
   die.style.transform = '';
   startDieIdle();             // resume the slow resting turntable
   const cap = $('#dice-caption');
-  if (cap) cap.textContent = '點玩家旁的「擲福 / 擲慧」開始擲骰';
+  if (cap) cap.textContent = t('setup.dice_caption');
 }
 
 function rollSetupDie(stat, idx) {
@@ -725,8 +725,8 @@ function updateTopbar() {
   const civLabel = $('.civ-progress-label');
   civLabel.classList.toggle('reached', goalReached);
   civLabel.textContent = goalReached
-    ? `集體文明 ${total} — 已達標 ${state.civGoal}、全員勝利`
-    : '集體文明積分總和 — 達標即勝利';
+    ? t('civ.progress_reached', { total, goal: state.civGoal })
+    : t('civ.progress_label');
   if (goalReached && !state._civGoalNoticed) {
     state._civGoalNoticed = true;
     toast(t('messages.civ_goal_reached', {goal: state.civGoal}), 'grad');
@@ -763,7 +763,7 @@ function updateTopbar() {
   if (banner) banner.classList.toggle('hidden', !sprint);
 
   const btn = $('#btn-toggle-timer');
-  btn.textContent = state.timer.running ? '暫停' : '開始';
+  btn.textContent = state.timer.running ? t('ui.btn_pause_timer') : t('ui.btn_start_timer');
 
   if (sprint && !state._sprintNoticed) {
     state._sprintNoticed = true;
@@ -790,9 +790,9 @@ function renderPlayers() {
     grid.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g stroke="#E0A331" stroke-width="2.6" stroke-linecap="round"><line x1="32" y1="17" x2="32" y2="10.5"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(45 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(90 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(135 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(180 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(225 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(270 32 32)"></line><line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(315 32 32)"></line></g><circle cx="32" cy="32" r="11.5" fill="#EFC158"></circle></svg></div>
-        <h3>尚未開局</h3>
-        <p>點右上「設定」開始新一局《福慧大富翁》。</p>
-        <button class="btn btn-primary" id="empty-setup-btn">開新局</button>
+        <h3>${t('messages.not_started_title')}</h3>
+        <p>${t('messages.not_started_desc')}</p>
+        <button class="btn btn-primary" id="empty-setup-btn">${t('ui.btn_new_game')}</button>
       </div>`;
     $('#empty-setup-btn').addEventListener('click', openSetup);
     return;
@@ -809,14 +809,14 @@ function buildPlayerCard(p) {
   const fw = (p.fortune || 0) + (p.wisdom || 0);
   card.innerHTML = `
     <header class="pc-head">
-      <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="玩家名稱" maxlength="10" />
-      <span class="pc-hat" title="已畢業">畢業</span>
-      <div class="pc-fw" title="福報 + 智慧">
-        <span>福+慧</span>
+      <input class="pc-name" value="${escapeHtml(p.name)}" placeholder="${t('ui.player_name_placeholder')}" maxlength="10" />
+      <span class="pc-hat" title="${t('ui.graduated_badge')}">${t('ui.graduated_badge')}</span>
+      <div class="pc-fw" title="${t('ui.fw_full')}">
+        <span>${t('ui.fw_short')}</span>
         <strong>${fw}</strong>
       </div>
       <div class="pc-total">
-        <span>綜合</span>
+        <span>${t('ui.total_score')}</span>
         <strong>${total}</strong>
       </div>
     </header>
@@ -824,13 +824,13 @@ function buildPlayerCard(p) {
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
     <div class="pc-actions">
-      <button class="pc-origin-open" data-act="origin" title="經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）">起始點加分</button>
-      <button class="pc-adjust" data-act="adjust" title="一次調整 福報／智慧／文明">批次調分</button>
+      <button class="pc-origin-open" data-act="origin" title="${t('ui.origin_title')}">${t('ui.btn_origin')}</button>
+      <button class="pc-adjust" data-act="adjust" title="${t('ui.adjust_title')}">${t('ui.btn_adjust')}</button>
     </div>
 
     <footer class="pc-foot">
-      <span class="pc-status">${p.graduated ? '已畢業　持續共好' : statusHint(p)}</span>
-      <button class="pc-remove" data-act="remove">移除</button>
+      <span class="pc-status">${p.graduated ? t('ui.graduated_status') : statusHint(p)}</span>
+      <button class="pc-remove" data-act="remove">${t('ui.btn_remove')}</button>
     </footer>
   `;
 
@@ -872,9 +872,9 @@ function buildPlayerCard(p) {
 }
 
 function statusHint(p) {
-  if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return '即將畢業';
-  if (p.fortune >= 35 || p.wisdom >= 35) return '中段修煉';
-  return '修煉中';
+  if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return t('ui.status_near_grad');
+  if (p.fortune >= 35 || p.wisdom >= 35) return t('ui.status_mid');
+  return t('ui.status_training');
 }
 
 function statRow(p, stat) {
@@ -929,7 +929,7 @@ function renderAdjustPreview() {
     const next = Math.max(0, (p[stat] || 0) + applied);
     const prev = row.querySelector('.adjust-preview');
     if (raw[stat] === 0) {
-      prev.textContent = `目前 ${p[stat] || 0}`;
+      prev.textContent = t('ui.lbl_current_val', {val: p[stat] || 0});
     } else {
       const sign = applied > 0 ? '+' : '';
       prev.textContent = `${p[stat] || 0} → ${next}　(${sign}${applied})`;
@@ -963,7 +963,7 @@ function applyAdjust() {
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
   STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
   const tag = mult > 1 ? t('messages.sprint_tag') : '';
-  const msg = `${name} 批次調分　${describeReward(scaled)}${tag}`;
+  const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
 }
@@ -986,7 +986,9 @@ function scoreOrigin(playerId, stop) {
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
   const tag = mult > 1 ? t('messages.sprint_tag') : '';
-  const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}${tag}`;
+  const msg = stop
+    ? t('messages.origin_stop_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag})
+    : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
 }
@@ -1049,7 +1051,7 @@ function updatePlayerCard(p) {
   });
 
   card.querySelector('.pc-status').textContent =
-    p.graduated ? '已畢業　持續共好' : statusHint(p);
+    p.graduated ? t('ui.graduated_status') : statusHint(p);
 
 }
 
@@ -1104,7 +1106,7 @@ function openSetup(opts = {}) {
   $('#setup-civ-black').value = DIE_MIN;
   updateCivCalc();
   const title = $('#setup-title');
-  if (title) title.textContent = mode === 'next' ? '進入下一局 — 啟程準備' : '開新局 — 啟程準備';
+  if (title) title.textContent = mode === 'next' ? t('setup.title_next') : t('setup.title');
   renderSetup();
   if (!d10Built) buildD10();
   resetDiceStage();
@@ -1129,11 +1131,11 @@ function renderSetup() {
     const isTop = top && top.i === i;
     return `
       <div class="setup-player-row ${isTop ? 'top' : ''}" data-idx="${i}">
-        <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="玩家 ${i + 1}" maxlength="10" />
-        <button class="mini-btn" data-roll="fortune">擲福</button>
-        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="" aria-label="福報初始值" />
-        <button class="mini-btn" data-roll="wisdom">擲慧</button>
-        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="" aria-label="智慧初始值" />
+        <input type="text" class="sp-name" value="${escapeHtml(r.name)}" placeholder="${t('common.player')} ${i + 1}" maxlength="10" />
+        <button class="mini-btn" data-roll="fortune">${t('setup.btn_roll_fortune')}</button>
+        <input type="number" class="roll-out fortune" data-stat="fortune" inputmode="numeric" min="0" max="10" value="${r.fortune || ''}" placeholder="" aria-label="${t('setup.aria_fortune_init')}" />
+        <button class="mini-btn" data-roll="wisdom">${t('setup.btn_roll_wisdom')}</button>
+        <input type="number" class="roll-out wisdom" data-stat="wisdom" inputmode="numeric" min="0" max="10" value="${r.wisdom || ''}" placeholder="" aria-label="${t('setup.aria_wisdom_init')}" />
       </div>
     `;
   }).join('');
@@ -1343,7 +1345,7 @@ async function restoreRound(idx) {
   if (!entry) return;
   const ok = await confirmModal({
     title: `切回第 ${entry.roundNum} 局`,
-    message: `目前的第 ${state.roundNum} 局會自動存進歷史，之後可隨時再切回，不會遺失。`,
+    message: t('confirm.next_round_msg', {round: state.roundNum}),
     confirmText: '切回此局',
   });
   if (!ok) return;
@@ -1481,7 +1483,7 @@ function viewRound(idx) {
   detail.innerHTML = `
     <div class="hd-head">
       <button class="btn btn-ghost" id="history-back">← 返回列表</button>
-      <span class="hd-readonly">唯讀檢視 · 不影響目前對局</span>
+      <span class="hd-readonly">${t('ui.history_readonly')}</span>
     </div>
     <div class="hd-title">第 ${entry.roundNum} 局</div>
     <div class="hd-meta">完成 ${when} · 時長 ${dur} · 文明高度 ${entry.civGoal}</div>
@@ -1526,7 +1528,7 @@ function openCardDraw(deckKey) {
   currentDeckKey = deckKey;
   currentCard = drawFromDeck(deckKey);
   currentChoiceOpt = null;
-  $('#card-title').textContent = DECKS[deckKey].title;
+  $('#card-title').textContent = deckKey === 'action' ? t('card.title_action') : t('card.title_boost');
   renderCard();
   $('#card-modal').classList.remove('hidden');
 }
@@ -1571,27 +1573,27 @@ function renderCard() {
   $('#card-body').innerHTML = bodyHtml;
 
   const playerOpts = state.players.map(p =>
-    `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
+    `<option value="${p.id}">${escapeHtml(p.name || t('common.player'))}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
   ).join('');
   const selectHtml = (id, label) => `
       <label class="row">
         <span>${label}</span>
         <select id="${id}">
-          <option value="">— 請選擇玩家 —</option>
+          <option value="">${t('card.lbl_select_player')}</option>
           ${playerOpts}
         </select>
       </label>`;
   // 「雙方」卡（boost）要同時套用給本人與上一家，給兩個下拉；其餘卡用單一收受者。
   const recipientControls = c.both
-    ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '上一家')
-    : selectHtml('card-recipient', '套用至');
+    ? selectHtml('card-recipient', t('card.lbl_self')) + selectHtml('card-recipient2', t('card.lbl_prev_player'))
+    : selectHtml('card-recipient', t('card.lbl_apply_to'));
   $('#card-foot').innerHTML = `
     ${cardPlayersRefHtml()}
     <div class="card-actions">
       ${recipientControls}
       <div class="card-buttons">
-        <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
-        <button class="btn btn-primary" id="card-apply">套用獎勵</button>
+        <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
+        <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_reward')}</button>
       </div>
     </div>
   `;
@@ -1620,10 +1622,10 @@ function rewardLineHtml(c) {
   const mult = scoreMultiplier();
   if (mult > 1) {
     const doubled = describeReward(scaleReward(c.reward || {}, mult));
-    return `<div class="card-reward sprint">無常與恩典齊發 ×${mult}　獎勵　${escapeHtml(doubled)}` +
-           `<span class="card-reward-base">（原 ${escapeHtml(c.rewardText)}）</span></div>`;
+    return `<div class="card-reward sprint">${t('card.reward_sprint', {mult, reward: escapeHtml(doubled)})}` +
+           `<span class="card-reward-base">${t('card.reward_original', {reward: escapeHtml(c.rewardText)})}</span></div>`;
   }
-  return `<div class="card-reward">獎勵　${escapeHtml(c.rewardText)}</div>`;
+  return `<div class="card-reward">${t('card.reward_prefix')}${escapeHtml(c.rewardText)}</div>`;
 }
 
 // The 附加 (side) line. Side effects are applied by hand, so during the sprint
@@ -1631,9 +1633,9 @@ function rewardLineHtml(c) {
 function sideLineHtml(c) {
   if (!c.side) return '';
   const note = scoreMultiplier() > 1
-    ? '<span class="card-side-x2">衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用</span>'
+    ? `<span class="card-side-x2">${t('card.side_sprint_remind', {mult: 2})}</span>`
     : '';
-  return `<p class="card-side">附加：${escapeHtml(c.side)}${note}</p>`;
+  return `<p class="card-side">${t('card.side_prefix')}${escapeHtml(c.side)}${note}</p>`;
 }
 
 function renderActionBody(c) {
@@ -1651,14 +1653,14 @@ function renderActionBody(c) {
 function renderBoostBody(c) {
   return `
     <div class="card-display">
-      <div class="card-category">共好加速卡</div>
+      <div class="card-category">${t('card.title_boost')}</div>
       <h3 class="card-name">${escapeHtml(c.name)}</h3>
       <div class="card-section">
-        <div class="card-section-label">即時行動</div>
+        <div class="card-section-label">${t('card.lbl_instant_action')}</div>
         <p class="card-section-text">${escapeHtml(c.action)}</p>
       </div>
       <div class="card-section">
-        <div class="card-section-label">福慧覺察</div>
+        <div class="card-section-label">${t('card.lbl_insight')}</div>
         <p class="card-section-text">${escapeHtml(c.insight)}</p>
       </div>
       ${sideLineHtml(c)}
@@ -1698,8 +1700,7 @@ function renderChoiceCard(c) {
     const met = total >= c.conditional.civGte;
     forced = met ? 0 : 1;
     currentChoiceOpt = forced;
-    condHtml = `<p class="dilemma-cond">目前集體文明 <strong>${total}</strong>（門檻 ${c.conditional.civGte}）` +
-               `　→　適用「文明 ${met ? '≥ ' : '< '}${c.conditional.civGte}」分支</p>`;
+    condHtml = `<p class="dilemma-cond">${t('card.dilemma_cond_civ', { total, threshold: c.conditional.civGte, op: met ? '≥ ' : '< ' })}</p>`;
   }
 
   const optionsHtml = (c.options || []).map((opt, i) => {
@@ -1731,26 +1732,26 @@ function renderChoiceCard(c) {
   `;
 
   const playerOpts = state.players.map(p =>
-    `<option value="${p.id}">${escapeHtml(p.name || '玩家')}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
+    `<option value="${p.id}">${escapeHtml(p.name || t('common.player'))}　（福 ${p.fortune} · 慧 ${p.wisdom} · 文 ${p.civ}）</option>`
   ).join('');
   const selectHtml = (id, lbl) => `
       <label class="row">
         <span>${lbl}</span>
         <select id="${id}">
-          <option value="">— 請選擇玩家 —</option>
+          <option value="">${t('card.lbl_select_player')}</option>
           ${playerOpts}
         </select>
       </label>`;
   const recipientControls = c.both
-    ? selectHtml('card-recipient', '本人') + selectHtml('card-recipient2', '對方')
-    : selectHtml('card-recipient', '套用至');
+    ? selectHtml('card-recipient', t('card.lbl_self')) + selectHtml('card-recipient2', t('card.lbl_other_player'))
+    : selectHtml('card-recipient', t('card.lbl_apply_to'));
   $('#card-foot').innerHTML = `
     ${cardPlayersRefHtml()}
     <div class="card-actions">
       ${recipientControls}
       <div class="card-buttons">
-        <button class="btn btn-ghost" id="card-redraw">再抽一張</button>
-        <button class="btn btn-primary" id="card-apply">套用抉擇</button>
+        <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
+        <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_dilemma')}</button>
       </div>
     </div>
   `;
@@ -2065,8 +2066,8 @@ function catalogBoostCardHtml(c) {
         <h4 class="cc-name">${escapeHtml(c.name)}</h4>
         <span class="cc-reward">${escapeHtml(c.rewardText)}</span>
       </header>
-      <p class="cc-line"><span class="cc-section-label">即時行動</span>${escapeHtml(c.action)}</p>
-      <p class="cc-line"><span class="cc-section-label">福慧覺察</span>${escapeHtml(c.insight)}</p>
+      <p class="cc-line"><span class="cc-section-label">${t('card.lbl_instant_action')}</span>${escapeHtml(c.action)}</p>
+      <p class="cc-line"><span class="cc-section-label">${t('card.lbl_insight')}</span>${escapeHtml(c.insight)}</p>
       ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
     </article>
   `;

@@ -23,14 +23,38 @@
     "btn_draw_action": "抽 行動指令牌",
     "btn_draw_boost": "抽 共好加速卡",
     "btn_browse_cards": "瀏覽全部卡牌",
-    "btn_deck_manager": "管理卡牌資料"
+    "btn_deck_manager": "管理卡牌資料",
+    "btn_new_game": "開新局",
+    "btn_pause_timer": "暫停",
+    "player_name_placeholder": "玩家名稱",
+    "graduated_badge": "畢業",
+    "fw_full": "福報 + 智慧",
+    "fw_short": "福+慧",
+    "total_score": "綜合",
+    "origin_title": "經過或停在起始點時，一鍵套用福慧文明加分（自動判斷是否畢業）",
+    "btn_origin": "起始點加分",
+    "adjust_title": "一次調整 福報／智慧／文明",
+    "btn_adjust": "批次調分",
+    "graduated_status": "已畢業　持續共好",
+    "btn_remove": "移除",
+    "status_near_grad": "即將畢業",
+    "status_mid": "中段修煉",
+    "status_training": "修煉中",
+    "lbl_current_val": "目前 {val}",
+    "history_readonly": "唯讀檢視 · 不影響目前對局",
+    "btn_drawn": "已抽",
+    "aria_drawn": "已抽卡、清除待辦",
+    "history_btn": "歷史 · {n}",
+    "history_view": "查看",
+    "history_restore": "切回此局"
   },
   "banner": {
     "sprint_title": "無常與恩典齊發",
     "sprint_sub": "最後 15 分鐘 — 所有卡牌得分與扣分 ×2"
   },
   "civ": {
-    "progress_label": "集體文明積分總和 — 達標即勝利"
+    "progress_label": "集體文明積分總和 — 達標即勝利",
+    "progress_reached": "集體文明 {total} — 已達標 {goal}、全員勝利"
   },
   "players": {
     "title": "玩家積分",
@@ -78,7 +102,12 @@
     "warn_incomplete_title": "尚未擲完初始值",
     "warn_incomplete_msg": "有玩家尚未擲福慧初始值，仍要開始嗎？",
     "warn_incomplete_btn": "仍要開始",
-    "dice_rolling": "{name} · {statLabel} 擲骰中…"
+    "dice_rolling": "{name} · {statLabel} 擲骰中…",
+    "title_next": "進入下一局 — 啟程準備",
+    "btn_roll_fortune": "擲福",
+    "btn_roll_wisdom": "擲慧",
+    "aria_fortune_init": "福報初始值",
+    "aria_wisdom_init": "智慧初始值"
   },
   "dm": {
     "title": "卡牌資料管理",
@@ -104,7 +133,25 @@
     "tab_boost": "共好加速卡"
   },
   "card": {
-    "title": "行動指令牌"
+    "title": "行動指令牌",
+    "title_action": "行動指令牌",
+    "title_boost": "共好加速卡",
+    "btn_redraw": "再抽一張",
+    "btn_apply_reward": "套用獎勵",
+    "btn_apply_dilemma": "套用抉擇",
+    "lbl_apply_to": "套用至",
+    "lbl_self": "本人",
+    "lbl_prev_player": "上一家",
+    "lbl_other_player": "對方",
+    "lbl_select_player": "— 請選擇玩家 —",
+    "reward_prefix": "獎勵　",
+    "reward_sprint": "無常與恩典齊發 ×{mult}　獎勵　{reward}",
+    "reward_original": "（原 {reward}）",
+    "side_prefix": "附加：",
+    "side_sprint_remind": "衝刺加倍中 · 此附加效果不會自動加倍，請以 ×2 手動套用",
+    "lbl_instant_action": "即時行動",
+    "lbl_insight": "福慧覺察",
+    "dilemma_cond_civ": "目前集體文明 <strong>{total}</strong>（門檻 {threshold}）　→　適用「文明 {op} {threshold}」分支"
   },
   "history": {
     "title": "歷史紀錄"
@@ -123,7 +170,8 @@
     "import_deck_msg": "匯入：{parts}\\n當前對應牌組將被覆蓋（其他保留）。",
     "import": "匯入",
     "reset_deck_title": "重置為預設牌組",
-    "reset_deck_msg": "所有自訂卡牌資料會被清除。"
+    "reset_deck_msg": "所有自訂卡牌資料會被清除。",
+    "next_round_msg": "目前的第 {round} 局會自動存進歷史，之後可隨時再切回，不會遺失。"
   },
   "origin": {
     "title": "起始點加分",
@@ -256,7 +304,17 @@
     "round_started_log": "進入第 {round} 局 · 文明高度 {goal}",
     "round_restored_log": "第 {round} 局開局 · 文明高度 {goal}",
     "empty_log": "尚無觸發",
-    "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。"
+    "empty_history": "尚無歷史紀錄。按右上「下一局」結束本局時會自動存檔。",
+    "not_started_title": "尚未開局",
+    "not_started_desc": "點右上「設定」開始新一局《福慧大富翁》。",
+    "grad_draw": "{name} {stat} 達 {val}　抽卡、可宣告畢業",
+    "leader_encounter": "領航者際遇　{name} 率先 福慧雙達 {val}　抽 1 張",
+    "breakthrough_encounter": "自我突破際遇　{name} 福慧雙達 {val}　抽 1 張",
+    "graduated_msg": "{name} 完成福慧雙修、畢業",
+    "downgrade_msg": "{name} 資格降級（福或慧 < {threshold}）",
+    "batch_adjust_msg": "{name} 批次調分　{reward}{tag}",
+    "origin_pass_msg": "{name} 經過起始點　{reward}{tag}",
+    "origin_stop_msg": "{name} 停在起始點　{reward}{tag}"
   },
   "common": {
     "player": "玩家"
@@ -282,5 +340,6 @@
     "choice_opt_missing_label": "「{name}」某選項缺 label",
     "choice_opt_each_object": "「{name}」選項 each 需為物件",
     "choice_opt_civAll_number": "「{name}」選項 civAll 需為數字"
-  }
+  },
+  "log": {}
 }

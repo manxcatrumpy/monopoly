@@ -1,4 +1,4 @@
-const CACHE = 'fuhui-dashboard-v51';
+const CACHE = 'fuhui-dashboard-v53';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,8 @@ const ASSETS = [
   './locales/cards-zh-tw.json',
   './locales/zh-cn.json',
   './locales/cards-zh-cn.json',
+  './locales/en.json',
+  './locales/cards-en.json',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/icon-180.png',
