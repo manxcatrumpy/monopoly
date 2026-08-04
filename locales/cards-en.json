@@ -1,0 +1,159 @@
+{
+  "actionDeck": {
+    "功德卡": {
+      "reward": { "fortune": 10, "wisdom": 10 },
+      "rewardText": "Fortune +10 · Wisdom +10",
+      "cards": [
+        { "name": "Share good things", "desc": "You proactively shared something beneficial, brightening others' day." },
+        { "name": "Praise someone", "desc": "You offered genuine praise, warming someone's heart." },
+        { "name": "Give up a seat", "desc": "You gave up your seat on public transit, spreading kindness." },
+        { "name": "Donate invoices", "desc": "You donated winning invoices to charity." },
+        { "name": "Recycle", "desc": "You diligently sorted recycling, caring for the earth." },
+        { "name": "Help a colleague", "desc": "You helped a colleague resolve a tough issue, earning gratitude." },
+        { "name": "Vegetarian meal", "desc": "You enjoyed a vegetarian meal, reducing carbon footprint." },
+        { "name": "Volunteer", "desc": "You volunteered at a local community center." },
+        { "name": "Pick up trash", "desc": "You picked up litter in the park." }
+      ]
+    },
+    "無常卡": {
+      "reward": { "fortune": -5, "wisdom": 5 },
+      "rewardText": "Fortune -5 · Wisdom +5",
+      "cards": [
+        { "name": "Missed the bus", "desc": "You were late for an important meeting." },
+        { "name": "Lost wallet", "desc": "You lost your wallet, feeling anxious." },
+        { "name": "Phone broke", "desc": "Your phone suddenly died, causing inconvenience." },
+        { "name": "Sudden rain", "desc": "You got caught in a downpour without an umbrella." },
+        { "name": "Misunderstanding", "desc": "You had a misunderstanding with a friend, causing sadness." }
+      ]
+    },
+    "命運牌": {
+      "cards": [
+        {
+          "name": "Unexpected Bonus",
+          "desc": "You received an unexpected bonus at work.",
+          "reward": { "fortune": 15 },
+          "rewardText": "Fortune +15"
+        },
+        {
+          "name": "Read a good book",
+          "desc": "You read an inspiring book that opened your mind.",
+          "reward": { "wisdom": 15 },
+          "rewardText": "Wisdom +15"
+        },
+        {
+          "name": "Traffic fine",
+          "desc": "You received a speeding ticket.",
+          "reward": { "fortune": -10 },
+          "rewardText": "Fortune -10"
+        },
+        {
+          "name": "Impulsive purchase",
+          "desc": "You bought something you didn't need on impulse.",
+          "reward": { "wisdom": -10 },
+          "rewardText": "Wisdom -10"
+        },
+        {
+          "name": "Meditate",
+          "desc": "You meditated for 20 minutes, finding inner peace.",
+          "reward": { "fortune": 5, "wisdom": 10 },
+          "rewardText": "Fortune +5 · Wisdom +10"
+        },
+        {
+          "name": "Argument",
+          "desc": "You argued with a family member over a trivial matter.",
+          "reward": { "fortune": -5, "wisdom": -5 },
+          "rewardText": "Fortune -5 · Wisdom -5"
+        }
+      ]
+    },
+    "行動指令牌": {
+      "cards": [
+        {
+          "name": "Take a deep breath",
+          "desc": "Take 3 deep breaths and relax your shoulders.",
+          "reward": { "wisdom": 5 },
+          "rewardText": "Wisdom +5"
+        },
+        {
+          "name": "Compliment the player on your left",
+          "desc": "Say one nice thing about the player on your left.",
+          "reward": { "fortune": 5 },
+          "rewardText": "Fortune +5"
+        },
+        {
+          "name": "Stretch",
+          "desc": "Stand up and stretch for 10 seconds.",
+          "reward": { "fortune": 2, "wisdom": 2 },
+          "rewardText": "Fortune +2 · Wisdom +2"
+        },
+        {
+          "name": "Share a gratitude",
+          "desc": "Share one thing you are grateful for today.",
+          "reward": { "fortune": 5, "wisdom": 5 },
+          "rewardText": "Fortune +5 · Wisdom +5"
+        }
+      ]
+    }
+  },
+  "boostDeck": [
+    {
+      "name": "Collaborative Brainstorming",
+      "action": "Select a player. Both of you share an idea to improve the game.",
+      "insight": "Wisdom grows through sharing.",
+      "reward": { "fortune": 5, "wisdom": 10 },
+      "rewardText": "Both: Fortune +5 · Wisdom +10",
+      "dual": true
+    },
+    {
+      "name": "Mutual Encouragement",
+      "action": "Select a player. Exchange words of encouragement.",
+      "insight": "Supporting others brings good fortune.",
+      "reward": { "fortune": 15 },
+      "rewardText": "Both: Fortune +15",
+      "dual": true
+    },
+    {
+      "name": "Civic Contribution",
+      "action": "Propose a rule that benefits everyone.",
+      "insight": "Great civilizations are built on collective well-being.",
+      "reward": { "civ": 2 },
+      "rewardText": "Civ +2 (Self)"
+    }
+  ],
+  "choiceCards": [
+    {
+      "group": "Life Crossroads",
+      "name": "Career Choice",
+      "scene": "You receive two job offers. One pays extremely well but requires 80 hours a week and involves borderline unethical practices. The other pays an average salary but is for an NGO helping underprivileged children.",
+      "options": [
+        {
+          "label": "Choose the high-paying corporate job.",
+          "each": { "fortune": 20, "wisdom": -10 },
+          "civAll": -2
+        },
+        {
+          "label": "Choose the NGO job.",
+          "each": { "fortune": -5, "wisdom": 20 },
+          "civAll": 3
+        }
+      ]
+    },
+    {
+      "group": "Ethical Dilemmas",
+      "name": "Found Wallet",
+      "scene": "You find a wallet on the street with $1000 cash and an ID.",
+      "options": [
+        {
+          "label": "Take the cash and throw the wallet away.",
+          "each": { "fortune": 20, "wisdom": -20 },
+          "civAll": -5
+        },
+        {
+          "label": "Turn it in to the police station immediately.",
+          "each": { "fortune": 5, "wisdom": 15 },
+          "civAll": 2
+        }
+      ]
+    }
+  ]
+}
