@@ -1,0 +1,28 @@
+{
+  "name": "monopoly",
+  "version": "1.0.0",
+  "description": "iPad 主持人控制台 — 純前端 PWA，無後端、可離線、可加到主畫面。",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manxcatrumpy/monopoly.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/manxcatrumpy/monopoly/issues"
+  },
+  "homepage": "https://github.com/manxcatrumpy/monopoly#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "globals": "^17.9.0"
+  }
+}
