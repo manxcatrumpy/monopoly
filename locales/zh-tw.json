@@ -30,7 +30,8 @@
     "sprint_sub": "最後 15 分鐘 — 所有卡牌得分與扣分 ×2"
   },
   "civ": {
-    "progress_label": "集體文明積分總和 — 達標即勝利"
+    "progress_label": "集體文明積分總和 — 達標即勝利",
+    "progress_reached": "集體文明 {total} — 已達標 {goal}、全員勝利"
   },
   "players": {
     "title": "玩家積分",

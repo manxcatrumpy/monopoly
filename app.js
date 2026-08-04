@@ -725,8 +725,8 @@ function updateTopbar() {
   const civLabel = $('.civ-progress-label');
   civLabel.classList.toggle('reached', goalReached);
   civLabel.textContent = goalReached
-    ? `集體文明 ${total} — 已達標 ${state.civGoal}、全員勝利`
-    : '集體文明積分總和 — 達標即勝利';
+    ? t('civ.progress_reached', { total, goal: state.civGoal })
+    : t('civ.progress_label');
   if (goalReached && !state._civGoalNoticed) {
     state._civGoalNoticed = true;
     toast(t('messages.civ_goal_reached', {goal: state.civGoal}), 'grad');

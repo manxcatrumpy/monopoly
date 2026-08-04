@@ -30,7 +30,8 @@
     "sprint_sub": "Last 15 mins — All card score changes ×2"
   },
   "civ": {
-    "progress_label": "Total Civ Points — Reach goal to win"
+    "progress_label": "Total Civ Points — Reach goal to win",
+    "progress_reached": "Total Civ {total} — Goal {goal} Reached, Victory!"
   },
   "players": {
     "title": "Player Scores",

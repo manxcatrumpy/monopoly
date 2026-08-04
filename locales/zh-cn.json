@@ -30,7 +30,8 @@
     "sprint_sub": "最后 15 分钟 — 所有卡牌得分与扣分 ×2"
   },
   "civ": {
-    "progress_label": "集体文明积分总和 — 达标即胜利"
+    "progress_label": "集体文明积分总和 — 达标即胜利",
+    "progress_reached": "集体文明 {total} — 已达标 {goal}、全员胜利"
   },
   "players": {
     "title": "玩家积分",
