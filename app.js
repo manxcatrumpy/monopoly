@@ -8,133 +8,12 @@
 // Host-updated deck content (4 categories). Each category carries a base reward;
 // a card may override it via its own `reward` / `rewardText`, and `side` notes a
 // manual extra effect that the host applies by hand.
-const DEFAULT_ACTION_DECK = {
-  '福慧雙增': {
-    reward: { fortune: 2, wisdom: 2, civ: 2 },
-    rewardText: '福報 +2 · 智慧 +2 · 文明 +2',
-    cards: [
-      { name: '真誠傾聽', desc: '請福報最低的玩家分享一件開心小事，看著他的眼睛專心聽，絕對不插嘴、不搶話。用心對待他人是福報；克制插嘴的衝動，是最高級的認知覺察。' },
-      { name: '經驗傳承', desc: '分享一次你曾踩過的坑或犯過的錯，並說說你學到了什麼教訓。正視過去的不足而認真成長，是智慧；將跌倒經驗化為他人的避坑指南，即是添福。' },
-      { name: '打破成見', desc: '分享一個從前深信、但錯得離譜的觀念（比如某個星座的迷思），你是怎麼醒悟的？承認自身的無知並願意打破框架，需要極大的「智慧」；接納多元、不輕易評斷，結下廣闊人際的「福報」。' },
-      { name: '情緒覺察', desc: '分享這幾天遭遇的煩躁瞬間，以及你如何消化這些負面情緒。情緒沒有對錯，看見並允許它存在即是「智慧」；能與情緒共處、停止情緒蔓延，為「福報」止漏。' },
-      { name: '跨越情緒', desc: '帶著全桌做一次你的專屬「情緒急救法」（例如：喝杯溫水、深呼吸三次）。讓自己平靜的方法是「智慧」；把這份平靜的力量傳遞給別人，就是累積「福報」。' },
-      { name: '暖心發電', desc: '找一個目前分數落後或剛被扣分的玩家，用最真誠的話誇讚他、給他打氣。在他人低潮時給予正向引導是「智慧」；用善語驅散陰霾、給予支持，即是美好的「福報」。' },
-      { name: '生活智慧王', desc: '分享一個你把舊東西變出新把戲，或延長物品壽命、一物多用的技巧。惜物愛物能累積「福報」；把東西的價值發揮到極致，就是你的生活「智慧」。' },
-      { name: '讓出機會', desc: '向全場大聲宣告：「下輪我放棄擲骰，把機會讓給左邊玩家！」看破競爭、無私讓利是「智慧」；把出頭的機會讓給別人，能為自己賺到無形的「福報」。' },
-      { name: '跨界學習', desc: '向任一玩家提出一個你想知道的問題，請對方用 1 分鐘為你解答。', side: '解答者額外獲得文明 +1' },
-    ],
-  },
-  '福報專精': {
-    reward: { fortune: 3, wisdom: 0, civ: 1 },
-    rewardText: '福報 +3 · 文明 +1',
-    cards: [
-      { name: '微小善意', desc: '承諾遊戲後的 24 小時內，完成一件微小付出，並與全桌擊掌為證。將善意從遊戲桌面延伸到真實的日常生活中，化為守護社會的真實「福報」。' },
-      { name: '無私分享', desc: '拿出自己的 2 點福報，無條件贈予場上福報最少的玩家。克服匱乏、明白給予不會讓自己變少，是「智慧」的突破；主動拉拔落後者，是「福報」的實踐。' },
-      { name: '主動承擔', desc: '承諾本次聚會結束後主動承擔一項善後工作。敏銳看見環境的需要並主動補位，是「智慧」；促成和諧，是最直接累積「福報」的方法。' },
-      { name: '成就他人', desc: '分享一次放棄出風頭、把舞台或功勞讓給別人的經驗。功成身退而不爭，是「智慧」；成就他人的成長，是無量「福報」。' },
-      { name: '感恩回饋', desc: '拿起手機，馬上傳一則關心的訊息給一位久未聯繫的家人。無經驗替代行動：傳訊給一位「情同家人」的摯友，向他表達這段關係對你的重要性。主動關懷並給予無條件的支持是看透關係的智慧；這份純粹的連結將化作深厚「福報」。' },
-    ],
-  },
-  '福慧文明聯動': {
-    reward: { fortune: 2, wisdom: 2, civ: 2 },
-    rewardText: '福報 +2 · 智慧 +2 · 文明 +2',
-    cards: [
-      { name: '共好提案', desc: '提出一個讓大家更舒適的微提案（例如：調整燈光、換個座位、約定不看手機），經半數同意即刻執行。察覺眾人需求是智慧；為群體創造好環境是結福報。' },
-      { name: '弱勢關懷', desc: '與目前總積分最低的一名玩家結盟，讓對方能同步獲得你下一次的福報與智慧點數。同理困境是智慧；無私提拔是文明社會美好的福報。' },
-      { name: '知識開源', desc: '分享並說明一個提升效率、品質或身心健康的實用工具／方法／APP。善用工具提升生活品質是「智慧」；不藏私分享給大家一起變好，就是累積「福報」。' },
-      { name: '世代／跨界對話', desc: '分享你從不同年齡或領域的人身上，學到的寶貴一課。放下經歷、虛心學習是智慧；讚賞他人長處能帶來福報。' },
-      { name: '環保倡議', desc: '提出一項可以立刻實踐的減碳／環保行動（如：出門帶環保杯、冷氣調高一度）。看見人與萬物相連是智慧；具體愛護環境是珍惜福。', side: '首位響應者獲福報 +1' },
-    ],
-  },
-  '智慧專精': {
-    reward: { fortune: 1, wisdom: 3, civ: 2 },
-    rewardText: '智慧 +3 · 福報 +1 · 文明 +2',
-    cards: [
-      { name: '接納無常', desc: '分享一次計畫大亂，但你卻能立刻放下執著、隨遇而安的經驗。立即調整、接受當下，需要極大的「智慧」；隨遇而安、不生抱怨，即是守住「福報」。' },
-      { name: '反求諸己', desc: '分享一次發生衝突時，意識到「其實自己也有責任」的經歷。停止指責、轉向內省，是難得的「智慧」；自我反省能化解芥蒂，自然能留住「福報」。' },
-      { name: '金句分享', desc: '分享一句最近戳中你、給你力量的話，或聽到的一句充滿力量的金句。汲取他人經驗與思想，是站在巨人肩膀上累積「智慧」；將好觀念傳遞給他人，即是知識開源的「福報」。' },
-      {
-        name: '覆盤總結',
-        desc: '客觀分析目前局勢，給出讓整體分數更高的建議。',
-        reward: { fortune: 1, wisdom: 3, civ: 3 },
-        rewardText: '智慧 +3 · 福報 +1 · 文明 +3',
-      },
-      { name: '靜心錨定', desc: '帶領全桌閉上眼睛，同步深呼吸 3 次，重新將意識拉回當下。', side: '參與配合的玩家皆獲得智慧 +1' },
-    ],
-  },
-  '和諧關係': {
-    reward: { fortune: 3, wisdom: 3, civ: 1 },
-    rewardText: '智慧 +3 · 福報 +3 · 文明 +1',
-    cards: [
-      { name: '溫和界線', desc: '分享一次你在家庭衝突中，成功忍住脾氣、沒有口出惡言的經驗。無經驗替代行動：演練一次，若長輩提出不合理要求，你要如何語氣溫和地拒絕？家人的定義超越血緣；主動關懷並給予無條件的支持是看透關係的智慧，這份純粹的連結將化作深厚「福報」。' },
-      { name: '出淤泥不染', desc: '分享一次面對職場八卦或負面抱怨的環境，你如何保持中立、不被捲入。無經驗替代行動：分享一個當你身處「充滿抱怨的群組」時，用來保護自己能量的方法。在消耗性環境中保持平靜是覺察的智慧；不隨波逐流、守住自身底線，即是最好的「福報」止漏。' },
-      { name: '換位思考', desc: '分享一次你原本很不解，後來卻突然懂了父母或長輩「苦衷」的瞬間。無經驗替代行動：說出一個你與家人最大的「觀念差異」，並試著站在「他們的年代與立場」辯護 1 分鐘。看透行為背後的愛與侷限是智慧；包容世代差異，能守護家庭的和諧「福報」。' },
-      { name: '逆境修養', desc: '分享一次面對職場／學校的不公對待或搶功勞，你沒有口出惡言、平靜化解的經驗。無經驗替代行動：深呼吸，分享一句當你覺得「委屈、不公平」時，可以幫自己「瞬間轉念」的金句。吞下委屈、看透利益本質是智慧；以和諧與大度化解對立，能將惡緣轉化為「福報」。' },
-    ],
-  },
-  // 文明扣分：單人抉擇卡（行動後果 vs 補救機會）。此類卡以 options 呈現，
-  // 不套用分類 reward；「集體文明 -1」＝場上所有玩家文明 -1（civAll），「免扣文明」＝補救選項無 civAll。
-  '文明扣分': {
-    reward: { fortune: 0, wisdom: 0, civ: 0 },
-    rewardText: '依抉擇套用',
-    cards: [
-      { name: '廚房無名氏',
-        scene: '用過的碗盤，沒洗就在水槽放著，打算等著哪個好心人幫你清理。',
-        options: [
-          { label: '行動後果：放著不管', civAll: -1,
-            insight: '精緻的利己主義，將自己善後責任轉嫁給環境，導致集體文明倒退' },
-          { label: '補救機會：順手把旁邊積累的杯子也洗乾淨', each: { fortune: -2, wisdom: 1, civ: 1 },
-            insight: '主動補漏的人，是集體文明的守護者。這種「多做一點」的覺悟，是文明進步的基石' },
-        ] },
-      { name: '已讀不回',
-        scene: '群組裡主管或家人發出重要詢問，你明明看到了卻因為懶得思考，而假裝沒看見。',
-        options: [
-          { label: '行動後果：假裝沒看見', civAll: -1,
-            insight: '大家都等著別人當英雄時，溝通成本將大幅增加，團隊的信任與效率（文明）隨之癱瘓' },
-          { label: '補救機會：立刻回覆並提供力所能及的協助', each: { fortune: -1, wisdom: -2 },
-            insight: '強迫自己跳脫舒適圈，消耗心神（智慧）去思考解方，並付出行動（福報），及時拯救了團隊的運作' },
-        ] },
-      { name: '正義魔人',
-        scene: '在大群組中，不留情面的指出同事的低級錯誤，雖然你講的沒錯，卻間接傷害彼此的關係。',
-        options: [
-          { label: '行動後果：公開羞辱式指正', civAll: -1,
-            insight: '帶著指責的「對」，往往比「錯」更傷人。以正義之名行羞辱之實，撕裂了群體的心理安全感' },
-          { label: '補救機會：顧全對方尊嚴、私下溝通', each: { wisdom: -2 },
-            insight: '帶著指責的對，往往比錯更傷人。用智慧包容他人的尊嚴，才是高維度的職場文明' },
-        ] },
-      { name: '啊，忘記關了',
-        scene: '著急離開，卻因為不細心而「忘記」關閉冷氣與所有電燈。',
-        options: [
-          { label: '行動後果：直接離開', civAll: -1,
-            insight: '無意識的粗心大意，造成了公用能源的虛耗，直接損害了群體的永續生存空間' },
-          { label: '補救機會：回頭關閉、額外付出止漏', each: { fortune: -2, wisdom: -1 },
-            insight: '用額外付出，來彌補自己的缺失（福報），並找回當下的專注與覺知（智慧）來完成止漏' },
-        ] },
-      { name: '垃圾疊疊樂',
-        scene: '公用垃圾桶已經滿到快要掉出來，你小心翼翼地把自己的垃圾疊在最頂端。',
-        options: [
-          { label: '行動後果：疊上去就走', civAll: -1,
-            insight: '逃避眼前的麻煩，將爆發的風險推給下一個人，這種苟且的心態是文明衰退的縮影' },
-          { label: '補救機會：清運垃圾，並承諾未來每一次都將自己的垃圾體積最小化', each: { fortune: -1, civ: 1 },
-            insight: '承擔大家都不想做的髒活，並透過承諾改變未來的行為模式，這份願力能直接提升自我文明' },
-        ] },
-      { name: '冰箱大地主',
-        scene: '買了一堆東西，佔用公用冰箱資源，又常把東西放到過期，不僅浪費電力，更浪費食物與資源。',
-        options: [
-          { label: '行動後果：繼續囤積到過期', each: { fortune: -2 }, civAll: -1,
-            insight: '貪心與過度囤積，浪費食物即消耗了自身的福報，更擠壓了他人的公共空間是損害文明行為' },
-          { label: '補救機會：在群組坦白並承諾補上一瓶，將尷尬化為幽默', each: { wisdom: -1 },
-            insight: '放下身段承認錯誤需要極大的心理素質（智慧），透過真誠的溝通來修復被佔用的公共關係' },
-        ] },
-    ],
-  },
-};
 
 function getActionDeck() {
-  return (state.customDecks && state.customDecks.action) || DEFAULT_ACTION_DECK;
+  return (state.customDecks && state.customDecks.action) || window.i18n.cards.actionDeck;
 }
 function getBoostDeck() {
-  return (state.customDecks && state.customDecks.boost) || DEFAULT_BOOST_DECK;
+  return (state.customDecks && state.customDecks.boost) || window.i18n.cards.boostDeck;
 }
 
 function buildActionPool() {
@@ -166,101 +45,6 @@ function buildActionPool() {
 
 // ─────────── Boost deck (共好加速卡) ───────────
 // Each card stands alone (no categories). 「即時行動」 + 「福慧覺察」 sections.
-const DEFAULT_BOOST_DECK = [
-  { name: '能量補給站',   reward: { fortune: 1, wisdom: 0, civ: 1 }, rewardText: '雙方 福報 +1 · 文明 +1', both: true,
-    action: '與共好夥伴擊個掌，大聲說：「你真的很棒！」',
-    insight: '給別人打氣，自己也會充滿電。' },
-  { name: '隨手微服務',   reward: { fortune: 3, wisdom: 0, civ: 0 }, rewardText: '雙方 福報 +3', both: true,
-    action: '主動為共好夥伴做一件微小的服務（例如：幫他倒水、遞一張衛生紙、或幫他把眼前的桌面稍微整理整齊⋯）。',
-    insight: '用行動主動利他。' },
-  { name: '無聲的祝福',   reward: { fortune: 1, wisdom: 1, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +1', both: true,
-    action: '對共好夥伴露出真誠的燦爛「笑臉」，傳遞無聲的善意。',
-    insight: '善意不需要複雜的包裝，簡單的交流就能傳遞溫暖。' },
-  { name: '點數大共享',   reward: { fortune: 2, wisdom: 0, civ: 0 }, rewardText: '福報 +2',
-    action: '分享予共好夥伴 1 點「福報」或「智慧」，並說：「這份好運，分給你」。',
-    insight: '慷慨是打破匱乏感的最佳練習。願意分享，福報反而會回流。' },
-  { name: '感恩的共振',   reward: { fortune: 3, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +3 · 智慧 +2 · 文明 +1', both: true,
-    action: '你與共好夥伴輪流分享一件「今天發生、值得感恩的小事」。',
-    insight: '心懷感恩，能瞬間帶動周圍的和諧氛圍。' },
-  { name: '正念同頻率',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
-    action: '你與共好夥伴一起閉上眼睛，由你喊節拍，兩人同步進行 3 次深呼吸。',
-    insight: '在喧鬧中找回平靜，把注意力收回到自己的身體。' },
-  { name: '情緒資源回收', reward: { fortune: 2, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +2 · 智慧 +2 · 文明 +1', both: true,
-    action: '與共好夥伴各自說出近期的「小煩惱」，說完後，兩人一起「大笑三聲」把它丟掉。',
-    insight: '幽默感與轉念，是面對無常時最強大的心理韌性。' },
-  { name: '傾聽的修煉',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
-    action: '請共好夥伴分享此刻的「心情或感受」，需全神貫注地看著對方，認真傾聽。',
-    insight: '真正的傾聽必須放下「我執」與「想給建議的衝動」。' },
-  { name: '舒展與覺知',   reward: { fortune: 1, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +1 · 智慧 +2', both: true,
-    action: '由共好夥伴示範一個簡單的「肩頸伸展或伸懶腰動作」，你跟著他一起做 10 秒鐘。',
-    insight: '身體是修行的殿堂。隨時覺察並照顧身體的緊繃。' },
-  { name: '意圖的宣告',   reward: { fortune: 2, wisdom: 2, civ: 0 }, rewardText: '雙方 福報 +2 · 智慧 +2', both: true,
-    action: '你與共好夥伴輪流大聲宣告一個「遊戲結束前要完成的微小目標」（例如：我要多微笑、我要不抱怨）。',
-    insight: '為自己的行為設定清晰的意圖，是有意識生活的開始。' },
-  { name: '翻譯蒟蒻',     reward: { fortune: 1, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +1 · 智慧 +2 · 文明 +1', both: true,
-    action: '當長輩常說「這麼晚還在忙，都不知道照顧自己！」，與共好夥伴一起把這句「指責」重新翻譯成能讓長輩安心、又能捍衛自己界線的「溫柔回應」。',
-    insight: '看透刀子嘴背後的豆腐心是智慧；共同翻譯愛的語言、讓表達真實傳遞是福報。' },
-  { name: '融入藍圖',     reward: { fortune: 2, wisdom: 2, civ: 1 }, rewardText: '雙方 福報 +2 · 智慧 +2 · 文明 +1', both: true,
-    action: '團隊來了新人、看起來有點不知所措。與共好夥伴一起為新人設計融入環境的引導與陪伴，讓他自在展現自己。',
-    insight: '打造包容的環境是福報；循序漸進的引導與陪伴讓潛能被激發，共創文明。' },
-  { name: '過年防禦聯盟', reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '雙方 智慧 +2', both: true,
-    action: '提出過節時親戚最愛問的地雷問題，與共好夥伴集思廣益，想出三個「溫和但不失禮貌」的回覆。',
-    insight: '面對關係保持冷靜並溫和回應，是覺察的智慧。' },
-  { name: '神隊友救援',   reward: { fortune: 0, wisdom: 2, civ: 0 }, rewardText: '雙方 智慧 +2', both: true,
-    action: '出差時同事訂錯飯店、到現場才發現。與共好夥伴一同討論：如何既清楚表達、又不帶指責的說話方式。',
-    insight: '接受現況並給予充足信任，是高維度的職場智慧。' },
-
-  // ── 文明反思：雙人抉擇卡（每張兩個選項，主持人依實際抉擇套用；可負分、可影響集體文明池）──
-  { name: '情緒修剪師', series: '文明反思', both: true,
-    scene: '雙方因專案意見不合快要吵起來，若直接爆發將嚴重打擊團隊合作的氣氛。',
-    options: [
-      { label: '選項 A：各自堅持，情緒宣洩', each: { fortune: -1, wisdom: -1 }, civAll: -2,
-        insight: '放任情緒不僅內耗雙方的能量，更會破壞團隊的安全感，導致集體文明倒退' },
-      { label: '選項 B（減傷）：主動叫停、各自冷靜', each: { fortune: -1, wisdom: -3 },
-        insight: '運用「智慧」按下暫停鍵。看似個人付出了忍耐的代價，卻成功為團隊止漏，守護了集體的和諧' },
-    ] },
-  { name: '職場擋箭牌', series: '文明反思', both: true,
-    scene: '團隊出包，主管正在氣頭上。你們兩位身為資深同仁，面臨是否出來扛責的抉擇。',
-    options: [
-      { label: '選項 A 明哲保身：讓犯錯的新人單獨面對', civAll: -1,
-        insight: '沉默雖然能保全自己的能量，卻失去團隊的信任與擔當，無法建立文明團隊，團隊文化基石將迅速崩塌' },
-      { label: '選項 B 承擔共好：共同出面承擔緩衝主管情緒', each: { fortune: -1 }, civAll: 1,
-        side: '新人（福＋慧最低者）智慧 +1',
-        insight: '有意識地消耗自身的「福報」為他人遮風擋雨。這份利他精神不僅能提升集體文明，還能轉化為後輩成長的智慧' },
-    ] },
-  { name: '流言止於智者', series: '文明反思', both: true,
-    scene: '八卦流言傳到你們耳中，內容涉及另一位夥伴的私生活，大家都在等著你們接話',
-    options: [
-      { label: '選項 A 順口搭腔：加入討論', civAll: -1,
-        insight: '不需付出個人成本的附和，卻是在消費他人的隱私，這會讓環境變得冷漠猜忌（信任瓦解）' },
-      { label: '選項 B 智慧止漏：用幽默轉移話題', each: { wisdom: -2 },
-        insight: '消耗「智慧」來化解尷尬、不隨波逐流。主動截斷負能量的傳播，是建立高信任文明的關鍵' },
-    ] },
-  { name: '家務大和解', series: '文明反思', both: true,
-    scene: '家裡家務事堆積如山，你們兩位都累了一整天，本來想推給對方，氣氛逐漸緊繃。',
-    options: [
-      { label: '選項 A 計較對錯：開始計較誰做得多', each: { fortune: -1 }, civAll: -1,
-        insight: '在關係中爭輸贏，是最嚴重的能量消耗，既傷了彼此的福報，也破壞了家庭的文明品質' },
-      { label: '選項 B 福報止損：共同分工，或決定點外賣放鬆', each: { fortune: -3 },
-        insight: '願意放下自我堅持、付出勞力或金錢，換來的是衝突的消弭與關係的維持' },
-    ] },
-  { name: '生態紅利', series: '文明反思', both: true, conditional: { civGte: 30 },
-    scene: '命運綁定！此時集體的文明指數，將直接決定你們能否在這個環境中獲得好運。',
-    options: [
-      { label: '文明 ≥ 30：代表環境溫暖互信。善意在此開花結果', each: { fortune: 2 },
-        insight: '這是先前所有玩家共同投資文明的回報。在高度文明的社會中，所有人都能毫不費力地獲得庇蔭' },
-      { label: '文明 < 30：代表環境冷漠猜忌。行善成本變高', each: { fortune: -1, wisdom: -1 },
-        insight: '當大家都不願投資集體，最終無人能倖免於難。自私的代價，就是必須在惡劣環境中付出更多心力生存' },
-    ] },
-  { name: '跨界救火隊', series: '文明反思', both: true,
-    scene: '隔壁部門進度嚴重落後，向你們求助，但這並非你們的KPI，幫忙會佔用休息時間',
-    options: [
-      { label: '選項 A 婉言拒絕：保全自己',
-        insight: '守住邊界並沒有錯，但社會也因此失去了互助躍升的機會，維持現狀' },
-      { label: '選項 B 共好利他：花自己的休息時間，幫忙理清思路。隔壁部門脫困', each: { fortune: -2, wisdom: -2 }, civAll: 1,
-        insight: '將個人的「福報與智慧」跨界輸出。打破本位主義的互助，能創造出強大的集體文明共振' },
-    ] },
-];
 
 function buildBoostPool() {
   return getBoostDeck().map(c => ({ type: 'boost', ...c }));
@@ -289,7 +73,7 @@ const MILESTONES = [25, 35, 45, 55]; // 單項里程；最後一階＝畢業線
 const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
 const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福慧雙達者
 const STATS = ['fortune', 'wisdom', 'civ'];
-const STAT_LABEL = { fortune: '福報', wisdom: '智慧', civ: '文明' };
+const STAT_LABEL = (stat) => t('players.' + stat);
 
 function emptyNavClaim() {
   return NAV_THRESHOLDS.reduce((o, n) => (o[n] = null, o), {});
@@ -621,14 +405,14 @@ function rollSetupDie(stat, idx) {
 
   const finalValue = roll(10);
   setupTmp.rolls[idx][stat] = finalValue;
-  const name = setupTmp.rolls[idx].name || `玩家 ${idx + 1}`;
-  const statLabel = stat === 'fortune' ? '福報' : '智慧';
+  const name = setupTmp.rolls[idx].name || `${t('common.player')} ${idx + 1}`;
+  const statLabel = stat === 'fortune' ? t('players.fortune') : t('players.wisdom');
 
   diceBusy = true;
   stopDieIdle();
   die.classList.remove('fortune', 'wisdom');
   die.classList.add(stat);
-  cap.textContent = `${name} · ${statLabel} 擲骰中…`;
+  cap.textContent = t('setup.dice_rolling', {name: name, statLabel: statLabel});
 
   // The die settles flat with the rolled face up; a random heading (yaw) makes
   // each throw come to rest at a different angle, like a real die on the table.
@@ -718,7 +502,7 @@ function scaleReward(base = {}, mult = 1) {
 function describeReward(r = {}) {
   return STATS
     .filter(stat => r[stat])
-    .map(stat => `${STAT_LABEL[stat]} ${r[stat] > 0 ? '+' : ''}${r[stat]}`)
+    .map(stat => `${STAT_LABEL(stat)} ${r[stat] > 0 ? '+' : ''}${r[stat]}`)
     .join(' · ');
 }
 
@@ -735,7 +519,7 @@ function toast(msg, kind = '') {
 }
 
 // In-app confirm dialog (replaces native confirm()). Returns a Promise<boolean>.
-function confirmModal({ title = '確認', message = '', confirmText = '確定', cancelText = '取消', danger = false } = {}) {
+function confirmModal({ title = t('confirm.title'), message = '', confirmText = t('confirm.btn_ok'), cancelText = t('confirm.btn_cancel'), danger = false } = {}) {
   return new Promise((resolve) => {
     const modal = $('#confirm-modal');
     const okBtn = $('#confirm-ok');
@@ -856,10 +640,10 @@ function processStatChange(player, stat, oldVal, newVal) {
   const k = key(stat, m);
   if (oldVal < m && newVal >= m && !player.notified[k]) {
     player.notified[k] = true;
-    const msg = `${player.name || '玩家'} ${STAT_LABEL[stat]} 達 ${m}　抽卡、可宣告畢業`;
+    const msg = `${player.name || t('common.player')} ${STAT_LABEL(stat)} 達 ${m}　抽卡、可宣告畢業`;
     toast(msg, 'grad');
     logEvent(msg, 'grad');
-    addPendingDraw(`${player.name || '玩家'}　${STAT_LABEL[stat]}達 ${m}　抽卡、可宣告畢業`, player.id);
+    addPendingDraw(`${player.name || t('common.player')}　${STAT_LABEL(stat)}達 ${m}　抽卡、可宣告畢業`, player.id);
     flashCard(player.id);
   }
   checkGraduation(player);
@@ -945,8 +729,8 @@ function updateTopbar() {
     : '集體文明積分總和 — 達標即勝利';
   if (goalReached && !state._civGoalNoticed) {
     state._civGoalNoticed = true;
-    toast(`集體文明達 ${state.civGoal} — 達標、全員勝利！`, 'grad');
-    logEvent(`集體文明達標 ${state.civGoal} — 全員勝利`, 'grad');
+    toast(t('messages.civ_goal_reached', {goal: state.civGoal}), 'grad');
+    logEvent(t('messages.civ_goal_reached_log', {goal: state.civGoal}), 'grad');
   } else if (!goalReached && state._civGoalNoticed) {
     state._civGoalNoticed = false;
   }
@@ -955,8 +739,8 @@ function updateTopbar() {
   const allGraduated = state.players.length > 0 && state.players.every(p => p.graduated);
   if (allGraduated && !state._allGradNoticed) {
     state._allGradNoticed = true;
-    toast('全員畢業 — 全員圓滿、可進行最終結算', 'grad');
-    logEvent('全員畢業 — 全員圓滿、可進行結算', 'grad');
+    toast(t('messages.all_graduated'), 'grad');
+    logEvent(t('messages.all_graduated_log'), 'grad');
   } else if (!allGraduated && state._allGradNoticed) {
     state._allGradNoticed = false;
   }
@@ -983,15 +767,15 @@ function updateTopbar() {
 
   if (sprint && !state._sprintNoticed) {
     state._sprintNoticed = true;
-    toast('無常與恩典齊發 — 最後 15 分鐘，卡牌得分與扣分 ×2', 'grad');
-    logEvent('無常與恩典齊發啟動 — 卡牌得分／扣分 ×2', 'grad');
+    toast(t('messages.sprint_started'), 'grad');
+    logEvent(t('messages.sprint_started_log'), 'grad');
   }
 
   if (sec >= maxSec && !state._timeUpNoticed) {
     state._timeUpNoticed = true;
     pauseTimer();
-    toast(`${gameMinutes()} 分鐘到、請進行最終結算`, 'grad');
-    logEvent('時間到 — 進行最終結算', 'grad');
+    toast(t('messages.time_up', {min: gameMinutes()}), 'grad');
+    logEvent(t('messages.time_up_log'), 'grad');
   }
 }
 
@@ -1062,7 +846,7 @@ function buildPlayerCard(p) {
     } else if (t.closest('[data-act="adjust"]')) {
       openAdjustModal(p.id);
     } else if (t.matches('[data-act="remove"]')) {
-      confirmModal({ title: '移除玩家', message: `確定要移除「${p.name || '玩家'}」？`, confirmText: '移除', danger: true })
+      confirmModal({ title: t('confirm.remove_player_title'), message: t('confirm.remove_player_msg', {name: p.name || t('common.player')}), confirmText: t('confirm.remove'), danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
     }
   });
@@ -1103,7 +887,7 @@ function statRow(p, stat) {
   }).join('');
   return `
     <div class="stat-row stat-${stat}">
-      <div class="stat-label">${STAT_LABEL[stat]}</div>
+      <div class="stat-label">${STAT_LABEL(stat)}</div>
       <div class="stat-bar">
         <div class="stat-bar-fill" style="width:${pct}%"></div>
         ${marks}
@@ -1178,7 +962,7 @@ function applyAdjust() {
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
   STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
-  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const tag = mult > 1 ? t('messages.sprint_tag') : '';
   const msg = `${name} 批次調分　${describeReward(scaled)}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
@@ -1201,7 +985,7 @@ function scoreOrigin(playerId, stop) {
   const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
-  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const tag = mult > 1 ? t('messages.sprint_tag') : '';
   const msg = `${p.name || '玩家'} ${stop ? '停在' : '經過'}起始點　${describeReward(r)}${tag}`;
   toast(msg, 'grad');
   logEvent(msg, 'grad');
@@ -1402,7 +1186,7 @@ function renderTopMarker() {
 
 async function applySetup() {
   if (setupTmp.rolls.some(r => (r.fortune || 0) === 0 || (r.wisdom || 0) === 0)) {
-    const ok = await confirmModal({ title: '尚未擲完初始值', message: '有玩家尚未擲福慧初始值，仍要開始嗎？', confirmText: '仍要開始' });
+    const ok = await confirmModal({ title: t('setup.warn_incomplete_title'), message: t('setup.warn_incomplete_msg'), confirmText: t('setup.warn_incomplete_btn') });
     if (!ok) return;
   }
   const isNext = setupTmp.mode === 'next';
@@ -1446,12 +1230,12 @@ async function applySetup() {
   state.log = [];
   state.pendingDraws = [];
   logEvent(isNext
-    ? `進入第 ${state.roundNum} 局 · 文明高度 ${state.civGoal}`
-    : `第 ${state.roundNum} 局開局 · 文明高度 ${state.civGoal}`, 'grad');
+    ? t('messages.round_started_log', {round: state.roundNum, goal: state.civGoal})
+    : t('messages.round_restored_log', {round: state.roundNum, goal: state.civGoal}), 'grad');
   save();
   closeSetup();
   renderAll();
-  if (isNext) toast(`已進入第 ${state.roundNum} 局 — 上一局已存入歷史紀錄`);
+  if (isNext) toast(t('messages.round_started', {round: state.roundNum}));
 }
 
 // ─────────── Topbar / sidebar bindings ───────────
@@ -1530,7 +1314,7 @@ function bindEvents() {
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
 
   $('#btn-reset-game').addEventListener('click', async () => {
-    const ok = await confirmModal({ title: '重置整個遊戲', message: '將清除所有玩家積分、計時、設定與歷史，且無法復原。確定要重置嗎？', confirmText: '重置', danger: true });
+    const ok = await confirmModal({ title: t('confirm.reset_game_title'), message: t('confirm.reset_game_msg'), confirmText: t('confirm.reset'), danger: true });
     if (!ok) return;
     state = defaultState();
     save();
@@ -1588,7 +1372,7 @@ async function restoreRound(idx) {
   save();
   renderAll();
   closeHistory();
-  toast(`已切回第 ${state.roundNum} 局 — 第 ${leaving.roundNum} 局已存入歷史`, 'grad');
+  toast(t('messages.round_restored', {round: state.roundNum, oldRound: leaving.roundNum}), 'grad');
 }
 
 function refreshHistoryButton() {
@@ -1730,8 +1514,8 @@ function backToHistoryList() {
 
 // ─────────── Card draw ───────────
 const DECKS = {
-  action: { title: '行動指令牌', pool: buildActionPool() },
-  boost:  { title: '共好加速卡', pool: buildBoostPool()  },
+  action: { title: '行動指令牌', pool: [] },
+  boost:  { title: '共好加速卡', pool: []  },
 };
 let currentCard = null;
 let currentDeckKey = null;
@@ -1818,11 +1602,11 @@ function renderCard() {
   });
   $('#card-apply').addEventListener('click', () => {
     const pid = $('#card-recipient').value;
-    if (!pid) { toast('請先選擇要套用的玩家'); return; }
+    if (!pid) { toast(t('messages.select_player')); return; }
     if (currentCard.both) {
       const pid2 = $('#card-recipient2').value;
-      if (!pid2) { toast('「雙方」卡請選擇上一家玩家'); return; }
-      if (pid2 === pid) { toast('本人與上一家不可為同一人'); return; }
+      if (!pid2) { toast(t('messages.select_prev_player')); return; }
+      if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
       applyCardReward([pid, pid2], currentCard);
     } else {
       applyCardReward(pid, currentCard);
@@ -1986,13 +1770,13 @@ function renderChoiceCard(c) {
     renderCard();
   });
   $('#card-apply').addEventListener('click', () => {
-    if (currentChoiceOpt == null) { toast('請先點選其中一個抉擇選項'); return; }
+    if (currentChoiceOpt == null) { toast(t('messages.select_choice')); return; }
     const pid = $('#card-recipient').value;
-    if (!pid) { toast('請先選擇要套用的玩家'); return; }
+    if (!pid) { toast(t('messages.select_player')); return; }
     if (c.both) {
       const pid2 = $('#card-recipient2').value;
-      if (!pid2) { toast('此卡為雙人卡，請選擇對方玩家'); return; }
-      if (pid2 === pid) { toast('本人與對方不可為同一人'); return; }
+      if (!pid2) { toast(t('messages.select_target')); return; }
+      if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
       applyChoiceCard([pid, pid2], c, currentChoiceOpt);
     } else {
       applyChoiceCard([pid], c, currentChoiceOpt);
@@ -2012,14 +1796,14 @@ function applyChoiceCard(playerIds, card, optIdx) {
     const p = getPlayer(pid);
     if (!p) return;
     STATS.forEach(stat => { if (each[stat]) setStat(pid, stat, (p[stat] || 0) + each[stat]); });
-    names.push(p.name || '玩家');
+    names.push(p.name || t('common.player'));
   });
   if (!names.length) return;
   if (civAll) {
     state.players.forEach(p => setStat(p.id, 'civ', (p.civ || 0) + civAll));   // 集體文明＝場上所有玩家
   }
   const fx = describeChoiceOption(card, opt);
-  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
+  const tag = mult > 1 ? t('messages.sprint_tag') : '';
   const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
   const positive = describeReward(each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
@@ -2153,7 +1937,7 @@ function exportDecks() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 100);
-  toast('已下載 JSON');
+  toast(t('messages.json_downloaded'));
 }
 
 function importDeckFile(file) {
@@ -2164,58 +1948,58 @@ function importDeckFile(file) {
       const data = JSON.parse(e.target.result);
       applyDecksImport(data);
     } catch (err) {
-      toast('JSON 解析失敗：' + err.message);
+      toast(t('messages.json_parse_error') + '：' + err.message);
     }
   };
-  reader.onerror = () => toast('讀檔失敗');
+  reader.onerror = () => toast(t('messages.read_fail'));
   reader.readAsText(file, 'utf-8');
 }
 
 function importPastedJSON() {
   const raw = $('#dm-paste').value.trim();
-  if (!raw) { toast('請先貼上 JSON'); return; }
+  if (!raw) { toast(t('messages.paste_json_first')); return; }
   try {
     const data = JSON.parse(raw);
     applyDecksImport(data);
   } catch (err) {
-    toast('JSON 解析失敗：' + err.message);
+    toast(t('messages.json_parse_error') + '：' + err.message);
   }
 }
 
 function validateImport(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return '需為 JSON 物件';
+    return t('validate.need_object');
   }
   if (data.actionDeck === undefined && data.boostDeck === undefined) {
-    return '至少需提供 actionDeck 或 boostDeck';
+    return t('validate.need_decks');
   }
 
   if (data.actionDeck !== undefined) {
     if (typeof data.actionDeck !== 'object' || Array.isArray(data.actionDeck) || data.actionDeck === null) {
-      return 'actionDeck 需為物件（類別 → 卡組）';
+      return t('validate.action_deck_object');
     }
     for (const [cat, deck] of Object.entries(data.actionDeck)) {
-      if (!deck || typeof deck !== 'object') return `「${cat}」需為物件`;
-      if (!deck.reward || typeof deck.reward !== 'object') return `「${cat}」缺 reward`;
-      if (typeof deck.rewardText !== 'string')             return `「${cat}」缺 rewardText`;
-      if (!Array.isArray(deck.cards))                      return `「${cat}」.cards 需為陣列`;
+      if (!deck || typeof deck !== 'object') return t('validate.cat_object', {cat});
+      if (!deck.reward || typeof deck.reward !== 'object') return t('validate.cat_missing_reward', {cat});
+      if (typeof deck.rewardText !== 'string')             return t('validate.cat_missing_rewardText', {cat});
+      if (!Array.isArray(deck.cards))                      return t('validate.cat_cards_array', {cat});
       for (const c of deck.cards) {
-        if (!c || typeof c.name !== 'string' || !c.name)   return `「${cat}」內某張卡缺 name`;
+        if (!c || typeof c.name !== 'string' || !c.name)   return t('validate.card_missing_name', {cat});
         if (Array.isArray(c.options)) { const e = validateChoiceCard(c, cat); if (e) return e; continue; }
-        if (typeof c.desc !== 'string')                    return `「${cat}」「${c.name}」缺 desc`;
+        if (typeof c.desc !== 'string')                    return t('validate.card_missing_desc', {cat: cat, name: c.name});
       }
     }
   }
 
   if (data.boostDeck !== undefined) {
-    if (!Array.isArray(data.boostDeck)) return 'boostDeck 需為陣列';
+    if (!Array.isArray(data.boostDeck)) return t('validate.boost_array');
     for (const c of data.boostDeck) {
-      if (!c || typeof c.name !== 'string' || !c.name) return '共好加速卡某張缺 name';
-      if (Array.isArray(c.options)) { const e = validateChoiceCard(c, '共好加速卡'); if (e) return e; continue; }
-      if (typeof c.action !== 'string')   return `「${c.name}」缺 action`;
-      if (typeof c.insight !== 'string')  return `「${c.name}」缺 insight`;
-      if (!c.reward || typeof c.reward !== 'object') return `「${c.name}」缺 reward`;
-      if (typeof c.rewardText !== 'string') return `「${c.name}」缺 rewardText`;
+      if (!c || typeof c.name !== 'string' || !c.name) return t('validate.boost_missing_name');
+      if (Array.isArray(c.options)) { const e = validateChoiceCard(c, t('dm.boost_label')); if (e) return e; continue; }
+      if (typeof c.action !== 'string')   return t('validate.boost_missing_action', {name: c.name});
+      if (typeof c.insight !== 'string')  return t('validate.boost_missing_insight', {name: c.name});
+      if (!c.reward || typeof c.reward !== 'object') return t('validate.boost_missing_reward', {name: c.name});
+      if (typeof c.rewardText !== 'string') return t('validate.boost_missing_rewardText', {name: c.name});
     }
   }
   return null;
@@ -2223,19 +2007,19 @@ function validateImport(data) {
 
 // 抉擇卡（帶 options）的匯入驗證。
 function validateChoiceCard(c, group) {
-  if (typeof c.scene !== 'string')                       return `「${group}」「${c.name}」缺 scene`;
-  if (!Array.isArray(c.options) || !c.options.length)    return `「${group}」「${c.name}」缺 options`;
+  if (typeof c.scene !== 'string')                       return t('validate.choice_missing_scene', {group, name: c.name});
+  if (!Array.isArray(c.options) || !c.options.length)    return t('validate.choice_missing_options', {group, name: c.name});
   for (const o of c.options) {
-    if (!o || typeof o.label !== 'string' || !o.label)   return `「${c.name}」某選項缺 label`;
-    if (o.each !== undefined && (typeof o.each !== 'object' || o.each === null)) return `「${c.name}」選項 each 需為物件`;
-    if (o.civAll !== undefined && !Number.isFinite(o.civAll)) return `「${c.name}」選項 civAll 需為數字`;
+    if (!o || typeof o.label !== 'string' || !o.label)   return t('validate.choice_opt_missing_label', {name: c.name});
+    if (o.each !== undefined && (typeof o.each !== 'object' || o.each === null)) return t('validate.choice_opt_each_object', {name: c.name});
+    if (o.civAll !== undefined && !Number.isFinite(o.civAll)) return t('validate.choice_opt_civAll_number', {name: c.name});
   }
   return null;
 }
 
 async function applyDecksImport(data) {
   const err = validateImport(data);
-  if (err) { toast('匯入失敗：' + err); return; }
+  if (err) { toast(t('messages.import_fail') + '：' + err); return; }
 
   const actionCount = data.actionDeck
     ? Object.values(data.actionDeck).reduce((s, d) => s + d.cards.length, 0)
@@ -2243,9 +2027,9 @@ async function applyDecksImport(data) {
   const boostCount  = data.boostDeck ? data.boostDeck.length : null;
 
   const parts = [];
-  if (actionCount !== null) parts.push(`行動指令牌 ${actionCount} 張`);
-  if (boostCount  !== null) parts.push(`共好加速卡 ${boostCount} 張`);
-  const ok = await confirmModal({ title: '匯入卡牌資料', message: `匯入：${parts.join(' · ')}\n當前對應牌組將被覆蓋（其他保留）。`, confirmText: '匯入' });
+  if (actionCount !== null) parts.push(`${t('dm.action_label')} ${actionCount} ${t('dm.count_suffix').strip()}`);
+  if (boostCount  !== null) parts.push(`${t('dm.boost_label')} ${boostCount} ${t('dm.count_suffix').strip()}`);
+  const ok = await confirmModal({ title: t('confirm.import_deck_title'), message: t('confirm.import_deck_msg', {parts: parts.join(' · ')}), confirmText: t('confirm.import') });
   if (!ok) return;
 
   const next = Object.assign({ action: null, boost: null }, state.customDecks || {});
@@ -2256,21 +2040,21 @@ async function applyDecksImport(data) {
   rebuildDecks();
   save();
   renderDeckManager();
-  toast('卡牌資料已更新', 'grad');
+  toast(t('messages.cards_updated'), 'grad');
 }
 
 async function resetDecksToDefault() {
   if (!state.customDecks || (!state.customDecks.action && !state.customDecks.boost)) {
-    toast('目前已是預設牌組');
+    toast(t('messages.already_default_deck'));
     return;
   }
-  const ok = await confirmModal({ title: '重置為預設牌組', message: '所有自訂卡牌資料會被清除。', confirmText: '重置', danger: true });
+  const ok = await confirmModal({ title: t('confirm.reset_deck_title'), message: t('confirm.reset_deck_msg'), confirmText: t('confirm.reset'), danger: true });
   if (!ok) return;
   state.customDecks = { action: null, boost: null };
   rebuildDecks();
   save();
   renderDeckManager();
-  toast('已重置為預設牌組', 'grad');
+  toast(t('messages.reset_to_default'), 'grad');
 }
 
 function catalogBoostCardHtml(c) {
@@ -2302,7 +2086,7 @@ function applyCardReward(playerIds, card) {
     if (r.fortune) setStat(pid, 'fortune', (p.fortune || 0) + r.fortune);
     if (r.wisdom)  setStat(pid, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
     if (r.civ)     setStat(pid, 'civ',     (p.civ     || 0) + r.civ);
-    names.push(p.name || '玩家');
+    names.push(p.name || t('common.player'));
   });
   if (!names.length) return;
   // During the sprint show the doubled per-player tally plus a clear ×2 tag;
@@ -2310,9 +2094,9 @@ function applyCardReward(playerIds, card) {
   // grant so two names + the value read unambiguously.
   const rewardText = mult > 1
     ? describeReward(r)
-    : (ids.length > 1 ? `雙方各得 ${describeReward(r)}` : card.rewardText);
-  const tag = mult > 1 ? '（無常與恩典齊發 ×2）' : '';
-  const msg = `${names.join('、')} 完成「${card.name}」　${rewardText}${tag}`;
+    : (ids.length > 1 ? t('messages.both_receive', {reward: describeReward(r)}) : card.rewardText);
+  const tag = mult > 1 ? t('messages.sprint_tag') : '';
+  const msg = t('messages.card_completed', {names: names.join('、'), card: card.name, reward: rewardText, tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
@@ -2370,4 +2154,12 @@ function init() {
   if (!hasGame) openSetup();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.i18n.init();
+  init();
+});
+
+window.addEventListener('languageChanged', () => {
+  rebuildDecks();
+  renderAll();
+});

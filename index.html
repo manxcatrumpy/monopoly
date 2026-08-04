@@ -35,18 +35,18 @@
         </svg>
       </span>
       <div class="brand-text">
-        <div class="title">福慧大富翁</div>
-        <div class="subtitle"><span class="subtitle-text">主持人控制台 · Host </span><span class="ver-tag" data-app-version></span></div>
+        <div class="title" data-i18n="app.title">福慧大富翁</div>
+        <div class="subtitle"><span class="subtitle-text" data-i18n="app.subtitle">主持人控制台 · Host </span><span class="ver-tag" data-app-version></span></div>
       </div>
     </div>
 
     <div class="meta">
       <div class="meta-item">
-        <label>局數</label>
-        <div class="meta-value">第 <strong id="round-num">1</strong> 局</div>
+        <label data-i18n="meta.round_label">局數</label>
+        <div class="meta-value"><span data-i18n="meta.round_prefix">第 </span><strong id="round-num">1</strong><span data-i18n="meta.round_suffix"> 局</span></div>
       </div>
       <div class="meta-item">
-        <label>文明高度</label>
+        <label data-i18n="meta.civ_label">文明高度</label>
         <div class="meta-value">
           <strong id="civ-total">0</strong>
           <span class="meta-sep">/</span>
@@ -54,15 +54,15 @@
         </div>
       </div>
       <div class="meta-item">
-        <label><span class="dot dot-fortune"></span>集體福報</label>
+        <label><span class="dot dot-fortune"></span><span data-i18n="meta.fortune_label">集體福報</span></label>
         <div class="meta-value"><strong id="fortune-total">0</strong></div>
       </div>
       <div class="meta-item">
-        <label><span class="dot dot-wisdom"></span>集體智慧</label>
+        <label><span class="dot dot-wisdom"></span><span data-i18n="meta.wisdom_label">集體智慧</span></label>
         <div class="meta-value"><strong id="wisdom-total">0</strong></div>
       </div>
       <div class="meta-item timer-item">
-        <label>遊戲時間</label>
+        <label data-i18n="meta.timer_label">遊戲時間</label>
         <div class="meta-value timer">
           <strong id="timer">00:00</strong>
           <span class="meta-cap" id="timer-max">/ 100:00</span>
@@ -71,32 +71,33 @@
     </div>
 
     <div class="actions">
+      <button id="btn-toggle-lang" class="btn btn-ghost" title="切換語言" onclick="window.i18n.setLanguage(window.i18n.currentLang === 'zh-tw' ? 'zh-cn' : 'zh-tw')">🌐 繁 / 簡</button>
       <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">開始</button>
-      <button id="btn-next-round" class="btn" title="進入下一局">下一局</button>
+      <button id="btn-next-round" class="btn" title="進入下一局" data-i18n="ui.btn_next_round">下一局</button>
       <button id="btn-history" class="btn btn-ghost" title="查看 / 復原歷史局" hidden>歷史紀錄</button>
-      <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定">設定</button>
-      <button id="btn-guide" class="btn btn-ghost" title="遊戲說明">說明</button>
+      <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定" data-i18n="ui.btn_setup">設定</button>
+      <button id="btn-guide" class="btn btn-ghost" title="遊戲說明" data-i18n="ui.btn_guide">說明</button>
     </div>
   </header>
 
   <div id="sprint-banner" class="sprint-banner hidden" role="status" aria-live="polite">
-    <span class="sprint-banner-title">無常與恩典齊發</span>
-    <span class="sprint-banner-sub">最後 15 分鐘 — 所有卡牌得分與扣分 ×2</span>
+    <span class="sprint-banner-title" data-i18n="banner.sprint_title">無常與恩典齊發</span>
+    <span class="sprint-banner-sub" data-i18n="banner.sprint_sub">最後 15 分鐘 — 所有卡牌得分與扣分 ×2</span>
   </div>
 
   <section class="civ-progress">
     <div class="civ-bar"><div id="civ-bar-fill" class="civ-bar-fill"></div></div>
-    <div class="civ-progress-label">集體文明積分總和 — 達標即勝利</div>
+    <div class="civ-progress-label" data-i18n="civ.progress_label">集體文明積分總和 — 達標即勝利</div>
   </section>
 
   <main class="dashboard">
     <section class="players-wrap">
       <div class="section-head">
-        <h2>玩家積分</h2>
+        <h2 data-i18n="players.title">玩家積分</h2>
         <div class="legend">
-          <span class="dot dot-fortune"></span>福報
-          <span class="dot dot-wisdom"></span>智慧
-          <span class="dot dot-civ"></span>文明
+          <span class="dot dot-fortune"></span><span data-i18n="players.fortune">福報</span>
+          <span class="dot dot-wisdom"></span><span data-i18n="players.wisdom">智慧</span>
+          <span class="dot dot-civ"></span><span data-i18n="players.civ">文明</span>
         </div>
       </div>
       <div id="players" class="players-grid" aria-live="polite"></div>
@@ -104,38 +105,38 @@
 
     <aside class="tools">
       <div class="tool-card">
-        <h3>抽卡</h3>
-        <p class="tool-hint">主持人代抽，會顯示卡牌內容與獎勵，可指派玩家自動套用點數。</p>
-        <button class="btn btn-block btn-draw" id="btn-draw-action">抽 行動指令牌</button>
-        <button class="btn btn-block btn-draw" id="btn-draw-boost">抽 共好加速卡</button>
-        <button class="btn btn-block btn-ghost" id="btn-browse-cards">瀏覽全部卡牌</button>
+        <h3 data-i18n="tools.draw_title">抽卡</h3>
+        <p class="tool-hint" data-i18n="tools.draw_hint">主持人代抽，會顯示卡牌內容與獎勵，可指派玩家自動套用點數。</p>
+        <button class="btn btn-block btn-draw" id="btn-draw-action" data-i18n="ui.btn_draw_action">抽 行動指令牌</button>
+        <button class="btn btn-block btn-draw" id="btn-draw-boost" data-i18n="ui.btn_draw_boost">抽 共好加速卡</button>
+        <button class="btn btn-block btn-ghost" id="btn-browse-cards" data-i18n="ui.btn_browse_cards">瀏覽全部卡牌</button>
       </div>
 
       <div class="tool-card">
-        <h3>卡牌資料</h3>
-        <p class="tool-hint">匯入自訂 JSON 可覆蓋預設牌組。資料存於本機 localStorage。</p>
-        <button class="btn btn-block btn-ghost" id="btn-deck-manager">管理卡牌資料</button>
+        <h3 data-i18n="tools.deck_title">卡牌資料</h3>
+        <p class="tool-hint" data-i18n="tools.deck_hint">匯入自訂 JSON 可覆蓋預設牌組。資料存於本機 localStorage。</p>
+        <button class="btn btn-block btn-ghost" id="btn-deck-manager" data-i18n="ui.btn_deck_manager">管理卡牌資料</button>
       </div>
 
       <div class="tool-card">
-        <h3>里程提醒</h3>
-        <p class="tool-hint">
+        <h3 data-i18n="tools.milestone_title">里程提醒</h3>
+        <p class="tool-hint" data-i18n="tools.milestone_hint">
           單項 55　接近畢業（福慧雙達 55 即畢業）<br />
           領航者　雙達 15 / 35 / 55　首位抽<br />
           自我突破　雙達 25 / 45　各人抽
         </p>
         <div class="pending-wrap hidden" id="pending-wrap">
-          <div class="pending-head">待抽卡　<span class="pending-note">抽完點「已抽」清除</span></div>
+          <div class="pending-head"><span data-i18n="tools.pending_head">待抽卡　</span><span class="pending-note" data-i18n="tools.pending_note">抽完點「已抽」清除</span></div>
           <ul class="pending-draws" id="pending-draws"></ul>
         </div>
         <ul class="milestone-log" id="milestone-log">
-          <li class="empty">尚無觸發</li>
+          <li class="empty" data-i18n="tools.log_empty">尚無觸發</li>
         </ul>
       </div>
 
       <div class="tool-card danger-card">
-        <h3>危險區</h3>
-        <button class="btn btn-warn btn-block" id="btn-reset-game">重置整個遊戲狀態</button>
+        <h3 data-i18n="tools.danger_title">危險區</h3>
+        <button class="btn btn-warn btn-block" id="btn-reset-game" data-i18n="tools.btn_reset">重置整個遊戲狀態</button>
       </div>
     </aside>
   </main>
@@ -144,8 +145,8 @@
        column drops below the player grid (≤1024px), so drawing never needs
        a scroll round-trip. Hidden while no game is running. -->
   <div id="quick-draw" class="quick-draw hidden">
-    <button class="btn btn-draw" id="btn-quick-action">抽 行動指令牌</button>
-    <button class="btn btn-draw" id="btn-quick-boost">抽 共好加速卡</button>
+    <button class="btn btn-draw" id="btn-quick-action" data-i18n="ui.btn_draw_action">抽 行動指令牌</button>
+    <button class="btn btn-draw" id="btn-quick-boost" data-i18n="ui.btn_draw_boost">抽 共好加速卡</button>
   </div>
 
   <!-- Setup modal -->
@@ -153,22 +154,22 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel">
       <header class="modal-head">
-        <h2 id="setup-title">開新局 — 啟程準備</h2>
-        <button class="icon-btn" id="setup-close" aria-label="關閉">✕</button>
+        <h2 id="setup-title" data-i18n="setup.title">開新局 — 啟程準備</h2>
+        <button class="icon-btn" id="setup-close" aria-label="關閉" data-i18n="setup.close">✕</button>
       </header>
 
       <div class="modal-body">
         <fieldset class="setup-section">
-          <legend>① 玩家人數（4–6）</legend>
+          <legend data-i18n="setup.sec1_title">① 玩家人數（4–6）</legend>
           <div class="player-count-pick">
-            <button class="chip" data-count="4">4 人</button>
-            <button class="chip" data-count="5">5 人</button>
-            <button class="chip" data-count="6">6 人</button>
+            <button class="chip" data-count="4" data-i18n="setup.p4">4 人</button>
+            <button class="chip" data-count="5" data-i18n="setup.p5">5 人</button>
+            <button class="chip" data-count="6" data-i18n="setup.p6">6 人</button>
           </div>
         </fieldset>
 
         <fieldset class="setup-section">
-          <legend>② 玩家資料 — 擲十面骰決定初始福慧</legend>
+          <legend data-i18n="setup.sec2_title">② 玩家資料 — 擲十面骰決定初始福慧</legend>
           <div class="dice-stage">
             <div class="dice-scene">
               <div class="die10" id="die10" aria-hidden="true">
@@ -184,42 +185,42 @@
                 <div class="d-face"><svg viewBox="0 0 120 120"><path class="kface" d="" /><text class="die10-num" x="60" y="60" text-anchor="middle" dominant-baseline="central">—</text></svg></div>
               </div>
             </div>
-            <div class="dice-caption" id="dice-caption">點玩家旁的「擲福 / 擲慧」開始擲骰</div>
+            <div class="dice-caption" id="dice-caption" data-i18n="setup.dice_caption">點玩家旁的「擲福 / 擲慧」開始擲骰</div>
           </div>
           <div id="setup-players" class="setup-players"></div>
-          <p class="hint">點「擲」隨機產生 1–10 點；也可直接輸入。</p>
+          <p class="hint" data-i18n="setup.hint2">點「擲」隨機產生 1–10 點；也可直接輸入。</p>
         </fieldset>
 
         <fieldset class="setup-section">
-          <legend>③ 文明高度</legend>
+          <legend data-i18n="setup.sec3_title">③ 文明高度</legend>
           <div class="setup-civ">
             <div class="setup-civ-info">
-              本局最高者：<strong id="setup-top-player">—</strong>
-              （福+慧 <strong id="setup-top-score">—</strong>） — 請其擲實體白骰與黑骰後輸入點數
+              <span data-i18n="setup.top_player">本局最高者：</span><strong id="setup-top-player">—</strong>
+              <span data-i18n="setup.top_score">（福+慧 </span><strong id="setup-top-score">—</strong><span data-i18n="setup.top_score_suffix">） — 請其擲實體白骰與黑骰後輸入點數</span>
             </div>
             <div class="civ-dice-inputs">
               <label class="row civ-input-row">
-                <span>白骰</span>
+                <span data-i18n="setup.white_dice">白骰</span>
                 <input type="number" id="setup-civ-white" min="1" max="6" value="1" />
               </label>
               <label class="row civ-input-row">
-                <span>黑骰</span>
+                <span data-i18n="setup.black_dice">黑骰</span>
                 <input type="number" id="setup-civ-black" min="1" max="6" value="1" />
               </label>
             </div>
             <div class="civ-goal-calc">
-              文明高度 ＝ 白 <strong id="civ-calc-white">1</strong>
-              × 黑 <strong id="civ-calc-black">1</strong>
-              ＋ 基礎 40 ＝ <strong id="civ-calc-goal">41</strong>
+              <span data-i18n="setup.civ_calc1">文明高度 ＝ 白 </span><strong id="civ-calc-white">1</strong>
+              <span data-i18n="setup.civ_calc2"> × 黑 </span><strong id="civ-calc-black">1</strong>
+              <span data-i18n="setup.civ_calc3"> ＋ 基礎 40 ＝ </span><strong id="civ-calc-goal">41</strong>
             </div>
-            <p class="hint">白骰、黑骰各 1–6 點；文明高度自動計算。</p>
+            <p class="hint" data-i18n="setup.hint3">白骰、黑骰各 1–6 點；文明高度自動計算。</p>
           </div>
         </fieldset>
 
         <fieldset class="setup-section">
-          <legend>④ 其他</legend>
+          <legend data-i18n="setup.sec4_title">④ 其他</legend>
           <label class="row">
-            <span>第幾局？</span>
+            <span data-i18n="setup.round_q">第幾局？</span>
             <input type="number" id="setup-round" min="1" value="1" />
           </label>
         </fieldset>
@@ -227,8 +228,8 @@
 
       <footer class="modal-foot">
         <span class="app-version" data-app-version></span>
-        <button class="btn btn-ghost" id="setup-cancel">取消</button>
-        <button class="btn btn-primary" id="setup-start">開始本局</button>
+        <button class="btn btn-ghost" id="setup-cancel" data-i18n="setup.btn_cancel">取消</button>
+        <button class="btn btn-primary" id="setup-start" data-i18n="setup.btn_start">開始本局</button>
       </footer>
     </div>
   </div>
@@ -238,33 +239,33 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel">
       <header class="modal-head">
-        <h2 id="dm-title">卡牌資料管理</h2>
+        <h2 id="dm-title" data-i18n="dm.title">卡牌資料管理</h2>
         <button class="icon-btn" id="dm-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
         <section class="dm-section">
-          <h3>目前牌組</h3>
+          <h3 data-i18n="dm.sec1_title">目前牌組</h3>
           <div class="dm-row">
-            <span class="dm-label">行動指令牌</span>
-            <span><strong id="dm-action-source">預設</strong> · <span id="dm-action-count">— 張</span></span>
+            <span class="dm-label" data-i18n="dm.action_label">行動指令牌</span>
+            <span><strong id="dm-action-source" data-i18n="dm.source_default">預設</strong> · <span id="dm-action-count">— 張</span></span>
           </div>
           <div class="dm-row">
-            <span class="dm-label">共好加速卡</span>
-            <span><strong id="dm-boost-source">預設</strong> · <span id="dm-boost-count">— 張</span></span>
+            <span class="dm-label" data-i18n="dm.boost_label">共好加速卡</span>
+            <span><strong id="dm-boost-source" data-i18n="dm.source_default">預設</strong> · <span id="dm-boost-count">— 張</span></span>
           </div>
         </section>
 
         <section class="dm-section">
-          <h3>匯出當前資料</h3>
-          <p class="dm-hint">下載完整 JSON，可作為自訂模板的起點。</p>
-          <button class="btn" id="dm-export">下載 JSON 檔</button>
+          <h3 data-i18n="dm.sec2_title">匯出當前資料</h3>
+          <p class="dm-hint" data-i18n="dm.hint2">下載完整 JSON，可作為自訂模板的起點。</p>
+          <button class="btn" id="dm-export" data-i18n="dm.btn_export">下載 JSON 檔</button>
         </section>
 
         <section class="dm-section">
-          <h3>匯入新卡牌</h3>
-          <p class="dm-hint">支援檔案或貼上 JSON。只送出其中一個 deck，另一個會保留原狀。</p>
+          <h3 data-i18n="dm.sec3_title">匯入新卡牌</h3>
+          <p class="dm-hint" data-i18n="dm.hint3">支援檔案或貼上 JSON。只送出其中一個 deck，另一個會保留原狀。</p>
           <input type="file" id="dm-file" accept="application/json,.json" hidden />
-          <button class="btn" id="dm-file-btn">選擇 JSON 檔案</button>
+          <button class="btn" id="dm-file-btn" data-i18n="dm.btn_file">選擇 JSON 檔案</button>
           <div class="dm-paste-section">
             <textarea id="dm-paste" placeholder='{
   "actionDeck": {
@@ -286,14 +287,14 @@
     }
   ]
 }' rows="8"></textarea>
-            <button class="btn btn-primary" id="dm-paste-apply">套用貼上的 JSON</button>
+            <button class="btn btn-primary" id="dm-paste-apply" data-i18n="dm.btn_apply">套用貼上的 JSON</button>
           </div>
         </section>
 
         <section class="dm-section">
-          <h3>還原</h3>
-          <p class="dm-hint">移除所有自訂、回到內建預設牌組。</p>
-          <button class="btn btn-warn" id="dm-reset">重置為預設</button>
+          <h3 data-i18n="dm.sec4_title">還原</h3>
+          <p class="dm-hint" data-i18n="dm.hint4">移除所有自訂、回到內建預設牌組。</p>
+          <button class="btn btn-warn" id="dm-reset" data-i18n="dm.btn_reset">重置為預設</button>
         </section>
       </div>
     </div>
@@ -304,12 +305,12 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel catalog-panel">
       <header class="modal-head">
-        <h2 id="catalog-title">卡牌一覽</h2>
+        <h2 id="catalog-title" data-i18n="catalog.title">卡牌一覽</h2>
         <button class="icon-btn" id="catalog-close" aria-label="關閉">✕</button>
       </header>
       <nav class="catalog-tabs" role="tablist">
-        <button class="catalog-tab active" data-tab="action" role="tab">行動指令牌</button>
-        <button class="catalog-tab" data-tab="boost" role="tab">共好加速卡</button>
+        <button class="catalog-tab active" data-tab="action" role="tab" data-i18n="catalog.tab_action">行動指令牌</button>
+        <button class="catalog-tab" data-tab="boost" role="tab" data-i18n="catalog.tab_boost">共好加速卡</button>
       </nav>
       <div class="modal-body" id="catalog-body"></div>
     </div>
@@ -320,7 +321,7 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel card-panel">
       <header class="modal-head">
-        <h2 id="card-title">行動指令牌</h2>
+        <h2 id="card-title" data-i18n="card.title">行動指令牌</h2>
         <button class="icon-btn" id="card-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body" id="card-body"></div>
@@ -333,7 +334,7 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel">
       <header class="modal-head">
-        <h2 id="history-title">歷史紀錄</h2>
+        <h2 id="history-title" data-i18n="history.title">歷史紀錄</h2>
         <button class="icon-btn" id="history-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
@@ -347,11 +348,11 @@
   <div id="confirm-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
     <div class="modal-backdrop"></div>
     <div class="modal-panel confirm-panel">
-      <h2 id="confirm-title" class="confirm-title">確認</h2>
+      <h2 id="confirm-title" class="confirm-title" data-i18n="confirm.title">確認</h2>
       <p id="confirm-message" class="confirm-message"></p>
       <div class="confirm-actions">
-        <button class="btn" id="confirm-cancel" type="button">取消</button>
-        <button class="btn btn-primary" id="confirm-ok" type="button">確定</button>
+        <button class="btn" id="confirm-cancel" type="button" data-i18n="confirm.btn_cancel">取消</button>
+        <button class="btn btn-primary" id="confirm-ok" type="button" data-i18n="confirm.btn_ok">確定</button>
       </div>
     </div>
   </div>
@@ -361,26 +362,26 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel adjust-panel">
       <header class="modal-head">
-        <h2 id="origin-title">起始點加分</h2>
+        <h2 id="origin-title" data-i18n="origin.title">起始點加分</h2>
         <button class="icon-btn" id="origin-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
-        <p class="adjust-sub" id="origin-sub">玩家</p>
-        <div class="adjust-sprint hidden" id="origin-sprint">無常與恩典齊發 — 選擇後自動 ×2</div>
-        <p class="origin-hint">經過或停在起始點時，一鍵套用福慧文明加分（畢業者自動加文明）。</p>
+        <p class="adjust-sub" id="origin-sub" data-i18n="origin.sub">玩家</p>
+        <div class="adjust-sprint hidden" id="origin-sprint" data-i18n="origin.sprint">無常與恩典齊發 — 選擇後自動 ×2</div>
+        <p class="origin-hint" data-i18n="origin.hint">經過或停在起始點時，一鍵套用福慧文明加分（畢業者自動加文明）。</p>
         <div class="origin-choices">
           <button class="origin-choice-btn" id="origin-pass-btn" type="button">
-            <span class="oc-title">經過起始點</span>
+            <span class="oc-title" data-i18n="origin.pass_title">經過起始點</span>
             <span class="oc-desc" id="origin-pass-desc"></span>
           </button>
           <button class="origin-choice-btn stop" id="origin-stop-btn" type="button">
-            <span class="oc-title">停在起始點</span>
+            <span class="oc-title" data-i18n="origin.stop_title">停在起始點</span>
             <span class="oc-desc" id="origin-stop-desc"></span>
           </button>
         </div>
       </div>
       <footer class="modal-foot">
-        <button class="btn" id="origin-cancel" type="button">取消</button>
+        <button class="btn" id="origin-cancel" type="button" data-i18n="origin.btn_cancel">取消</button>
       </footer>
     </div>
   </div>
@@ -390,15 +391,15 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel adjust-panel">
       <header class="modal-head">
-        <h2 id="adjust-title">批次調分</h2>
+        <h2 id="adjust-title" data-i18n="adjust.title">批次調分</h2>
         <button class="icon-btn" id="adjust-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
-        <p class="adjust-sub" id="adjust-sub">玩家</p>
-        <div class="adjust-sprint hidden" id="adjust-sprint">無常與恩典齊發 — 送出後三項自動 ×2</div>
+        <p class="adjust-sub" id="adjust-sub" data-i18n="adjust.sub">玩家</p>
+        <div class="adjust-sprint hidden" id="adjust-sprint" data-i18n="adjust.sprint">無常與恩典齊發 — 送出後三項自動 ×2</div>
         <div class="adjust-rows" id="adjust-rows">
           <div class="adjust-row" data-stat="fortune">
-            <span class="adjust-label"><span class="dot dot-fortune"></span>福報</span>
+            <span class="adjust-label"><span class="dot dot-fortune"></span><span data-i18n="adjust.lbl_fortune">福報</span></span>
             <div class="adjust-ctrl">
               <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
               <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="福報增減量" />
@@ -407,7 +408,7 @@
             <span class="adjust-preview"></span>
           </div>
           <div class="adjust-row" data-stat="wisdom">
-            <span class="adjust-label"><span class="dot dot-wisdom"></span>智慧</span>
+            <span class="adjust-label"><span class="dot dot-wisdom"></span><span data-i18n="adjust.lbl_wisdom">智慧</span></span>
             <div class="adjust-ctrl">
               <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
               <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="智慧增減量" />
@@ -416,7 +417,7 @@
             <span class="adjust-preview"></span>
           </div>
           <div class="adjust-row" data-stat="civ">
-            <span class="adjust-label"><span class="dot dot-civ"></span>文明</span>
+            <span class="adjust-label"><span class="dot dot-civ"></span><span data-i18n="adjust.lbl_civ">文明</span></span>
             <div class="adjust-ctrl">
               <button class="adjust-step" data-step="-1" type="button" aria-label="減少">−</button>
               <input class="adjust-input" type="number" inputmode="numeric" value="0" aria-label="文明增減量" />
@@ -427,8 +428,8 @@
         </div>
       </div>
       <footer class="modal-foot">
-        <button class="btn" id="adjust-cancel" type="button">取消</button>
-        <button class="btn btn-primary" id="adjust-apply" type="button">套用</button>
+        <button class="btn" id="adjust-cancel" type="button" data-i18n="adjust.btn_cancel">取消</button>
+        <button class="btn btn-primary" id="adjust-apply" type="button" data-i18n="adjust.btn_apply">套用</button>
       </footer>
     </div>
   </div>
@@ -438,86 +439,86 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel guide-panel">
       <header class="modal-head">
-        <h2 id="guide-title">遊戲說明</h2>
+        <h2 id="guide-title" data-i18n="guide.title">遊戲說明</h2>
         <button class="icon-btn" id="guide-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body guide-body">
-        <p class="guide-lead">《福慧大富翁》· 青年啟航計劃　—　把人生擺上桌</p>
+        <p class="guide-lead" data-i18n="guide.lead">《福慧大富翁》· 青年啟航計劃　—　把人生擺上桌</p>
 
         <details class="guide-sec" open>
-          <summary>遊戲目的</summary>
+          <summary data-i18n="guide.s1_title">遊戲目的</summary>
           <div class="guide-sec-body">
-            <p><strong>目的：</strong>讓參與者認識生命兩大基本元素「福報與智慧」，進一步知道如何在生活中累積，建立自利利他、和諧成長的文明觀念。</p>
+            <p><strong data-i18n="guide.s1_p1_strong">目的：</strong><span data-i18n="guide.s1_p1">讓參與者認識生命兩大基本元素「福報與智慧」，進一步知道如何在生活中累積，建立自利利他、和諧成長的文明觀念。</span></p>
             <ul>
-              <li>福報來自「自利利他」的無害積累。</li>
-              <li>智慧來自「自覺覺他」的無漏覺察。</li>
+              <li data-i18n="guide.s1_li1">福報來自「自利利他」的無害積累。</li>
+              <li data-i18n="guide.s1_li2">智慧來自「自覺覺他」的無漏覺察。</li>
             </ul>
-            <p><strong>目標：</strong>認識福報與智慧，並幫助自己與別人從遊戲中畢業，才是真正的贏家。</p>
+            <p><strong data-i18n="guide.s1_p2_strong">目標：</strong><span data-i18n="guide.s1_p2">認識福報與智慧，並幫助自己與別人從遊戲中畢業，才是真正的贏家。</span></p>
           </div>
         </details>
 
         <details class="guide-sec">
-          <summary>基本設定</summary>
+          <summary data-i18n="guide.s2_title">基本設定</summary>
           <div class="guide-sec-body">
             <ul>
-              <li><strong>人數：</strong>4–6 人</li>
-              <li><strong>時間：</strong>至多 100 分鐘<span class="guide-note">（本 App 依人數調整：4 人 100 分、5 人 105 分、6 人 110 分）</span></li>
-              <li><strong>配件：</strong>遊戲棋盤、棋子 ×6、畢業禮帽 ×6、白骰子 ×2、黑骰子 ×1、十面骰子 ×1、積分表 ×1</li>
+              <li><strong data-i18n="guide.s2_li1_strong">人數：</strong><span data-i18n="guide.s2_li1">4–6 人</span></li>
+              <li><strong data-i18n="guide.s2_li2_strong">時間：</strong><span data-i18n="guide.s2_li2">至多 100 分鐘</span><span class="guide-note" data-i18n="guide.s2_li2_note">（本 App 依人數調整：4 人 100 分、5 人 105 分、6 人 110 分）</span></li>
+              <li><strong data-i18n="guide.s2_li3_strong">配件：</strong><span data-i18n="guide.s2_li3">遊戲棋盤、棋子 ×6、畢業禮帽 ×6、白骰子 ×2、黑骰子 ×1、十面骰子 ×1、積分表 ×1</span></li>
             </ul>
-            <p class="guide-sub">牌庫</p>
+            <p class="guide-sub" data-i18n="guide.s2_sub">牌庫</p>
             <ul>
-              <li>機會｜功德卡 ×9 款、無常卡 ×5 款</li>
-              <li>命運｜命運牌 ×24 張</li>
-              <li>行動｜行動指令牌 ×24 張</li>
-              <li>共好加速器 ×10 張</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-sec">
-          <summary>遊戲開始與結束</summary>
-          <div class="guide-sec-body">
-            <p><strong>遊戲開始：</strong>玩家用十面骰子擲點兩次，分別決定自己的福報與智慧起始點數。</p>
-            <p><strong>遊戲結束：</strong>符合以下任一條件時即宣告結束，並進入結算。</p>
-            <p class="guide-sub">條件一：文明高度達標</p>
-            <ul>
-              <li>全體「文明積分」總和達本局設定之「文明高度」。</li>
-              <li>文明高度設定：由初始福慧點數合計最高的玩家擲骰決定。</li>
-              <li>本局「文明高度」＝ 一顆白骰點數 × 黑骰點數 ＋ 基礎 40 點。</li>
-            </ul>
-            <p class="guide-sub">條件二：全員畢業</p>
-            <ul>
-              <li>畢業宣告：福慧雙項皆 ≥ 55 即可宣告畢業，棋子戴上禮帽。</li>
-              <li>持續共好：畢業後仍須擲骰移動，參與至遊戲結束。</li>
-              <li>點數轉移：畢業者所獲「福慧點」可贈予任一玩家，文明 +1；「扣分」須自行承擔。</li>
-              <li>資格降級：福慧任一數值跌破 55 即摘帽恢復一般身分，重新達標可再次畢業。</li>
-            </ul>
-            <p class="guide-sub">條件三：時間終止</p>
-            <ul>
-              <li>遊戲進行達時間上限，當前玩家回合結束後，即宣告終止並進入結算。</li>
+              <li data-i18n="guide.s2_sub_li1">機會｜功德卡 ×9 款、無常卡 ×5 款</li>
+              <li data-i18n="guide.s2_sub_li2">命運｜命運牌 ×24 張</li>
+              <li data-i18n="guide.s2_sub_li3">行動｜行動指令牌 ×24 張</li>
+              <li data-i18n="guide.s2_sub_li4">共好加速器 ×10 張</li>
             </ul>
           </div>
         </details>
 
         <details class="guide-sec">
-          <summary>勝利機制</summary>
+          <summary data-i18n="guide.s3_title">遊戲開始與結束</summary>
           <div class="guide-sec-body">
-            <p>遊戲結束後結算每位玩家的綜合積分，最高者即為本局最終贏家——「福慧大富翁」。</p>
-            <p class="guide-formula">綜合積分 ＝ 福報總計 ＋ 智慧總計 ＋（文明 × 2）</p>
-            <p><strong>範例：</strong>玩家 A 福報 30、智慧 40、文明 10 → 30 ＋ 40 ＋（10 × 2）＝ <strong>90 分</strong>。</p>
+            <p><strong data-i18n="guide.s3_p1_strong">遊戲開始：</strong><span data-i18n="guide.s3_p1">玩家用十面骰子擲點兩次，分別決定自己的福報與智慧起始點數。</span></p>
+            <p><strong data-i18n="guide.s3_p2_strong">遊戲結束：</strong><span data-i18n="guide.s3_p2">符合以下任一條件時即宣告結束，並進入結算。</span></p>
+            <p class="guide-sub" data-i18n="guide.s3_sub1">條件一：文明高度達標</p>
+            <ul>
+              <li data-i18n="guide.s3_sub1_li1">全體「文明積分」總和達本局設定之「文明高度」。</li>
+              <li data-i18n="guide.s3_sub1_li2">文明高度設定：由初始福慧點數合計最高的玩家擲骰決定。</li>
+              <li data-i18n="guide.s3_sub1_li3">本局「文明高度」＝ 一顆白骰點數 × 黑骰點數 ＋ 基礎 40 點。</li>
+            </ul>
+            <p class="guide-sub" data-i18n="guide.s3_sub2">條件二：全員畢業</p>
+            <ul>
+              <li data-i18n="guide.s3_sub2_li1">畢業宣告：福慧雙項皆 ≥ 55 即可宣告畢業，棋子戴上禮帽。</li>
+              <li data-i18n="guide.s3_sub2_li2">持續共好：畢業後仍須擲骰移動，參與至遊戲結束。</li>
+              <li data-i18n="guide.s3_sub2_li3">點數轉移：畢業者所獲「福慧點」可贈予任一玩家，文明 +1；「扣分」須自行承擔。</li>
+              <li data-i18n="guide.s3_sub2_li4">資格降級：福慧任一數值跌破 55 即摘帽恢復一般身分，重新達標可再次畢業。</li>
+            </ul>
+            <p class="guide-sub" data-i18n="guide.s3_sub3">條件三：時間終止</p>
+            <ul>
+              <li data-i18n="guide.s3_sub3_li1">遊戲進行達時間上限，當前玩家回合結束後，即宣告終止並進入結算。</li>
+            </ul>
           </div>
         </details>
 
         <details class="guide-sec">
-          <summary>機會牌 — 取得方式</summary>
+          <summary data-i18n="guide.s4_title">勝利機制</summary>
           <div class="guide-sec-body">
-            <p>機會牌庫代表真實世界的「機緣」：隨福慧積累，會遇到貴人善緣（功德卡），也會遭遇不可控的意外（無常卡）。高度越高，機緣的影響越深刻。</p>
+            <p data-i18n="guide.s4_p1">遊戲結束後結算每位玩家的綜合積分，最高者即為本局最終贏家——「福慧大富翁」。</p>
+            <p class="guide-formula" data-i18n="guide.s4_formula">綜合積分 ＝ 福報總計 ＋ 智慧總計 ＋（文明 × 2）</p>
+            <p><strong data-i18n="guide.s4_p2_strong">範例：</strong><span data-i18n="guide.s4_p2">玩家 A 福報 30、智慧 40、文明 10 → 30 ＋ 40 ＋（10 × 2）＝ </span><strong data-i18n="guide.s4_p2_bold">90 分</strong><span data-i18n="guide.s4_p2_end">。</span></p>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary data-i18n="guide.s5_title">機會牌 — 取得方式</summary>
+          <div class="guide-sec-body">
+            <p data-i18n="guide.s5_p1">機會牌庫代表真實世界的「機緣」：隨福慧積累，會遇到貴人善緣（功德卡），也會遭遇不可控的意外（無常卡）。高度越高，機緣的影響越深刻。</p>
             <ul>
-              <li><strong>踩格觸發（日常機緣）：</strong>棋子停留在「機會」格時，可抽取 1 張。</li>
-              <li><strong>境界突破（里程碑際遇）：</strong>福報與智慧同時達到特定分數時，觸發「升級考驗」或「強力加持」，達標當下可立即抽取對應數量的機會牌：
+              <li><strong data-i18n="guide.s5_li1_strong">踩格觸發（日常機緣）：</strong><span data-i18n="guide.s5_li1">棋子停留在「機會」格時，可抽取 1 張。</span></li>
+              <li><strong data-i18n="guide.s5_li2_strong">境界突破（里程碑際遇）：</strong><span data-i18n="guide.s5_li2">福報與智慧同時達到特定分數時，觸發「升級考驗」或「強力加持」，達標當下可立即抽取對應數量的機會牌：</span>
                 <ul>
-                  <li>領航者際遇：場上「第一位」福慧雙雙 ≥ 15 / 35 / 55 分的玩家，達標當下各抽 1 張。</li>
-                  <li>自我突破際遇：「任一玩家」福慧雙雙 ≥ 25 / 45 分時，達標當下各抽 1 張。</li>
+                  <li data-i18n="guide.s5_li2_sub1">領航者際遇：場上「第一位」福慧雙雙 ≥ 15 / 35 / 55 分的玩家，達標當下各抽 1 張。</li>
+                  <li data-i18n="guide.s5_li2_sub2">自我突破際遇：「任一玩家」福慧雙雙 ≥ 25 / 45 分時，達標當下各抽 1 張。</li>
                 </ul>
               </li>
             </ul>
@@ -525,33 +526,33 @@
         </details>
 
         <details class="guide-sec">
-          <summary>機會牌 — 使用方式</summary>
+          <summary data-i18n="guide.s6_title">機會牌 — 使用方式</summary>
           <div class="guide-sec-body">
-            <p class="guide-sub">無常卡</p>
+            <p class="guide-sub" data-i18n="guide.s6_sub1">無常卡</p>
             <ul>
-              <li>抽到時必須立即翻開並執行效果。</li>
-              <li>不可預測也不可囤積，立即執行完畢（含選擇是否接受無常的禮物挑戰）即繳回牌庫。</li>
+              <li data-i18n="guide.s6_sub1_li1">抽到時必須立即翻開並執行效果。</li>
+              <li data-i18n="guide.s6_sub1_li2">不可預測也不可囤積，立即執行完畢（含選擇是否接受無常的禮物挑戰）即繳回牌庫。</li>
             </ul>
-            <p class="guide-sub">功德卡</p>
+            <p class="guide-sub" data-i18n="guide.s6_sub2">功德卡</p>
             <ul>
-              <li>單次消耗品，可不立即使用，使用後即繳回。</li>
-              <li>每位玩家手中最多持有 2 張；超額時須立即使用 1 張或棄掉 1 張。</li>
-              <li>請依牌面說明，在正確時機大聲宣告並出示卡牌。</li>
+              <li data-i18n="guide.s6_sub2_li1">單次消耗品，可不立即使用，使用後即繳回。</li>
+              <li data-i18n="guide.s6_sub2_li2">每位玩家手中最多持有 2 張；超額時須立即使用 1 張或棄掉 1 張。</li>
+              <li data-i18n="guide.s6_sub2_li3">請依牌面說明，在正確時機大聲宣告並出示卡牌。</li>
             </ul>
           </div>
         </details>
 
         <details class="guide-sec">
-          <summary>積分表與里程碑</summary>
+          <summary data-i18n="guide.s7_title">積分表與里程碑</summary>
           <div class="guide-sec-body">
-            <p>每局記錄各玩家的福報、智慧、文明點數與畢業情況，並標記自我突破獎勵（□雙 25 □雙 45）與超拔加分。</p>
-            <p class="guide-sub">里程碑得獎者（領跑得主）</p>
+            <p data-i18n="guide.s7_p1">每局記錄各玩家的福報、智慧、文明點數與畢業情況，並標記自我突破獎勵（□雙 25 □雙 45）與超拔加分。</p>
+            <p class="guide-sub" data-i18n="guide.s7_sub1">里程碑得獎者（領跑得主）</p>
             <ul>
-              <li>福慧雙雙 ≥ 15 分 🏆 領跑得主</li>
-              <li>福慧雙雙 ≥ 35 分 🏆 領跑得主</li>
-              <li>福慧雙雙 ≥ 55 分 🏆 領跑得主</li>
+              <li data-i18n="guide.s7_li1">福慧雙雙 ≥ 15 分 🏆 領跑得主</li>
+              <li data-i18n="guide.s7_li2">福慧雙雙 ≥ 35 分 🏆 領跑得主</li>
+              <li data-i18n="guide.s7_li3">福慧雙雙 ≥ 55 分 🏆 領跑得主</li>
             </ul>
-            <p>結算時填上「福慧大富翁」獲勝者與其綜合積分。</p>
+            <p data-i18n="guide.s7_p2">結算時填上「福慧大富翁」獲勝者與其綜合積分。</p>
           </div>
         </details>
       </div>
@@ -562,12 +563,12 @@
   <div id="draw-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="draw-title" aria-describedby="draw-message">
     <div class="modal-backdrop"></div>
     <div class="modal-panel confirm-panel draw-panel">
-      <h2 id="draw-title" class="confirm-title">抽卡里程</h2>
-      <p id="draw-message" class="confirm-message">達成以下里程，請各抽 1 張<strong>機會卡</strong>，抽完點「已抽」。</p>
+      <h2 id="draw-title" class="confirm-title" data-i18n="draw_mile.title">抽卡里程</h2>
+      <p id="draw-message" class="confirm-message"><span data-i18n="draw_mile.msg1">達成以下里程，請各抽 1 張</span><strong data-i18n="draw_mile.msg_strong">機會卡</strong><span data-i18n="draw_mile.msg2">，抽完點「已抽」。</span></p>
       <ul class="draw-list" id="draw-list"></ul>
       <div class="confirm-actions">
-        <button class="btn" id="draw-later" type="button">稍後再抽</button>
-        <button class="btn btn-primary" id="draw-all-done" type="button">全部已抽</button>
+        <button class="btn" id="draw-later" type="button" data-i18n="draw_mile.btn_later">稍後再抽</button>
+        <button class="btn btn-primary" id="draw-all-done" type="button" data-i18n="draw_mile.btn_done">全部已抽</button>
       </div>
     </div>
   </div>
@@ -575,6 +576,7 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <script src="./i18n.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
