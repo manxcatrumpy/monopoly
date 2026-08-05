@@ -350,6 +350,16 @@
     "quote_label": "Quote",
     "author_label": "Speaker / Player",
     "btn_download": "Download JPG",
-    "subtitle": "Turn the inspiration gained from the game into a beautiful highlight card ✨"
+    "subtitle": "Turn the inspiration gained from the game into a beautiful highlight card ✨",
+    "quote_placeholder": "Enter an inspiring quote from the game...",
+    "author_placeholder": "e.g., Player A",
+    "preview_label": "Preview",
+    "preview_sub": "Real-time preview of your highlight card, WYSIWYG",
+    "quote_default": "Your input quote will be displayed here.",
+    "author_default": "Speaker",
+    "card_meta": "Highlight Moment",
+    "msg_html2canvas_fail": "html2canvas failed to load, download unavailable.",
+    "msg_download_success": "Highlight card downloaded!",
+    "msg_download_fail": "Download failed, please try again later."
   }
 }

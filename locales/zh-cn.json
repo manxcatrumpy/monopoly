@@ -350,6 +350,16 @@
     "quote_label": "金句内容",
     "author_label": "说话者 / 玩家",
     "btn_download": "下载 JPG",
-    "subtitle": "把游戏中获得的启发，制作成一张美丽的亮眼时刻卡 ✨"
+    "subtitle": "把游戏中获得的启发，制作成一张美丽的亮眼时刻卡 ✨",
+    "quote_placeholder": "输入在游戏中获得启发的一句话...",
+    "author_placeholder": "例如：玩家A",
+    "preview_label": "预览效果",
+    "preview_sub": "即时预览你的金句卡，所见即所得",
+    "quote_default": "这里会显示输入的金句内容。",
+    "author_default": "说话者",
+    "card_meta": "精彩时刻",
+    "msg_html2canvas_fail": "html2canvas 加载失败，无法下载。",
+    "msg_download_success": "亮眼时刻卡已下载！",
+    "msg_download_fail": "下载失败，请稍后再试。"
   }
 }

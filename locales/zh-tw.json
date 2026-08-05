@@ -350,6 +350,16 @@
     "quote_label": "金句內容",
     "author_label": "說話者 / 玩家",
     "btn_download": "下載 JPG",
-    "subtitle": "把遊戲中獲得的啟發，製作成一張美麗的金句卡 ✨"
+    "subtitle": "把遊戲中獲得的啟發，製作成一張美麗的金句卡 ✨",
+    "quote_placeholder": "輸入在遊戲中獲得啟發的一句話...",
+    "author_placeholder": "例如：玩家A",
+    "preview_label": "預覽效果",
+    "preview_sub": "即時預覽你的金句卡，所見即所得",
+    "quote_default": "這裡會顯示輸入的金句內容。",
+    "author_default": "說話者",
+    "card_meta": "精彩時刻",
+    "msg_html2canvas_fail": "html2canvas 載入失敗，無法下載。",
+    "msg_download_success": "金句卡已下載！",
+    "msg_download_fail": "下載失敗，請稍後再試。"
   }
 }

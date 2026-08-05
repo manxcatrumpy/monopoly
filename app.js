@@ -2198,8 +2198,8 @@ function initHighlightFeature() {
   }
 
   function updatePreview() {
-    displayQuote.textContent = inputQuote.value || '這裡會顯示輸入的金句內容。';
-    displayAuthor.textContent = inputAuthor.value ? `— ${inputAuthor.value}` : '— 說話者';
+    displayQuote.textContent = inputQuote.value || t('highlight.quote_default');
+    displayAuthor.textContent = inputAuthor.value ? `— ${inputAuthor.value}` : `— ${t('highlight.author_default')}`;
     
     if (charCount) {
       charCount.textContent = `${inputQuote.value.length} / 200`;
@@ -2211,7 +2211,7 @@ function initHighlightFeature() {
 
   function downloadHighlightCard() {
     if (typeof html2canvas === 'undefined') {
-      showToast('html2canvas 載入失敗，無法下載。');
+      showToast(t('highlight.msg_html2canvas_fail'));
       return;
     }
     
@@ -2228,11 +2228,11 @@ function initHighlightFeature() {
       link.href = canvas.toDataURL('image/jpeg', 0.9);
       link.click();
       
-      showToast('金句卡已下載！');
+      showToast(t('highlight.msg_download_success'));
       closeHighlight();
     }).catch(err => {
       console.error('html2canvas error:', err);
-      showToast('下載失敗，請稍後再試。');
+      showToast(t('highlight.msg_download_fail'));
     });
   }
 
