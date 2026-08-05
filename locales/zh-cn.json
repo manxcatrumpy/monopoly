@@ -46,7 +46,8 @@
     "aria_drawn": "已抽卡、清除待办",
     "history_btn": "历史 · {n}",
     "history_view": "查看",
-    "history_restore": "切回此局"
+    "history_restore": "切回此局",
+    "btn_highlight": "制作金句卡"
   },
   "banner": {
     "sprint_title": "无常与恩典齐发",
@@ -73,7 +74,9 @@
     "pending_note": "抽完点「已抽」清除",
     "log_empty": "尚无触发",
     "danger_title": "危险区",
-    "btn_reset": "重置整个游戏状态"
+    "btn_reset": "重置整个游戏状态",
+    "highlight_title": "精彩时刻",
+    "highlight_hint": "记录本局游戏中的金句，制作专属卡片分享。"
   },
   "setup": {
     "title": "开新局 — 启程准备",
@@ -341,5 +344,22 @@
     "choice_opt_each_object": "「{name}」选项 each 需为物件",
     "choice_opt_civAll_number": "「{name}」选项 civAll 需为数字"
   },
-  "log": {}
+  "log": {},
+  "highlight": {
+    "title": "制作金句卡",
+    "quote_label": "金句内容",
+    "author_label": "说话者 / 玩家",
+    "btn_download": "下载 JPG",
+    "subtitle": "把游戏中获得的启发，制作成一张美丽的亮眼时刻卡 ✨",
+    "quote_placeholder": "输入在游戏中获得启发的一句话...",
+    "author_placeholder": "例如：玩家A",
+    "preview_label": "预览效果",
+    "preview_sub": "即时预览你的金句卡，所见即所得",
+    "quote_default": "这里会显示输入的金句内容。",
+    "author_default": "说话者",
+    "card_meta": "精彩时刻",
+    "msg_html2canvas_fail": "html2canvas 加载失败，无法下载。",
+    "msg_download_success": "亮眼时刻卡已下载！",
+    "msg_download_fail": "下载失败，请稍后再试。"
+  }
 }
