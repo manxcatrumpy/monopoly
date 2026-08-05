@@ -46,7 +46,8 @@
     "aria_drawn": "已抽卡、清除待办",
     "history_btn": "历史 · {n}",
     "history_view": "查看",
-    "history_restore": "切回此局"
+    "history_restore": "切回此局",
+    "btn_highlight": "制作金句卡"
   },
   "banner": {
     "sprint_title": "无常与恩典齐发",
@@ -73,7 +74,9 @@
     "pending_note": "抽完点「已抽」清除",
     "log_empty": "尚无触发",
     "danger_title": "危险区",
-    "btn_reset": "重置整个游戏状态"
+    "btn_reset": "重置整个游戏状态",
+    "highlight_title": "精彩时刻",
+    "highlight_hint": "记录本局游戏中的金句，制作专属卡片分享。"
   },
   "setup": {
     "title": "开新局 — 启程准备",
@@ -341,5 +344,11 @@
     "choice_opt_each_object": "「{name}」选项 each 需为物件",
     "choice_opt_civAll_number": "「{name}」选项 civAll 需为数字"
   },
-  "log": {}
+  "log": {},
+  "highlight": {
+    "title": "制作金句卡",
+    "quote_label": "金句内容",
+    "author_label": "说话者 / 玩家",
+    "btn_download": "下载 JPG"
+  }
 }

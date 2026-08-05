@@ -138,6 +138,12 @@
         </ul>
       </div>
 
+      <div class="tool-card">
+        <h3 data-i18n="tools.highlight_title">精彩時刻</h3>
+        <p class="tool-hint" data-i18n="tools.highlight_hint">記錄本局遊戲中的金句，製作專屬卡片分享。</p>
+        <button class="btn btn-block" id="btn-highlight" data-i18n="ui.btn_highlight">製作金句卡</button>
+      </div>
+
       <div class="tool-card danger-card">
         <h3 data-i18n="tools.danger_title">危險區</h3>
         <button class="btn btn-warn btn-block" id="btn-reset-game" data-i18n="tools.btn_reset">重置整個遊戲狀態</button>
@@ -577,10 +583,106 @@
     </div>
   </div>
 
+  <!-- 精彩時刻 Modal -->
+  <div id="highlight-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="highlight-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel highlight-panel">
+      <header class="modal-head highlight-head">
+        <div class="head-title-group">
+          <div class="head-text">
+            <h2 id="highlight-title" data-i18n="highlight.title">製作金句卡</h2>
+            <p class="head-sub">把遊戲中獲得的啟發，製作成一張美麗的金句卡 ✨</p>
+          </div>
+        </div>
+        <button class="icon-btn" id="highlight-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body highlight-body">
+        <div class="highlight-controls">
+          <div class="input-group">
+            <div class="input-header">
+              <label for="highlight-quote-input" class="input-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                <span data-i18n="highlight.quote_label">金句內容</span>
+              </label>
+              <span class="char-count" id="highlight-char-count">0 / 200</span>
+            </div>
+            <textarea id="highlight-quote-input" rows="4" placeholder="輸入在遊戲中獲得啟發的一句話..."></textarea>
+          </div>
+          <div class="input-group">
+            <div class="input-header">
+              <label for="highlight-author-input" class="input-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span data-i18n="highlight.author_label">說話者 / 玩家</span>
+              </label>
+            </div>
+            <input type="text" id="highlight-author-input" placeholder="例如：玩家A" />
+          </div>
+        </div>
+        
+        <div class="highlight-preview-wrapper">
+          <div class="preview-header">
+            <div class="preview-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>預覽效果</span>
+            </div>
+            <span class="preview-sub">即時預覽你的金句卡，所見即所得</span>
+          </div>
+          <div class="preview-container">
+            <div id="highlight-card-preview" class="highlight-card">
+              <div class="highlight-card-inner">
+                <div class="hc-logo">
+                  <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="#E0A331" stroke-width="2.6" stroke-linecap="round">
+                      <line x1="32" y1="17" x2="32" y2="10.5"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(45 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(90 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(135 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(180 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(225 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(270 32 32)"></line>
+                      <line x1="32" y1="17" x2="32" y2="10.5" transform="rotate(315 32 32)"></line>
+                    </g>
+                    <circle cx="32" cy="32" r="11.5" fill="#EFC158"></circle>
+                  </svg>
+                  <span>福慧大富翁</span>
+                </div>
+                <div class="hc-content" id="hc-quote-display">這裡會顯示輸入的金句內容。</div>
+                <div class="hc-divider">
+                  <span class="hc-line"></span>
+                  <svg class="hc-lotus" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21 C 12 21 8 16 8 13 C 8 10 12 8 12 8 C 12 8 16 10 16 13 C 16 16 12 21 12 21 Z" fill="#CBB99B"/>
+                    <path d="M12 21 C 12 21 4 18 4 15 C 4 12 10 12 10 12 C 10 12 8 16 12 21 Z" fill="#CBB99B" opacity="0.7"/>
+                    <path d="M12 21 C 12 21 20 18 20 15 C 20 12 14 12 14 12 C 14 12 16 16 12 21 Z" fill="#CBB99B" opacity="0.7"/>
+                  </svg>
+                  <span class="hc-line"></span>
+                </div>
+                <div class="hc-footer">
+                  <div class="hc-author" id="hc-author-display">— 說話者</div>
+                  <div class="hc-meta">
+                    <span class="hc-date" id="hc-date-display"></span>
+                    <span class="hc-game-meta">精彩時刻</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="modal-foot highlight-foot">
+        <button class="btn btn-ghost btn-round" id="highlight-cancel" data-i18n="confirm.btn_cancel">取消</button>
+        <button class="btn btn-primary btn-round btn-dl" id="highlight-download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span data-i18n="highlight.btn_download">下載 JPG</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script src="./i18n.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

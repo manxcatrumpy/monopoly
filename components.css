@@ -599,3 +599,279 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
   .dashboard { padding-bottom: 150px; }
 }
 .quick-draw.hidden { display: none; }
+
+/* 精彩時刻 金句卡 Modal 樣式 */
+/* 精彩時刻 金句卡 Modal 樣式 */
+.highlight-panel {
+  max-width: 720px;
+  background: #FAF8F5; /* 溫潤的奶茶白背景 */
+}
+.highlight-head {
+  border-bottom: none;
+  padding: 32px 32px 16px;
+}
+.head-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.head-icon {
+  width: 44px;
+  height: 44px;
+}
+.head-text h2 {
+  font-size: 20px;
+  margin: 0 0 6px;
+  color: #333333;
+}
+.head-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #888888;
+  letter-spacing: 0.05em;
+}
+
+.highlight-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 32px 24px;
+}
+.highlight-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: transparent;
+  padding: 0;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444444;
+  letter-spacing: 0.05em;
+}
+.input-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+.char-count {
+  font-size: 12px;
+  color: #999999;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.highlight-controls textarea,
+.highlight-controls input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #E6E2D8;
+  border-radius: 8px;
+  background: #FAF8F5;
+  color: #333333;
+  font-family: inherit;
+  font-size: 15px;
+  resize: vertical;
+  box-sizing: border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.highlight-controls textarea:focus,
+.highlight-controls input:focus {
+  outline: none;
+  border-color: #CBB99B;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(203, 185, 155, 0.2);
+}
+
+.highlight-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #EFECE5; /* 更深的暖灰色底，襯托純白卡片 */
+  padding: 28px 24px;
+  border-radius: 12px;
+}
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
+.preview-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555555;
+  letter-spacing: 0.05em;
+}
+.preview-sub {
+  font-size: 12px;
+  color: #888888;
+  letter-spacing: 0.05em;
+}
+.preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 卡片本身樣式 (供 html2canvas 擷取) */
+.highlight-card {
+  width: 100%;
+  max-width: 520px;
+  min-height: 360px;
+  background: #FCFBF9; /* 純白偏暖的紙張底色 */
+  border-radius: 16px; 
+  padding: 32px 40px 28px 40px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  color: #333333;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden; /* 確保背景圖案被裁切 */
+}
+.highlight-card-inner {
+  border: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+.hc-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.hc-logo svg {
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+}
+.hc-logo span {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: #888888;
+}
+.hc-content {
+  flex: 1;
+  font-size: 28px;
+  line-height: 1.6;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 0 16px;
+  color: #333333;
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+.hc-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 36px;
+  opacity: 0.8;
+}
+.hc-line {
+  flex: 1;
+  height: 1px;
+  background: #EBE5D9;
+}
+.hc-lotus {
+  width: 24px;
+  height: 24px;
+}
+.hc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+  z-index: 1;
+}
+.hc-author {
+  font-size: 18px;
+  font-weight: 600;
+  color: #555555;
+  letter-spacing: 0.05em;
+}
+.hc-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-size: 12px;
+  color: #AAAAAA;
+  letter-spacing: 0.05em;
+}
+.hc-game-meta {
+  background: #EBE8E0;
+  color: #7A7A7A;
+  padding: 4px 8px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+/* Modal Footer Buttons */
+.highlight-foot {
+  border-top: 1px solid #EBE5D9;
+  padding: 20px 32px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.btn-round {
+  border-radius: 24px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #D8D2C4;
+  color: #555555;
+}
+.btn-ghost:hover {
+  background: #EFECE5;
+}
+.btn-dl {
+  background: #6D9773;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(109, 151, 115, 0.3);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-dl:hover {
+  background: #5B8461;
+}
+.btn-icon {
+  width: 18px;
+  height: 18px;
+}

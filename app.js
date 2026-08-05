@@ -2148,6 +2148,7 @@ function init() {
     nextPlayerId = maxId + 1;
   }
   renderVersion();
+  initHighlightFeature();
   bindEvents();
   renderAll();
   startTimerLoop();
@@ -2164,3 +2165,84 @@ window.addEventListener('languageChanged', () => {
   rebuildDecks();
   renderAll();
 });
+
+// ─────────── 精彩時刻 金句卡 ───────────
+function initHighlightFeature() {
+  const highlightModal = $('#highlight-modal');
+  if (!highlightModal) return;
+
+  const btnOpen = $('#btn-highlight');
+  const btnClose = $('#highlight-close');
+  const btnCancel = $('#highlight-cancel');
+  const btnDownload = $('#highlight-download');
+  const backdrop = $('.modal-backdrop', highlightModal);
+
+  const inputQuote = $('#highlight-quote-input');
+  const inputAuthor = $('#highlight-author-input');
+  const charCount = $('#highlight-char-count');
+  
+  const displayQuote = $('#hc-quote-display');
+  const displayAuthor = $('#hc-author-display');
+  const displayDate = $('#hc-date-display');
+  const cardPreview = $('#highlight-card-preview');
+
+  function openHighlight() {
+    inputQuote.value = '';
+    inputAuthor.value = '';
+    updatePreview();
+    highlightModal.classList.remove('hidden');
+  }
+
+  function closeHighlight() {
+    highlightModal.classList.add('hidden');
+  }
+
+  function updatePreview() {
+    displayQuote.textContent = inputQuote.value || '這裡會顯示輸入的金句內容。';
+    displayAuthor.textContent = inputAuthor.value ? `— ${inputAuthor.value}` : '— 說話者';
+    
+    if (charCount) {
+      charCount.textContent = `${inputQuote.value.length} / 200`;
+    }
+    
+    const now = new Date();
+    displayDate.textContent = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+  }
+
+  function downloadHighlightCard() {
+    if (typeof html2canvas === 'undefined') {
+      showToast('html2canvas 載入失敗，無法下載。');
+      return;
+    }
+    
+    // Briefly remove rounded corners from wrapper if html2canvas struggles with overflow:hidden
+    // (Optional, usually fine)
+    
+    html2canvas(cardPreview, {
+      scale: 2,
+      backgroundColor: null,
+      useCORS: true
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `highlight-${Date.now()}.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.9);
+      link.click();
+      
+      showToast('金句卡已下載！');
+      closeHighlight();
+    }).catch(err => {
+      console.error('html2canvas error:', err);
+      showToast('下載失敗，請稍後再試。');
+    });
+  }
+
+  if (btnOpen) btnOpen.addEventListener('click', openHighlight);
+  if (btnClose) btnClose.addEventListener('click', closeHighlight);
+  if (btnCancel) btnCancel.addEventListener('click', closeHighlight);
+  if (backdrop) backdrop.addEventListener('click', closeHighlight);
+  
+  if (inputQuote) inputQuote.addEventListener('input', updatePreview);
+  if (inputAuthor) inputAuthor.addEventListener('input', updatePreview);
+  
+  if (btnDownload) btnDownload.addEventListener('click', downloadHighlightCard);
+}

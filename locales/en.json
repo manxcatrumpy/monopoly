@@ -46,7 +46,8 @@
     "aria_drawn": "Mark as drawn and clear",
     "history_btn": "History · {n}",
     "history_view": "View",
-    "history_restore": "Restore"
+    "history_restore": "Restore",
+    "btn_highlight": "Create Highlight Card"
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
@@ -73,7 +74,9 @@
     "pending_note": "Click 'Drawn' to clear",
     "log_empty": "No events",
     "danger_title": "Danger Zone",
-    "btn_reset": "Reset Game"
+    "btn_reset": "Reset Game",
+    "highlight_title": "Highlight Moment",
+    "highlight_hint": "Save golden quotes from this game and create an exclusive card."
   },
   "setup": {
     "title": "New Game Setup",
@@ -341,5 +344,11 @@
     "choice_opt_each_object": "Option 'each' in {name} must be object",
     "choice_opt_civAll_number": "Option 'civAll' in {name} must be number"
   },
-  "log": {}
+  "log": {},
+  "highlight": {
+    "title": "Create Highlight Card",
+    "quote_label": "Quote",
+    "author_label": "Speaker / Player",
+    "btn_download": "Download JPG"
+  }
 }
