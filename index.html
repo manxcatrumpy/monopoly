@@ -46,6 +46,10 @@
         <div class="meta-value"><span data-i18n="meta.round_prefix">第 </span><strong id="round-num">1</strong><span data-i18n="meta.round_suffix"> 局</span></div>
       </div>
       <div class="meta-item">
+        <label data-i18n="ui.turn_label">輪次</label>
+        <div class="meta-value" id="turn-num-container">第 <strong id="turn-num">1</strong> 輪</div>
+      </div>
+      <div class="meta-item">
         <label data-i18n="meta.civ_label">文明高度</label>
         <div class="meta-value">
           <strong id="civ-total">0</strong>
@@ -77,6 +81,7 @@
         window.i18n.setLanguage(nextLang);
       ">🌐 繁 / 簡</button>
       <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">開始</button>
+      <button id="btn-next-turn" class="btn btn-primary" title="下一輪" data-i18n="ui.btn_next_turn">下一輪</button>
       <button id="btn-next-round" class="btn" title="進入下一局" data-i18n="ui.btn_next_round">下一局</button>
       <button id="btn-history" class="btn btn-ghost" title="查看 / 復原歷史局" hidden>歷史紀錄</button>
       <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定" data-i18n="ui.btn_setup">設定</button>
@@ -84,9 +89,16 @@
     </div>
   </header>
 
+  <div id="weather-banner" class="hidden" role="status" aria-live="polite">
+    <div style="flex:1;">
+      <span id="weather-banner-title">氣象預報</span>
+      <span id="weather-banner-sub"></span>
+    </div>
+    <button id="btn-weather-adjust" class="btn hidden" style="margin-left: 1rem; border: 1px solid currentColor; background: transparent; color: inherit;" data-i18n="ui.btn_weather_adjust">開啟氣候調節</button>
+  </div>
+
   <div id="sprint-banner" class="sprint-banner hidden" role="status" aria-live="polite">
-    <span class="sprint-banner-title" data-i18n="banner.sprint_title">無常與恩典齊發</span>
-    <span class="sprint-banner-sub" data-i18n="banner.sprint_sub">最後 15 分鐘 — 所有卡牌得分與扣分 ×2</span>
+    <span class="sprint-banner-title" data-i18n="weather.endgame_banner">【終局倒數】最後 15 分鐘。所有加分、扣分 ×2。天氣不再變化。</span>
   </div>
 
   <section class="civ-progress">
@@ -678,11 +690,35 @@
     </div>
   </div>
 
+  <!-- Weather Adjust Modal -->
+  <div id="weather-adjust-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="weather-adjust-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel" style="max-width: 600px; width: 90vw;">
+      <header class="modal-head">
+        <h2 id="weather-adjust-title" data-i18n="weather.modal_title">氣候調節 (3 福慧 = 1 文明)</h2>
+        <button class="icon-btn" id="weather-adjust-close" aria-label="關閉">✕</button>
+      </header>
+      <div class="modal-body" style="background:#f5f6f1; padding: 1.5rem;">
+        <div style="background:#fff; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; text-align:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;"><span data-i18n="weather.current_forecast">當前預報：</span><strong id="weather-adjust-current-label">災害交加</strong></div>
+          <div style="font-size:1.5rem; font-weight:700; margin-bottom:0.5rem;" id="weather-adjust-total-cost-container">總計將投入 <span id="weather-adjust-total-cost" style="color:#d32f2f;">0</span> 福慧</div>
+          <div style="font-size:1.1rem; color:#4a7c59;" id="weather-adjust-civ-gain-container">→ 文明增加 <span id="weather-adjust-civ-gain" style="font-weight:bold;">0</span> 點</div>
+          <div id="weather-adjust-gap" style="margin-top:1rem; font-size:0.95rem; color:#888;"></div>
+        </div>
+        <div id="weather-adjust-players"></div>
+      </div>
+      <footer class="modal-foot" style="justify-content: flex-end;">
+        <button class="btn btn-primary btn-round" id="weather-adjust-submit" data-i18n="ui.btn_confirm_adjust">確認扣除並調節天氣</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script src="./i18n.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="./config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

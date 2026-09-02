@@ -862,3 +862,16 @@ button { font-family: inherit; }
   color: var(--fortune-ink);
   border: 1px solid currentColor; border-radius: var(--r-pill); padding: 1px 7px;
 }
+
+/* Weather System Styles */
+.weather-favorable { background-color: #fcebc5; color: #a56a15; }
+.weather-normal { background-color: #e5ebf2; color: #3b5a7b; }
+.weather-disaster { background-color: #4a5c6a; color: #f5f6f1; }
+#weather-banner { margin-top: 0; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+#weather-banner.hidden { display: none !important; }
+#weather-banner-title { font-weight: bold; font-size: 1.1rem; margin-right: 0.5rem; }
+.weather-adj-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; }
+.weather-adj-name { font-weight: bold; width: 30%; }
+.weather-adj-controls { display: flex; gap: 0.5rem; align-items: center; }
+.weather-adj-controls input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 0.25rem; font-size: 1rem; }
+

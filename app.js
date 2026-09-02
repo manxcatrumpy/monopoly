@@ -64,7 +64,7 @@ function gameMinutes() {
 function maxGameSeconds() {
   return gameMinutes() * 60;
 }
-const SPRINT_SECONDS = 15 * 60;        // 最後 15 分鐘「無常與恩典齊發」：卡牌得分／扣分 ×2
+const SPRINT_SECONDS = () => GAME_CONFIG.ENDGAME_MINUTES * 60;
 const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
 const CIV_BASE = 40;                // 文明高度基礎點：白骰 × 黑骰 ＋ 此基礎
@@ -81,7 +81,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // when you prepare to ship new features or bug fixes.
-const APP_VERSION = '1.3.0 (build 55)';
+const APP_VERSION = '1.4.0 (build 56)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -89,6 +89,7 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 // ─────────── State ───────────
 const defaultState = () => ({
   roundNum: 1,
+  turnNum: 1,
   civGoal: 30,
   timer: { accumulated: 0, lastStartedAt: null, running: false },
   players: [],
@@ -97,6 +98,7 @@ const defaultState = () => ({
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
+  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
 });
 
 let state = defaultState();
@@ -123,6 +125,10 @@ function load() {
     if (!Array.isArray(state.pendingDraws)) state.pendingDraws = [];
     // Ensure customDecks shape (older saves predate this field)
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
+    if (state.turnNum === undefined) state.turnNum = 1;
+    if (!state.weatherEvents) {
+      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
+    }
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
@@ -155,6 +161,33 @@ function totalWisdom() {
 }
 function comprehensiveScore(p) {
   return (p.fortune || 0) + (p.wisdom || 0) + (p.civ || 0) * 2;
+}
+// ─────────── Weather System ───────────
+function expectedCiv(turn, civGoal) {
+  const completedRounds = Math.max(0, turn - 1);
+  return civGoal * completedRounds / GAME_CONFIG.EXPECTED_ROUNDS;
+}
+
+function judgeWeather(civCurrent, turn, civGoal) {
+  const expected = expectedCiv(turn, civGoal);
+  if (civCurrent >= expected * 1.2) return 'FAVORABLE';
+  if (civCurrent <= expected * 0.8) return 'DISASTER';
+  return 'NORMAL';
+}
+
+function getPhase(turn) {
+  for (const ev of state.weatherEvents) {
+    if (turn === ev.targetRound - 2) return { phase: 'FORECAST', ev };
+    if (turn === ev.targetRound - 1) return { phase: 'ADJUST', ev };
+    if (turn === ev.targetRound) return { phase: 'REPORT', ev };
+  }
+  return { phase: 'NORMAL', ev: null };
+}
+
+function getActiveWeather() {
+  if (sprintActive()) return 'ENDGAME';
+  const { phase, ev } = getPhase(state.turnNum);
+  return phase === 'REPORT' ? ev.lockedWeather : null;
 }
 
 // ─────────── Dice ───────────
@@ -485,17 +518,29 @@ function resetTimer() {
 }
 
 // ─────────── 倒數衝刺：無常與恩典齊發 ───────────
-// 在最後 SPRINT_SECONDS（15 分鐘）內，所有卡牌的得分與扣分一律 ×2。
 function sprintActive() {
-  return elapsedSeconds() >= maxGameSeconds() - SPRINT_SECONDS;
+  return elapsedSeconds() >= maxGameSeconds() - SPRINT_SECONDS();
 }
+function getWeatherLabel(w) {
+  return w && GAME_CONFIG.MULTIPLIERS[w] ? t(GAME_CONFIG.MULTIPLIERS[w].labelKey) : '';
+}
+
 function scoreMultiplier() {
-  return sprintActive() ? SPRINT_MULTIPLIER : 1;
+  const w = getActiveWeather();
+  if (w && GAME_CONFIG.MULTIPLIERS[w]) return Object.assign({ id: w }, GAME_CONFIG.MULTIPLIERS[w]);
+  return { gain: 1, loss: 1, id: null };
 }
-// 依倍率縮放一張卡的 reward（保留各分項正負號）。
-function scaleReward(base = {}, mult = 1) {
+
+function applyMult(val, stat, multObj) {
+  if (!val) return 0;
+  if (stat === 'civ' || stat === 'civAll') return val; // 文明不吃倍率
+  const rate = val >= 0 ? multObj.gain : multObj.loss;
+  return Math.round(val * rate);
+}
+
+function scaleReward(base = {}, mult = { gain: 1, loss: 1 }) {
   const out = {};
-  STATS.forEach(stat => { out[stat] = (base[stat] || 0) * mult; });
+  STATS.forEach(stat => { out[stat] = applyMult(base[stat] || 0, stat, mult); });
   return out;
 }
 // 把 reward 物件描述成 "福報 +4 · 智慧 +2"（保留正負號、略過 0）。
@@ -709,6 +754,7 @@ function flashCard(playerId, cls = 'pulse') {
 // ─────────── Render: Topbar & civ bar ───────────
 function updateTopbar() {
   $('#round-num').textContent = state.roundNum;
+  if ($('#turn-num-container')) $('#turn-num-container').textContent = t('ui.turn_value', { n: state.turnNum });
   const started = state.players.length > 0;
   // 開局前尚未骰出文明高度目標，顯示破折號而非佔位數字。
   $('#civ-goal').textContent = started ? state.civGoal : '—';
@@ -759,8 +805,63 @@ function updateTopbar() {
   // Final-15-minute sprint: surface it in the timer and a top banner.
   const sprint = sprintActive();
   timerEl.classList.toggle('sprint', sprint);
-  const banner = $('#sprint-banner');
-  if (banner) banner.classList.toggle('hidden', !sprint);
+  const sprintBanner = $('#sprint-banner');
+  if (sprintBanner) sprintBanner.classList.toggle('hidden', !sprint);
+
+  const weatherBanner = $('#weather-banner');
+  if (weatherBanner) {
+    if (sprint || !started) {
+      weatherBanner.classList.add('hidden');
+    } else {
+      const { phase, ev } = getPhase(state.turnNum);
+      const title = $('#weather-banner-title');
+      const sub = $('#weather-banner-sub');
+      const btnAdjust = $('#btn-weather-adjust');
+      weatherBanner.className = ''; // reset classes
+      
+      if (phase === 'FORECAST' && ev && ev.lockedWeather) {
+        weatherBanner.classList.remove('hidden');
+        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        title.textContent = t('weather.forecast_title');
+        
+        const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
+        sub.textContent = t('weather.forecast_sub', { current: totalCiv(), expected: Math.ceil(expected) });
+        btnAdjust.classList.add('hidden');
+      } else if (phase === 'ADJUST' && ev && ev.lockedWeather) {
+        weatherBanner.classList.remove('hidden');
+        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        title.textContent = t('weather.adjust_title');
+        
+        if (ev.upgraded) {
+          // Find old weather label if we can, but upgraded just uses new weather in our current data model
+          // actually, upgraded sub is `你們把天氣救回來了。{old} → {new}`. Wait, we don't store {old} in `ev` right now.
+          // The prompt says `{old} → {new}`, let's just say "你們把天氣救回來了！天氣已升級為 {new}" or similar?
+          // I updated the template to "{old} → {new}". We should store `oldWeather` in `ev`.
+          // For now, I'll pass it if it exists, else just show the new weather.
+          sub.textContent = t('weather.adjust_sub_upgraded', { old: ev.oldWeather ? getWeatherLabel(ev.oldWeather) : '更糟的天氣', new: getWeatherLabel(ev.lockedWeather) });
+        } else {
+          const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+          const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
+          let targetCiv = 0;
+          if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
+          if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
+          const short = ranks[ev.lockedWeather] < 2 ? Math.max(0, targetCiv - totalCiv()) : 0;
+          sub.textContent = t('weather.adjust_sub_pending', { short });
+        }
+        
+        btnAdjust.classList.remove('hidden');
+        btnAdjust.onclick = openWeatherAdjustModal;
+      } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
+        weatherBanner.classList.remove('hidden');
+        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        title.textContent = t('weather.report_title');
+        sub.textContent = t(`weather.report_${ev.lockedWeather.toLowerCase()}`);
+        btnAdjust.classList.add('hidden');
+      } else {
+        weatherBanner.classList.add('hidden');
+      }
+    }
+  }
 
   const btn = $('#btn-toggle-timer');
   btn.textContent = state.timer.running ? t('ui.btn_pause_timer') : t('ui.btn_start_timer');
@@ -922,10 +1023,11 @@ function renderAdjustPreview() {
   const p = getPlayer(adjustTargetId); if (!p) return;
   const mult = scoreMultiplier();
   const raw = adjustInputs();
+  const scaled = scaleReward(raw, mult);
   STATS.forEach(stat => {
     const row = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"]`);
     if (!row) return;
-    const applied = raw[stat] * mult;
+    const applied = scaled[stat] || 0;
     const next = Math.max(0, (p[stat] || 0) + applied);
     const prev = row.querySelector('.adjust-preview');
     if (raw[stat] === 0) {
@@ -962,7 +1064,7 @@ function applyAdjust() {
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
   STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
-  const tag = mult > 1 ? t('messages.sprint_tag') : '';
+  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
@@ -985,7 +1087,7 @@ function scoreOrigin(playerId, stop) {
   const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
-  const tag = mult > 1 ? t('messages.sprint_tag') : '';
+  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = stop
     ? t('messages.origin_stop_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag})
     : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
@@ -1000,7 +1102,7 @@ function openOriginModal(id) {
   originTargetId = id;
   const mult = scoreMultiplier();
   $('#origin-sub').textContent = p.name || '玩家';
-  $('#origin-sprint').classList.toggle('hidden', mult <= 1);
+  $('#origin-sprint').classList.toggle('hidden', mult.id === null);
   $('#origin-pass-desc').textContent = describeReward(scaleReward(originReward(p, false), mult));
   $('#origin-stop-desc').textContent = describeReward(scaleReward(originReward(p, true), mult));
   $('#origin-modal').classList.remove('hidden');
@@ -1200,6 +1302,8 @@ async function applySetup() {
     state.history.push(snap);
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
+  state.turnNum = 1;
+  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
   state.players = setupTmp.rolls.map((r, i) => makePlayer({
     name: r.name || `玩家 ${i + 1}`,
     fortune: r.fortune || 0,
@@ -1240,8 +1344,31 @@ async function applySetup() {
   if (isNext) toast(t('messages.round_started', {round: state.roundNum}));
 }
 
+function nextTurn() {
+  state.turnNum++;
+  const { phase, ev } = getPhase(state.turnNum);
+  
+  if (phase === 'FORECAST' && ev && ev.lockedWeather === null) {
+    ev.lockedWeather = judgeWeather(totalCiv(), state.turnNum, state.civGoal);
+    ev.civAtLock = totalCiv();
+    const label = getWeatherLabel(ev.lockedWeather);
+    toast(`氣象預報發布：下一輪即將面臨「${label}」！`, 'grad');
+    logEvent(`氣象預報發布：鎖定天氣為「${label}」`, 'grad');
+  } else if (phase === 'REPORT' && ev) {
+    const label = getWeatherLabel(ev.lockedWeather);
+    toast(`氣象情報生效：本輪套用「${label}」倍率`, 'grad');
+    logEvent(`氣象情報生效：套用天氣「${label}」`, 'grad');
+  } else {
+    toast(`進入第 ${state.turnNum} 輪`);
+  }
+  save();
+  renderAll();
+}
+
 // ─────────── Topbar / sidebar bindings ───────────
 function bindEvents() {
+  const btnNextTurn = $('#btn-next-turn');
+  if (btnNextTurn) btnNextTurn.addEventListener('click', nextTurn);
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   $('#btn-history').addEventListener('click', openHistory);
@@ -1620,9 +1747,9 @@ function renderCard() {
 // tally so the host sees what 套用獎勵 will actually grant.
 function rewardLineHtml(c) {
   const mult = scoreMultiplier();
-  if (mult > 1) {
+  if (mult.id !== null) {
     const doubled = describeReward(scaleReward(c.reward || {}, mult));
-    return `<div class="card-reward sprint">${t('card.reward_sprint', {mult, reward: escapeHtml(doubled)})}` +
+    return `<div class="card-reward sprint">${t('weather.card_multiplier_applied', { weather: getWeatherLabel(mult.id), doubled: escapeHtml(doubled) })}` +
            `<span class="card-reward-base">${t('card.reward_original', {reward: escapeHtml(c.rewardText)})}</span></div>`;
   }
   return `<div class="card-reward">${t('card.reward_prefix')}${escapeHtml(c.rewardText)}</div>`;
@@ -1632,8 +1759,9 @@ function rewardLineHtml(c) {
 // they are NOT auto-doubled — remind the host to apply this one at ×2 manually.
 function sideLineHtml(c) {
   if (!c.side) return '';
-  const note = scoreMultiplier() > 1
-    ? `<span class="card-side-x2">${t('card.side_sprint_remind', {mult: 2})}</span>`
+  const mult = scoreMultiplier();
+  const note = mult.id !== null
+    ? `<span class="card-side-x2">${t('weather.card_manual_calc', { weather: getWeatherLabel(mult.id) })}</span>`
     : '';
   return `<p class="card-side">${t('card.side_prefix')}${escapeHtml(c.side)}${note}</p>`;
 }
@@ -1716,8 +1844,8 @@ function renderChoiceCard(c) {
       </button>`;
   }).join('');
 
-  const sprintHtml = mult > 1
-    ? `<div class="card-reward sprint">無常與恩典齊發 ×${mult}　所有增減已加倍顯示</div>` : '';
+  const sprintHtml = mult.id !== null
+    ? `<div class="card-reward sprint">${t('weather.card_converted', { weather: getWeatherLabel(mult.id), gain: mult.gain, loss: mult.loss })}</div>` : '';
 
   $('#card-body').innerHTML = `
     <div class="card-display dilemma">
@@ -1804,7 +1932,7 @@ function applyChoiceCard(playerIds, card, optIdx) {
     state.players.forEach(p => setStat(p.id, 'civ', (p.civ || 0) + civAll));   // 集體文明＝場上所有玩家
   }
   const fx = describeChoiceOption(card, opt);
-  const tag = mult > 1 ? t('messages.sprint_tag') : '';
+  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
   const positive = describeReward(each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
@@ -2093,10 +2221,10 @@ function applyCardReward(playerIds, card) {
   // During the sprint show the doubled per-player tally plus a clear ×2 tag;
   // otherwise the card's own wording. For 雙方 cards spell out the per-player
   // grant so two names + the value read unambiguously.
-  const rewardText = mult > 1
+  const rewardText = mult.id !== null
     ? describeReward(r)
     : (ids.length > 1 ? t('messages.both_receive', {reward: describeReward(r)}) : card.rewardText);
-  const tag = mult > 1 ? t('messages.sprint_tag') : '';
+  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.card_completed', {names: names.join('、'), card: card.name, reward: rewardText, tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
@@ -2163,6 +2291,120 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('languageChanged', () => {
   rebuildDecks();
+  renderAll();
+});
+
+// ─────────── Weather Adjust Modal ───────────
+function openWeatherAdjustModal() {
+  const { phase, ev } = getPhase(state.turnNum);
+  if (phase !== 'ADJUST' || !ev) return;
+  const modal = $('#weather-adjust-modal');
+  $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
+  
+  const container = $('#weather-adjust-players');
+  container.innerHTML = state.players.map(p => `
+    <div class="weather-adj-row" data-id="${p.id}">
+      <div class="weather-adj-name">${escapeHtml(p.name)}</div>
+      <div class="weather-adj-controls">
+        <label>福報 <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></label>
+        <label>智慧 <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></label>
+      </div>
+    </div>
+  `).join('');
+  
+  updateWeatherAdjust();
+  modal.classList.remove('hidden');
+}
+
+function updateWeatherAdjust() {
+  let totalCost = 0;
+  $$('#weather-adjust-players .weather-adj-row').forEach(row => {
+    totalCost += parseInt(row.querySelector('.adj-fortune').value, 10) || 0;
+    totalCost += parseInt(row.querySelector('.adj-wisdom').value, 10) || 0;
+  });
+  
+  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost" style="color:#d32f2f;">${totalCost}</span>` });
+  
+  const rate = GAME_CONFIG.WEATHER.EXCHANGE_RATE_COST;
+  const civGain = Math.floor(totalCost / rate);
+  $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain" style="font-weight:bold;">${civGain}</span>` });
+  
+  const { ev } = getPhase(state.turnNum);
+  if (ev) {
+    const currentCiv = totalCiv();
+    const newCiv = currentCiv + civGain;
+    const nowWeather = judgeWeather(newCiv, ev.targetRound - 2, state.civGoal);
+    const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+    
+    let gapMsg = '';
+    if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
+      const nextRankName = Object.keys(ranks).find(k => ranks[k] === ranks[ev.lockedWeather] + 1);
+      gapMsg = `✨ ${t('weather.adjust_sub_upgraded', { weather: getWeatherLabel(nextRankName) })}`;
+    } else if (ranks[ev.lockedWeather] < 2) {
+      // 算出還差多少文明
+      const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
+      let targetCiv = 0;
+      if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1; // 脫離 DISASTER 的門檻
+      if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);      // 達到 FAVORABLE 的門檻
+      
+      const civShort = targetCiv - newCiv;
+      gapMsg = t('weather.gap_msg', { civ: civShort, pts: civShort * rate - (totalCost % rate) });
+    } else {
+      gapMsg = t('weather.adjust_maxed');
+    }
+    $('#weather-adjust-gap').textContent = gapMsg;
+  }
+}
+
+$('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-submit')?.addEventListener('click', () => {
+  let totalCost = 0;
+  const changes = [];
+  $$('#weather-adjust-players .weather-adj-row').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const f = parseInt(row.querySelector('.adj-fortune').value, 10) || 0;
+    const w = parseInt(row.querySelector('.adj-wisdom').value, 10) || 0;
+    if (f > 0 || w > 0) changes.push({ id, f, w });
+    totalCost += f + w;
+  });
+  
+  const rate = GAME_CONFIG.WEATHER.EXCHANGE_RATE_COST;
+  const civGain = Math.floor(totalCost / rate);
+  if (civGain > 0) {
+    changes.forEach(c => {
+      const p = getPlayer(c.id);
+      if (p) {
+        if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
+        if (c.w) setStat(p.id, 'wisdom', p.wisdom - c.w);
+      }
+    });
+    
+    // 加給所有人的 collective pool, 但文明是掛在 player 身上，這裡加在第一個玩家身上代表集體增加，或均分？
+    // 遊戲中的「集體文明+1」通常是用 `civAll` 來實作（每個人都+1），但這裡是總分加 civGain。
+    // 就將總分直接加在第一位玩家身上 (集體共享分數)
+    const p0 = state.players[0];
+    if (p0) setStat(p0.id, 'civ', (p0.civ || 0) + civGain);
+    
+    const { ev } = getPhase(state.turnNum);
+    if (ev) {
+      const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
+      const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+      if (ranks[now] > ranks[ev.lockedWeather]) {
+        const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
+        ev.oldWeather = ev.lockedWeather;
+        ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
+        ev.upgraded = true;
+        const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
+        toast(msg, 'grad');
+        logEvent(msg, 'grad');
+      } else {
+        toast(t('weather.adjust_fail', { cost: totalCost }));
+      }
+    }
+  }
+  
+  $('#weather-adjust-modal').classList.add('hidden');
+  save();
   renderAll();
 });
 

@@ -1,9 +1,10 @@
-const CACHE = 'fuhui-dashboard-v55';
+const CACHE = 'fuhui-dashboard-v56';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './components.css',
+  './config.js',
   './app.js',
   './i18n.js',
   './locales/zh-tw.json',
