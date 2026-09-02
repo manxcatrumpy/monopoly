@@ -81,7 +81,7 @@ function emptyNavClaim() {
 
 // App version — single source of truth. Keep the trailing build number in sync
 // when you prepare to ship new features or bug fixes.
-const APP_VERSION = '1.3.0 (build 55)';
+const APP_VERSION = '1.3.1 (build 56)';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -2122,9 +2122,7 @@ function startTimerLoop() {
 // ─────────── Service worker ───────────
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 }
 
