@@ -4,7 +4,7 @@
   "description": "iPad 主持人控制台 — 純前端 PWA，無後端、可離線、可加到主畫面。",
   "main": "app.js",
   "scripts": {
-    "build": "mkdir -p dist && cp -r *.html *.js *.css *.webmanifest icons locales dist/",
+    "build": "mkdir -p dist && cp -r *.html *.js *.css *.webmanifest icons locales dist/ && node scripts/test-bump.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
