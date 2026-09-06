@@ -1805,7 +1805,8 @@ function renderBoostBody(c) {
 // 一個選項在目前衝刺倍率下的實際效果。civAll＝套用到「場上所有玩家」的文明增減。
 function choiceEffects(opt) {
   const mult = scoreMultiplier();
-  return { each: scaleReward(opt.each || {}, mult), civAll: (opt.civAll || 0) * mult, mult };
+  // civAll 是數字；scoreMultiplier() 回的是 {gain,loss,id}。文明不吃天氣／終局倍率（見 applyMult）。
+  return { each: scaleReward(opt.each || {}, mult), civAll: applyMult(opt.civAll || 0, 'civAll', mult), mult };
 }
 // 「雙方各 福報 -1 · 智慧 -1　·　全體文明 -2」— 一行描述一個選項的效果。
 function describeChoiceOption(card, opt) {
