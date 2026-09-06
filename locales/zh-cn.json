@@ -325,7 +325,8 @@
     "downgrade_msg": "{name} 资格降级（福或慧 < {threshold}）",
     "batch_adjust_msg": "{name} 批次调分　{reward}{tag}",
     "origin_pass_msg": "{name} 经过起始点　{reward}{tag}",
-    "origin_stop_msg": "{name} 停在起始点　{reward}{tag}"
+    "origin_stop_msg": "{name} 停在起始点　{reward}{tag}",
+    "enter_turn": "进入第 {n} 轮"
   },
   "common": {
     "player": "玩家"
@@ -391,6 +392,11 @@
     "report_favorable": "文明走得比预期快。本轮 加分 ×2、扣分不变。",
     "report_normal": "文明大致跟上。本轮 加分、扣分 皆 ×1.3。",
     "report_disaster": "文明落后了。本轮 扣分 ×2、加分不变。",
-    "endgame_banner": "【终局倒数】最后 15 分钟。所有加分、扣分 ×2。天气不再变化。"
+    "endgame_banner": "【终局倒数】最后 15 分钟。所有加分、扣分 ×2。天气不再变化。",
+    "toast_forecast": "气象预报发布：下一轮即将面临“{weather}”！",
+    "toast_forecast_log": "气象预报发布：锁定天气为“{weather}”",
+    "toast_report": "气象情报生效：本轮套用“{weather}”倍率",
+    "toast_report_log": "气象情报生效：套用天气“{weather}”",
+    "worse_weather": "更糟的天气"
   }
 }

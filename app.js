@@ -833,12 +833,10 @@ function updateTopbar() {
         title.textContent = t('weather.adjust_title');
         
         if (ev.upgraded) {
-          // Find old weather label if we can, but upgraded just uses new weather in our current data model
-          // actually, upgraded sub is `你們把天氣救回來了。{old} → {new}`. Wait, we don't store {old} in `ev` right now.
-          // The prompt says `{old} → {new}`, let's just say "你們把天氣救回來了！天氣已升級為 {new}" or similar?
-          // I updated the template to "{old} → {new}". We should store `oldWeather` in `ev`.
-          // For now, I'll pass it if it exists, else just show the new weather.
-          sub.textContent = t('weather.adjust_sub_upgraded', { old: ev.oldWeather ? getWeatherLabel(ev.oldWeather) : '更糟的天氣', new: getWeatherLabel(ev.lockedWeather) });
+          sub.textContent = t('weather.adjust_sub_upgraded', {
+            old: getWeatherLabel(ev.oldWeather) || t('weather.worse_weather'),
+            new: getWeatherLabel(ev.lockedWeather),
+          });
         } else {
           const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
           const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
@@ -1352,14 +1350,14 @@ function nextTurn() {
     ev.lockedWeather = judgeWeather(totalCiv(), state.turnNum, state.civGoal);
     ev.civAtLock = totalCiv();
     const label = getWeatherLabel(ev.lockedWeather);
-    toast(`氣象預報發布：下一輪即將面臨「${label}」！`, 'grad');
-    logEvent(`氣象預報發布：鎖定天氣為「${label}」`, 'grad');
+    toast(t('weather.toast_forecast', { weather: label }), 'grad');
+    logEvent(t('weather.toast_forecast_log', { weather: label }), 'grad');
   } else if (phase === 'REPORT' && ev) {
     const label = getWeatherLabel(ev.lockedWeather);
-    toast(`氣象情報生效：本輪套用「${label}」倍率`, 'grad');
-    logEvent(`氣象情報生效：套用天氣「${label}」`, 'grad');
+    toast(t('weather.toast_report', { weather: label }), 'grad');
+    logEvent(t('weather.toast_report_log', { weather: label }), 'grad');
   } else {
-    toast(`進入第 ${state.turnNum} 輪`);
+    toast(t('messages.enter_turn', { n: state.turnNum }));
   }
   save();
   renderAll();
@@ -2305,8 +2303,8 @@ function openWeatherAdjustModal() {
     <div class="weather-adj-row" data-id="${p.id}">
       <div class="weather-adj-name">${escapeHtml(p.name)}</div>
       <div class="weather-adj-controls">
-        <label>福報 <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></label>
-        <label>智慧 <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></label>
+        <label>${escapeHtml(t('players.fortune'))} <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></label>
+        <label>${escapeHtml(t('players.wisdom'))} <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></label>
       </div>
     </div>
   `).join('');
@@ -2338,7 +2336,10 @@ function updateWeatherAdjust() {
     let gapMsg = '';
     if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
       const nextRankName = Object.keys(ranks).find(k => ranks[k] === ranks[ev.lockedWeather] + 1);
-      gapMsg = `✨ ${t('weather.adjust_sub_upgraded', { weather: getWeatherLabel(nextRankName) })}`;
+      gapMsg = '✨ ' + t('weather.adjust_sub_upgraded', {
+        old: getWeatherLabel(ev.lockedWeather),
+        new: getWeatherLabel(nextRankName),
+      });
     } else if (ranks[ev.lockedWeather] < 2) {
       // 算出還差多少文明
       const expected = expectedCiv(ev.targetRound - 2, state.civGoal);

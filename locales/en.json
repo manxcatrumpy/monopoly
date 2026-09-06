@@ -325,7 +325,8 @@
     "downgrade_msg": "{name} status downgraded (Fort or Wis < {threshold})",
     "batch_adjust_msg": "{name} Batch Adjust: {reward}{tag}",
     "origin_pass_msg": "{name} passed Origin: {reward}{tag}",
-    "origin_stop_msg": "{name} stopped at Origin: {reward}{tag}"
+    "origin_stop_msg": "{name} stopped at Origin: {reward}{tag}",
+    "enter_turn": "Entering turn {n}"
   },
   "common": {
     "player": "Player"
@@ -391,6 +392,11 @@
     "report_favorable": "Civ is ahead of schedule. Gains ×2, Losses unchanged this turn.",
     "report_normal": "Civ is on track. Gains and Losses both ×1.3 this turn.",
     "report_disaster": "Civ is falling behind. Losses ×2, Gains unchanged this turn.",
-    "endgame_banner": "[Endgame] Last 15 minutes. All Gains and Losses ×2. Weather is locked."
+    "endgame_banner": "[Endgame] Last 15 minutes. All Gains and Losses ×2. Weather is locked.",
+    "toast_forecast": "Weather forecast: next turn will face “{weather}”!",
+    "toast_forecast_log": "Weather forecast locked as “{weather}”",
+    "toast_report": "Weather active: “{weather}” multiplier this turn",
+    "toast_report_log": "Weather active: applying “{weather}”",
+    "worse_weather": "worse weather"
   }
 }
