@@ -864,6 +864,7 @@ button { font-family: inherit; }
 }
 
 /* Weather System Styles */
+.weather-forecast { background-color: #efe6d4; color: #5c4a2e; }
 .weather-favorable { background-color: #fcebc5; color: #a56a15; }
 .weather-normal { background-color: #e5ebf2; color: #3b5a7b; }
 .weather-disaster { background-color: #4a5c6a; color: #f5f6f1; }

@@ -833,7 +833,7 @@ function updateTopbar() {
       
       if (phase === 'FORECAST' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
-        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        weatherBanner.classList.add('weather-forecast');
         title.textContent = t('weather.forecast_title');
         
         const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
@@ -1361,9 +1361,8 @@ function nextTurn() {
   if (phase === 'FORECAST' && ev && ev.lockedWeather === null) {
     ev.lockedWeather = judgeWeather(totalCiv(), state.turnNum, state.civGoal);
     ev.civAtLock = totalCiv();
-    const label = getWeatherLabel(ev.lockedWeather);
-    toast(t('weather.toast_forecast', { weather: label }), 'grad');
-    logEvent(t('weather.toast_forecast_log', { weather: label }), 'grad');
+    toast(t('weather.toast_forecast'), 'grad');
+    logEvent(t('weather.toast_forecast_log'), 'grad');
   } else if (phase === 'REPORT' && ev) {
     const label = getWeatherLabel(ev.lockedWeather);
     toast(t('weather.toast_report', { weather: label }), 'grad');
