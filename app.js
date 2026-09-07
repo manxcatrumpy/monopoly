@@ -176,8 +176,7 @@ function comprehensiveScore(p) {
 }
 // ─────────── Weather System ───────────
 function expectedCiv(turn, civGoal) {
-  const completedRounds = Math.max(0, turn - 1);
-  return civGoal * completedRounds / GAME_CONFIG.EXPECTED_ROUNDS;
+  return civGoal * turn / GAME_CONFIG.EXPECTED_ROUNDS;
 }
 
 function judgeWeather(civCurrent, turn, civGoal) {
