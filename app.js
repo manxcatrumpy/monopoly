@@ -98,7 +98,7 @@ const defaultState = () => ({
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
-  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }))
+  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
 });
 
 let state = defaultState();
@@ -127,7 +127,7 @@ function load() {
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.turnNum === undefined) state.turnNum = 1;
     if (!state.weatherEvents) {
-      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }));
+      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
     }
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
@@ -859,8 +859,8 @@ function updateTopbar() {
           sub.textContent = t('weather.adjust_sub_pending', { short });
         }
         
-        btnAdjust.classList.toggle('hidden', !!ev.adjusted);
-        if (!ev.adjusted) btnAdjust.onclick = openWeatherAdjustModal;
+        btnAdjust.classList.remove('hidden');
+        btnAdjust.onclick = openWeatherAdjustModal;
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
@@ -1313,7 +1313,7 @@ async function applySetup() {
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
   state.turnNum = 1;
-  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }));
+  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
   state.players = setupTmp.rolls.map((r, i) => makePlayer({
     name: r.name || `玩家 ${i + 1}`,
     fortune: r.fortune || 0,
@@ -2327,7 +2327,7 @@ function readWeatherAdjustInputs() {
 
 function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.turnNum);
-  if (phase !== 'ADJUST' || !ev || ev.adjusted) return;
+  if (phase !== 'ADJUST' || !ev) return;
   const modal = $('#weather-adjust-modal');
   $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
 
@@ -2360,7 +2360,9 @@ function updateWeatherAdjust() {
     const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
 
     let gapMsg = '';
-    if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
+    if (ev.upgraded) {
+      gapMsg = t('weather.adjust_already_upgraded');
+    } else if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
       const nextRankName = Object.keys(ranks).find(k => ranks[k] === ranks[ev.lockedWeather] + 1);
       gapMsg = '✨ ' + t('weather.adjust_sub_upgraded', {
         old: getWeatherLabel(ev.lockedWeather),
@@ -2384,7 +2386,7 @@ function updateWeatherAdjust() {
 $('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
 $('#weather-adjust-submit')?.addEventListener('click', () => {
   const { phase, ev } = getPhase(state.turnNum);
-  if (phase !== 'ADJUST' || !ev || ev.adjusted) {
+  if (phase !== 'ADJUST' || !ev) {
     $('#weather-adjust-modal').classList.add('hidden');
     return;
   }
@@ -2395,7 +2397,6 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     return;
   }
 
-  ev.adjusted = true;
   contributions.forEach(c => {
     const p = getPlayer(c.id);
     if (!p) return;
@@ -2409,7 +2410,7 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
 
   const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
   const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-  if (ranks[now] > ranks[ev.lockedWeather]) {
+  if (!ev.upgraded && ranks[now] > ranks[ev.lockedWeather]) {
     const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
     ev.oldWeather = ev.lockedWeather;
     ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
@@ -2417,6 +2418,8 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
     toast(msg, 'grad');
     logEvent(msg, 'grad');
+  } else if (ev.upgraded) {
+    toast(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }));
   } else {
     const msg = t('weather.adjust_fail', { cost: totalCost });
     toast(msg);

@@ -399,6 +399,7 @@
     "toast_report_log": "氣象情報生效：套用天氣「{weather}」",
     "worse_weather": "更糟的天氣",
     "adjust_none": "至少投入 {rate} 點福慧才能兌換 1 點文明。",
-    "adjust_spent_log": "{names} 投入 {cost} 福慧，集體文明 +{civ}"
+    "adjust_spent_log": "{names} 投入 {cost} 福慧，集體文明 +{civ}",
+    "adjust_already_upgraded": "天氣已搶救過。再兌換只增加文明，天氣不再變。"
   }
 }
