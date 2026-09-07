@@ -397,6 +397,8 @@
     "toast_forecast_log": "Weather forecast locked as “{weather}”",
     "toast_report": "Weather active: “{weather}” multiplier this turn",
     "toast_report_log": "Weather active: applying “{weather}”",
-    "worse_weather": "worse weather"
+    "worse_weather": "worse weather",
+    "adjust_none": "Spend at least {rate} F/W to convert 1 Civ.",
+    "adjust_spent_log": "{names} spent {cost} F/W → +{civ} collective Civ"
   }
 }

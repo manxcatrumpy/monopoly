@@ -397,6 +397,8 @@
     "toast_forecast_log": "气象预报发布：锁定天气为“{weather}”",
     "toast_report": "气象情报生效：本轮套用“{weather}”倍率",
     "toast_report_log": "气象情报生效：套用天气“{weather}”",
-    "worse_weather": "更糟的天气"
+    "worse_weather": "更糟的天气",
+    "adjust_none": "至少投入 {rate} 点福慧才能兑换 1 点文明。",
+    "adjust_spent_log": "{names} 投入 {cost} 福慧，集体文明 +{civ}"
   }
 }

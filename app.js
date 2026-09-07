@@ -98,7 +98,7 @@ const defaultState = () => ({
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
-  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
+  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }))
 });
 
 let state = defaultState();
@@ -127,7 +127,7 @@ function load() {
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.turnNum === undefined) state.turnNum = 1;
     if (!state.weatherEvents) {
-      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
+      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }));
     }
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
@@ -152,6 +152,18 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
 
 function totalCiv() {
   return state.players.reduce((s, p) => s + (p.civ || 0), 0);
+}
+// 把文明加到集體高度：均分給每位玩家，餘數由前往後補，避免全灌在 players[0]。
+function addCollectiveCiv(amount) {
+  const n = state.players.length;
+  if (!amount || !n) return;
+  let rem = amount % n;
+  const each = (amount - rem) / n;
+  state.players.forEach(p => {
+    const add = each + (rem > 0 ? 1 : 0);
+    if (rem > 0) rem--;
+    if (add) setStat(p.id, 'civ', (p.civ || 0) + add);
+  });
 }
 function totalFortune() {
   return state.players.reduce((s, p) => s + (p.fortune || 0), 0);
@@ -847,8 +859,8 @@ function updateTopbar() {
           sub.textContent = t('weather.adjust_sub_pending', { short });
         }
         
-        btnAdjust.classList.remove('hidden');
-        btnAdjust.onclick = openWeatherAdjustModal;
+        btnAdjust.classList.toggle('hidden', !!ev.adjusted);
+        if (!ev.adjusted) btnAdjust.onclick = openWeatherAdjustModal;
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
@@ -1301,7 +1313,7 @@ async function applySetup() {
   }
   state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
   state.turnNum = 1;
-  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
+  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, adjusted: false, civAtLock: null }));
   state.players = setupTmp.rolls.map((r, i) => makePlayer({
     name: r.name || `玩家 ${i + 1}`,
     fortune: r.fortune || 0,
@@ -2292,12 +2304,34 @@ window.addEventListener('languageChanged', () => {
 });
 
 // ─────────── Weather Adjust Modal ───────────
+function readWeatherAdjustInputs() {
+  const rate = GAME_CONFIG.WEATHER.EXCHANGE_RATE_COST;
+  const contributions = [];
+  let totalCost = 0;
+  $$('#weather-adjust-players .weather-adj-row').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const p = getPlayer(id);
+    if (!p) return;
+    const fEl = row.querySelector('.adj-fortune');
+    const wEl = row.querySelector('.adj-wisdom');
+    const fRaw = parseInt(fEl.value, 10);
+    const wRaw = parseInt(wEl.value, 10);
+    const f = Math.max(0, Math.min(Number.isFinite(fRaw) ? fRaw : 0, p.fortune | 0));
+    const w = Math.max(0, Math.min(Number.isFinite(wRaw) ? wRaw : 0, p.wisdom | 0));
+    if (String(f) !== fEl.value) fEl.value = f;
+    if (String(w) !== wEl.value) wEl.value = w;
+    contributions.push({ id, f, w, name: p.name || t('common.player') });
+    totalCost += f + w;
+  });
+  return { contributions, totalCost, civGain: Math.floor(totalCost / rate), rate };
+}
+
 function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.turnNum);
-  if (phase !== 'ADJUST' || !ev) return;
+  if (phase !== 'ADJUST' || !ev || ev.adjusted) return;
   const modal = $('#weather-adjust-modal');
   $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
-  
+
   const container = $('#weather-adjust-players');
   container.innerHTML = state.players.map(p => `
     <div class="weather-adj-row" data-id="${p.id}">
@@ -2308,31 +2342,24 @@ function openWeatherAdjustModal() {
       </div>
     </div>
   `).join('');
-  
+
   updateWeatherAdjust();
   modal.classList.remove('hidden');
 }
 
 function updateWeatherAdjust() {
-  let totalCost = 0;
-  $$('#weather-adjust-players .weather-adj-row').forEach(row => {
-    totalCost += parseInt(row.querySelector('.adj-fortune').value, 10) || 0;
-    totalCost += parseInt(row.querySelector('.adj-wisdom').value, 10) || 0;
-  });
-  
+  const { totalCost, civGain, rate } = readWeatherAdjustInputs();
+
   $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost" style="color:#d32f2f;">${totalCost}</span>` });
-  
-  const rate = GAME_CONFIG.WEATHER.EXCHANGE_RATE_COST;
-  const civGain = Math.floor(totalCost / rate);
   $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain" style="font-weight:bold;">${civGain}</span>` });
-  
+
   const { ev } = getPhase(state.turnNum);
   if (ev) {
     const currentCiv = totalCiv();
     const newCiv = currentCiv + civGain;
     const nowWeather = judgeWeather(newCiv, ev.targetRound - 2, state.civGoal);
     const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-    
+
     let gapMsg = '';
     if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
       const nextRankName = Object.keys(ranks).find(k => ranks[k] === ranks[ev.lockedWeather] + 1);
@@ -2341,12 +2368,11 @@ function updateWeatherAdjust() {
         new: getWeatherLabel(nextRankName),
       });
     } else if (ranks[ev.lockedWeather] < 2) {
-      // 算出還差多少文明
       const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
       let targetCiv = 0;
-      if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1; // 脫離 DISASTER 的門檻
-      if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);      // 達到 FAVORABLE 的門檻
-      
+      if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
+      if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
+
       const civShort = targetCiv - newCiv;
       gapMsg = t('weather.gap_msg', { civ: civShort, pts: civShort * rate - (totalCost % rate) });
     } else {
@@ -2358,51 +2384,46 @@ function updateWeatherAdjust() {
 
 $('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
 $('#weather-adjust-submit')?.addEventListener('click', () => {
-  let totalCost = 0;
-  const changes = [];
-  $$('#weather-adjust-players .weather-adj-row').forEach(row => {
-    const id = row.getAttribute('data-id');
-    const f = parseInt(row.querySelector('.adj-fortune').value, 10) || 0;
-    const w = parseInt(row.querySelector('.adj-wisdom').value, 10) || 0;
-    if (f > 0 || w > 0) changes.push({ id, f, w });
-    totalCost += f + w;
-  });
-  
-  const rate = GAME_CONFIG.WEATHER.EXCHANGE_RATE_COST;
-  const civGain = Math.floor(totalCost / rate);
-  if (civGain > 0) {
-    changes.forEach(c => {
-      const p = getPlayer(c.id);
-      if (p) {
-        if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
-        if (c.w) setStat(p.id, 'wisdom', p.wisdom - c.w);
-      }
-    });
-    
-    // 加給所有人的 collective pool, 但文明是掛在 player 身上，這裡加在第一個玩家身上代表集體增加，或均分？
-    // 遊戲中的「集體文明+1」通常是用 `civAll` 來實作（每個人都+1），但這裡是總分加 civGain。
-    // 就將總分直接加在第一位玩家身上 (集體共享分數)
-    const p0 = state.players[0];
-    if (p0) setStat(p0.id, 'civ', (p0.civ || 0) + civGain);
-    
-    const { ev } = getPhase(state.turnNum);
-    if (ev) {
-      const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
-      const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-      if (ranks[now] > ranks[ev.lockedWeather]) {
-        const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
-        ev.oldWeather = ev.lockedWeather;
-        ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
-        ev.upgraded = true;
-        const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
-        toast(msg, 'grad');
-        logEvent(msg, 'grad');
-      } else {
-        toast(t('weather.adjust_fail', { cost: totalCost }));
-      }
-    }
+  const { phase, ev } = getPhase(state.turnNum);
+  if (phase !== 'ADJUST' || !ev || ev.adjusted) {
+    $('#weather-adjust-modal').classList.add('hidden');
+    return;
   }
-  
+
+  const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+  if (civGain <= 0) {
+    toast(t('weather.adjust_none', { rate }));
+    return;
+  }
+
+  ev.adjusted = true;
+  contributions.forEach(c => {
+    const p = getPlayer(c.id);
+    if (!p) return;
+    if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
+    if (c.w) setStat(p.id, 'wisdom', p.wisdom - c.w);
+  });
+  addCollectiveCiv(civGain);
+
+  const names = contributions.filter(c => c.f || c.w).map(c => c.name).join('、');
+  logEvent(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }), 'milestone');
+
+  const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
+  const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+  if (ranks[now] > ranks[ev.lockedWeather]) {
+    const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
+    ev.oldWeather = ev.lockedWeather;
+    ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
+    ev.upgraded = true;
+    const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
+    toast(msg, 'grad');
+    logEvent(msg, 'grad');
+  } else {
+    const msg = t('weather.adjust_fail', { cost: totalCost });
+    toast(msg);
+    logEvent(msg);
+  }
+
   $('#weather-adjust-modal').classList.add('hidden');
   save();
   renderAll();
