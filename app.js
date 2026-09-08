@@ -2324,6 +2324,17 @@ function readWeatherAdjustInputs() {
   return { contributions, totalCost, civGain: Math.floor(totalCost / rate), rate };
 }
 
+function chargeWeatherAdjust(contributions, spent) {
+  let remain = spent;
+  return contributions.map(c => {
+    const f = Math.min(c.f, remain);
+    remain -= f;
+    const w = Math.min(c.w, remain);
+    remain -= w;
+    return { id: c.id, name: c.name, f, w };
+  });
+}
+
 function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) return;
@@ -2361,8 +2372,11 @@ function openWeatherAdjustModal() {
 
 function updateWeatherAdjust() {
   const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+  const leftover = totalCost % rate;
+  const spent = civGain * rate;
+  const charged = chargeWeatherAdjust(contributions, spent);
 
-  contributions.forEach(c => {
+  charged.forEach(c => {
     const row = $(`#weather-adjust-players .weather-adj-row[data-id="${c.id}"]`);
     if (!row) return;
     const p = getPlayer(c.id);
@@ -2379,8 +2393,13 @@ function updateWeatherAdjust() {
     }
   });
 
-  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost">${totalCost}</span>` });
+  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost">${spent}</span>` });
   $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain">${civGain}</span>` });
+  const leftoverEl = $('#weather-adjust-leftover');
+  if (leftoverEl) {
+    leftoverEl.textContent = leftover ? t('weather.adjust_leftover', { n: leftover, spent }) : '';
+    leftoverEl.classList.toggle('hidden', !leftover);
+  }
 
   const { ev } = getPhase(state.turnNum);
   if (ev) {
@@ -2441,7 +2460,9 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     return;
   }
 
-  contributions.forEach(c => {
+  const spent = civGain * rate;
+  const charged = chargeWeatherAdjust(contributions, spent);
+  charged.forEach(c => {
     const p = getPlayer(c.id);
     if (!p) return;
     if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
@@ -2449,8 +2470,8 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
   });
   addCollectiveCiv(civGain);
 
-  const names = contributions.filter(c => c.f || c.w).map(c => c.name).join('、');
-  logEvent(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }), 'milestone');
+  const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
+  logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
 
   const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
   const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
@@ -2463,9 +2484,9 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     toast(msg, 'grad');
     logEvent(msg, 'grad');
   } else if (ev.upgraded) {
-    toast(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }));
+    toast(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }));
   } else {
-    const msg = t('weather.adjust_fail', { cost: totalCost });
+    const msg = t('weather.adjust_fail', { cost: spent });
     toast(msg);
     logEvent(msg);
   }

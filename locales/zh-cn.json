@@ -403,6 +403,7 @@
     "adjust_already_upgraded": "天气已抢救过。再兑换只增加文明，天气不再变。",
     "report_heading": "【{weather}】",
     "adj_spend": "扣",
-    "adj_remain": "剩 {n}"
+    "adj_remain": "剩 {n}",
+    "adjust_leftover": "其中 {n} 点未满一换，不会扣除（实际投入 {spent}）"
   }
 }

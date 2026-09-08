@@ -910,5 +910,7 @@ button { font-family: inherit; }
 .weather-adjust-cost { font-size: 18px; font-weight: 700; color: var(--ink); }
 #weather-adjust-total-cost { color: var(--danger-deep); }
 .weather-adjust-gain { margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--civ); }
+.weather-adjust-leftover { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--warn); }
+.weather-adjust-leftover.hidden { display: none; }
 .weather-adjust-gap { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }
 

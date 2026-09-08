@@ -403,6 +403,7 @@
     "adjust_already_upgraded": "Weather already upgraded. Further exchanges add Civ only.",
     "report_heading": "[{weather}]",
     "adj_spend": "spend",
-    "adj_remain": "left {n}"
+    "adj_remain": "left {n}",
+    "adjust_leftover": "{n} leftover F/W will not convert (actually spend {spent})"
   }
 }
