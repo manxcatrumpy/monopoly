@@ -372,9 +372,9 @@
     "msg_download_fail": "下載失敗，請稍後再試。"
   },
   "weather": {
-    "forecast_title": "氣象預報 (N-2)",
+    "forecast_title": "【氣象預報】",
     "forecast_sub": "天要變了。下一輪，你們有一次調節的機會。（當前文明 {current} ／ 預期 {expected}）",
-    "adjust_title": "氣候調節 (N-1)",
+    "adjust_title": "【氣候調節】",
     "adjust_sub_upgraded": "你們把天氣救回來了。{old} → {new}",
     "adjust_sub_pending": "可用福慧換取文明。距離下一級天氣，還差 {short} 點文明",
     "report_title": "氣象情報生效",

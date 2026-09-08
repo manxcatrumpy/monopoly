@@ -372,9 +372,9 @@
     "msg_download_fail": "Download failed, please try again later."
   },
   "weather": {
-    "forecast_title": "Weather Forecast (N-2)",
+    "forecast_title": "[Weather Forecast]",
     "forecast_sub": "The weather is changing. Next turn, you have one chance to adjust it. (Current Civ {current} / Expected {expected})",
-    "adjust_title": "Weather Adjust (N-1)",
+    "adjust_title": "[Weather Adjust]",
     "adjust_sub_upgraded": "You saved the weather. {old} → {new}",
     "adjust_sub_pending": "Exchange F/W for Civ. {short} more Civ needed for next weather rank.",
     "report_title": "Weather Active",
