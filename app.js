@@ -2337,12 +2337,22 @@ function openWeatherAdjustModal() {
       <div class="weather-adj-controls">
         <label class="weather-adj-stat">
           <span class="weather-adj-have">${escapeHtml(t('players.fortune'))} <strong>${p.fortune | 0}</strong></span>
-          <span>${escapeHtml(t('weather.adj_spend'))} <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></span>
+          <span class="weather-adj-spend">${escapeHtml(t('weather.adj_spend'))}</span>
+          <span class="weather-adj-stepper">
+            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, -1)" aria-label="−">−</button>
+            <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()">
+            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, 1)" aria-label="+">+</button>
+          </span>
           <span class="weather-adj-remain" data-remain="fortune">${escapeHtml(t('weather.adj_remain', { n: p.fortune | 0 }))}</span>
         </label>
         <label class="weather-adj-stat">
           <span class="weather-adj-have">${escapeHtml(t('players.wisdom'))} <strong>${p.wisdom | 0}</strong></span>
-          <span>${escapeHtml(t('weather.adj_spend'))} <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></span>
+          <span class="weather-adj-spend">${escapeHtml(t('weather.adj_spend'))}</span>
+          <span class="weather-adj-stepper">
+            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, -1)" aria-label="−">−</button>
+            <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()">
+            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, 1)" aria-label="+">+</button>
+          </span>
           <span class="weather-adj-remain" data-remain="wisdom">${escapeHtml(t('weather.adj_remain', { n: p.wisdom | 0 }))}</span>
         </label>
       </div>
@@ -2351,6 +2361,16 @@ function openWeatherAdjustModal() {
 
   updateWeatherAdjust();
   modal.classList.remove('hidden');
+}
+
+function nudgeWeatherAdjust(btn, delta) {
+  const input = btn.parentElement && btn.parentElement.querySelector('input');
+  if (!input) return;
+  const max = parseInt(input.max, 10);
+  const cur = parseInt(input.value, 10) || 0;
+  const cap = Number.isFinite(max) ? max : cur + delta;
+  input.value = Math.max(0, Math.min(cap, cur + delta));
+  updateWeatherAdjust();
 }
 
 function updateWeatherAdjust() {

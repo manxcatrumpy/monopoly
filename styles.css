@@ -881,8 +881,41 @@ button { font-family: inherit; }
 .weather-adj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0.75rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; }
 .weather-adj-name { font-weight: bold; min-width: 5rem; }
 .weather-adj-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-.weather-adj-stat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; }
+.weather-adj-stat { display: flex; align-items: center; gap: 0.45rem; font-size: 0.95rem; }
 .weather-adj-have strong { font-variant-numeric: tabular-nums; }
 .weather-adj-remain { color: #666; min-width: 3.2rem; font-variant-numeric: tabular-nums; }
-.weather-adj-controls input { width: 56px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 0.25rem; font-size: 1rem; }
+.weather-adj-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.weather-adj-stepper input {
+  width: 48px;
+  height: 44px;
+  margin: 0;
+  border: none;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-radius: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.weather-adj-btn {
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: #f3f1ea;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+}
+.weather-adj-btn:hover { background: #e8e4d8; }
+.weather-adj-btn:active { background: #ddd8c8; }
 
