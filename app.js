@@ -775,6 +775,30 @@ function updateTopbar() {
   const pct = Math.min(100, (total / Math.max(1, state.civGoal)) * 100);
   $('#civ-bar-fill').style.width = pct + '%';
 
+  const band = $('#civ-bar-band');
+  const mark = $('#civ-bar-mark');
+  if (!started || !state.civGoal) {
+    if (band) band.hidden = true;
+    if (mark) mark.classList.add('hidden');
+  } else {
+    const { phase, ev } = getPhase(state.turnNum);
+    const expTurn = (ev && (phase === 'FORECAST' || phase === 'ADJUST')) ? ev.targetRound - 2 : state.turnNum;
+    const expected = expectedCiv(expTurn, state.civGoal);
+    const goal = Math.max(1, state.civGoal);
+    const expPct = Math.min(100, (expected / goal) * 100);
+    const lowPct = Math.min(100, (expected * 0.8 / goal) * 100);
+    const highPct = Math.min(100, (expected * 1.2 / goal) * 100);
+    if (band) {
+      band.hidden = !(expected > 0);
+      band.style.left = lowPct + '%';
+      band.style.width = Math.max(0, highPct - lowPct) + '%';
+    }
+    if (mark) {
+      mark.classList.toggle('hidden', !(expected > 0));
+      mark.style.left = expPct + '%';
+    }
+  }
+
   // 集體文明達標＝勝利：進度條轉金、跳通知並記 log。旗標在回落時清除，
   // 所以主持人改錯數字後再次達標仍會重新慶祝。
   const goalReached = total >= state.civGoal;

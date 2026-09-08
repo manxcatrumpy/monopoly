@@ -102,7 +102,16 @@
   </div>
 
   <section class="civ-progress">
-    <div class="civ-bar"><div id="civ-bar-fill" class="civ-bar-fill"></div></div>
+    <div class="civ-bar-wrap">
+      <div class="civ-bar">
+        <div id="civ-bar-band" class="civ-bar-band" hidden></div>
+        <div id="civ-bar-fill" class="civ-bar-fill"></div>
+      </div>
+      <div id="civ-bar-mark" class="civ-bar-mark hidden" aria-hidden="true">
+        <span class="civ-bar-mark-needle"></span>
+        <span class="civ-bar-mark-label" data-i18n="civ.expected_mark">預期</span>
+      </div>
+    </div>
     <div class="civ-progress-label" data-i18n="civ.progress_label">集體文明積分總和 — 達標即勝利</div>
   </section>
 
