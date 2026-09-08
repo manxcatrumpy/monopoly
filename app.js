@@ -828,7 +828,7 @@ function updateTopbar() {
       const title = $('#weather-banner-title');
       const sub = $('#weather-banner-sub');
       const btnAdjust = $('#btn-weather-adjust');
-      weatherBanner.className = ''; // reset classes
+      weatherBanner.className = 'weather-banner';
       
       if (phase === 'FORECAST' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');

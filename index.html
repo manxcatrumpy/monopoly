@@ -89,12 +89,12 @@
     </div>
   </header>
 
-  <div id="weather-banner" class="hidden" role="status" aria-live="polite">
-    <div style="flex:1;">
-      <span id="weather-banner-title">氣象預報</span>
-      <span id="weather-banner-sub"></span>
+  <div id="weather-banner" class="weather-banner hidden" role="status" aria-live="polite">
+    <div class="weather-banner-copy">
+      <div id="weather-banner-title" class="weather-banner-title">氣象預報</div>
+      <div id="weather-banner-sub" class="weather-banner-sub"></div>
     </div>
-    <button id="btn-weather-adjust" class="btn hidden" style="margin-left: 1rem; border: 1px solid currentColor; background: transparent; color: inherit;" data-i18n="ui.btn_weather_adjust">開啟氣候調節</button>
+    <button id="btn-weather-adjust" class="weather-banner-btn hidden" type="button" data-i18n="ui.btn_weather_adjust">開啟氣候調節</button>
   </div>
 
   <div id="sprint-banner" class="sprint-banner hidden" role="status" aria-live="polite">
