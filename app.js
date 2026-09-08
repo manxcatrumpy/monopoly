@@ -2343,8 +2343,20 @@ function openWeatherAdjustModal() {
   if (phase !== 'ADJUST' || !ev) return;
   const modal = $('#weather-adjust-modal');
   if (!modal.classList.contains('hidden')) return;
-  $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
+  const resultEl = $('#weather-adjust-result');
+  if (resultEl) {
+    resultEl.textContent = '';
+    resultEl.classList.add('hidden');
+    resultEl.classList.remove('is-upgraded');
+  }
+  fillWeatherAdjustForm();
+  modal.classList.remove('hidden');
+}
 
+function fillWeatherAdjustForm() {
+  const { ev } = getPhase(state.turnNum);
+  if (!ev) return;
+  $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
   const container = $('#weather-adjust-players');
   container.innerHTML = state.players.map(p => `
     <div class="weather-adj-row" data-id="${p.id}">
@@ -2369,9 +2381,7 @@ function openWeatherAdjustModal() {
       </div>
     </div>
   `).join('');
-
   updateWeatherAdjust();
-  modal.classList.remove('hidden');
 }
 
 function updateWeatherAdjust() {
@@ -2483,25 +2493,35 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
 
   const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
   const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+  let resultMsg = '';
+  let upgradedNow = false;
   if (!ev.upgraded && ranks[now] > ranks[ev.lockedWeather]) {
     const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
     ev.oldWeather = ev.lockedWeather;
     ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
     ev.upgraded = true;
-    const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
-    toast(msg, 'grad');
-    logEvent(msg, 'grad');
+    upgradedNow = true;
+    resultMsg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
+    toast(resultMsg, 'grad');
+    logEvent(resultMsg, 'grad');
   } else if (ev.upgraded) {
-    toast(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }));
+    resultMsg = t('weather.adjust_spent_log', { names, cost: spent, civ: civGain });
+    toast(resultMsg);
   } else {
-    const msg = t('weather.adjust_fail', { cost: spent });
-    toast(msg);
-    logEvent(msg);
+    resultMsg = t('weather.adjust_fail', { cost: spent });
+    toast(resultMsg);
+    logEvent(resultMsg);
   }
 
-  $('#weather-adjust-modal').classList.add('hidden');
   save();
   renderAll();
+  fillWeatherAdjustForm();
+  const resultEl = $('#weather-adjust-result');
+  if (resultEl && resultMsg) {
+    resultEl.textContent = resultMsg;
+    resultEl.classList.remove('hidden');
+    resultEl.classList.toggle('is-upgraded', upgradedNow);
+  }
 });
 
 // ─────────── 精彩時刻 金句卡 ───────────
