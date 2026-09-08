@@ -693,22 +693,23 @@
   <!-- Weather Adjust Modal -->
   <div id="weather-adjust-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="weather-adjust-title">
     <div class="modal-backdrop"></div>
-    <div class="modal-panel" style="max-width: 600px; width: 90vw;">
+    <div class="modal-panel weather-adjust-panel">
       <header class="modal-head">
         <h2 id="weather-adjust-title" data-i18n="weather.modal_title">氣候調節 (3 福慧 = 1 文明)</h2>
         <button class="icon-btn" id="weather-adjust-close" aria-label="關閉">✕</button>
       </header>
-      <div class="modal-body" style="background:#f5f6f1; padding: 1.5rem;">
-        <div style="background:#fff; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; text-align:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-          <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;"><span data-i18n="weather.current_forecast">當前預報：</span><strong id="weather-adjust-current-label">災害交加</strong></div>
-          <div style="font-size:1.5rem; font-weight:700; margin-bottom:0.5rem;" id="weather-adjust-total-cost-container">總計將投入 <span id="weather-adjust-total-cost" style="color:#d32f2f;">0</span> 福慧</div>
-          <div style="font-size:1.1rem; color:#4a7c59;" id="weather-adjust-civ-gain-container">→ 文明增加 <span id="weather-adjust-civ-gain" style="font-weight:bold;">0</span> 點</div>
-          <div id="weather-adjust-gap" style="margin-top:1rem; font-size:0.95rem; color:#888;"></div>
+      <div class="modal-body">
+        <div class="weather-adjust-summary">
+          <div class="weather-adjust-forecast"><span data-i18n="weather.current_forecast">當前預報：</span><strong id="weather-adjust-current-label">災害交加</strong></div>
+          <div class="weather-adjust-cost" id="weather-adjust-total-cost-container">總計將投入 <span id="weather-adjust-total-cost">0</span> 福慧</div>
+          <div class="weather-adjust-gain" id="weather-adjust-civ-gain-container">→ 文明增加 <span id="weather-adjust-civ-gain">0</span> 點</div>
+          <div class="weather-adjust-gap" id="weather-adjust-gap"></div>
         </div>
         <div id="weather-adjust-players"></div>
       </div>
-      <footer class="modal-foot" style="justify-content: flex-end;">
-        <button class="btn btn-primary btn-round" id="weather-adjust-submit" data-i18n="ui.btn_confirm_adjust">確認扣除並調節天氣</button>
+      <footer class="modal-foot">
+        <button class="btn" id="weather-adjust-cancel" type="button" data-i18n="adjust.btn_cancel">取消</button>
+        <button class="btn btn-primary" id="weather-adjust-submit" type="button" data-i18n="ui.btn_confirm_adjust">確認扣除並調節天氣</button>
       </footer>
     </div>
   </div>

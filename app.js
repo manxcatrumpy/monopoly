@@ -2334,43 +2334,29 @@ function openWeatherAdjustModal() {
   container.innerHTML = state.players.map(p => `
     <div class="weather-adj-row" data-id="${p.id}">
       <div class="weather-adj-name">${escapeHtml(p.name)}</div>
-      <div class="weather-adj-controls">
-        <label class="weather-adj-stat">
-          <span class="weather-adj-have">${escapeHtml(t('players.fortune'))} <strong>${p.fortune | 0}</strong></span>
-          <span class="weather-adj-spend">${escapeHtml(t('weather.adj_spend'))}</span>
-          <span class="weather-adj-stepper">
-            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, -1)" aria-label="−">−</button>
-            <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()">
-            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, 1)" aria-label="+">+</button>
-          </span>
-          <span class="weather-adj-remain" data-remain="fortune">${escapeHtml(t('weather.adj_remain', { n: p.fortune | 0 }))}</span>
-        </label>
-        <label class="weather-adj-stat">
-          <span class="weather-adj-have">${escapeHtml(t('players.wisdom'))} <strong>${p.wisdom | 0}</strong></span>
-          <span class="weather-adj-spend">${escapeHtml(t('weather.adj_spend'))}</span>
-          <span class="weather-adj-stepper">
-            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, -1)" aria-label="−">−</button>
-            <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()">
-            <button type="button" class="weather-adj-btn" onclick="nudgeWeatherAdjust(this, 1)" aria-label="+">+</button>
-          </span>
-          <span class="weather-adj-remain" data-remain="wisdom">${escapeHtml(t('weather.adj_remain', { n: p.wisdom | 0 }))}</span>
-        </label>
+      <div class="adjust-row">
+        <span class="adjust-label"><span class="dot dot-fortune"></span>${escapeHtml(t('players.fortune'))}</span>
+        <div class="adjust-ctrl">
+          <button type="button" class="adjust-step" data-step="-1" aria-label="減少">−</button>
+          <input class="adjust-input adj-fortune" type="number" inputmode="numeric" min="0" max="${p.fortune}" value="0" aria-label="${escapeHtml(t('players.fortune'))}">
+          <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
+        </div>
+        <span class="adjust-preview" data-remain="fortune">${escapeHtml(t('ui.lbl_current_val', { val: p.fortune | 0 }))}</span>
+      </div>
+      <div class="adjust-row">
+        <span class="adjust-label"><span class="dot dot-wisdom"></span>${escapeHtml(t('players.wisdom'))}</span>
+        <div class="adjust-ctrl">
+          <button type="button" class="adjust-step" data-step="-1" aria-label="減少">−</button>
+          <input class="adjust-input adj-wisdom" type="number" inputmode="numeric" min="0" max="${p.wisdom}" value="0" aria-label="${escapeHtml(t('players.wisdom'))}">
+          <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
+        </div>
+        <span class="adjust-preview" data-remain="wisdom">${escapeHtml(t('ui.lbl_current_val', { val: p.wisdom | 0 }))}</span>
       </div>
     </div>
   `).join('');
 
   updateWeatherAdjust();
   modal.classList.remove('hidden');
-}
-
-function nudgeWeatherAdjust(btn, delta) {
-  const input = btn.parentElement && btn.parentElement.querySelector('input');
-  if (!input) return;
-  const max = parseInt(input.max, 10);
-  const cur = parseInt(input.value, 10) || 0;
-  const cap = Number.isFinite(max) ? max : cur + delta;
-  input.value = Math.max(0, Math.min(cap, cur + delta));
-  updateWeatherAdjust();
 }
 
 function updateWeatherAdjust() {
@@ -2383,12 +2369,18 @@ function updateWeatherAdjust() {
     if (!p) return;
     const fEl = row.querySelector('[data-remain="fortune"]');
     const wEl = row.querySelector('[data-remain="wisdom"]');
-    if (fEl) fEl.textContent = t('weather.adj_remain', { n: (p.fortune | 0) - c.f });
-    if (wEl) wEl.textContent = t('weather.adj_remain', { n: (p.wisdom | 0) - c.w });
+    if (fEl) {
+      const have = p.fortune | 0;
+      fEl.textContent = c.f ? `${have} → ${have - c.f}　(−${c.f})` : t('ui.lbl_current_val', { val: have });
+    }
+    if (wEl) {
+      const have = p.wisdom | 0;
+      wEl.textContent = c.w ? `${have} → ${have - c.w}　(−${c.w})` : t('ui.lbl_current_val', { val: have });
+    }
   });
 
-  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost" style="color:#d32f2f;">${totalCost}</span>` });
-  $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain" style="font-weight:bold;">${civGain}</span>` });
+  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost">${totalCost}</span>` });
+  $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain">${civGain}</span>` });
 
   const { ev } = getPhase(state.turnNum);
   if (ev) {
@@ -2422,6 +2414,20 @@ function updateWeatherAdjust() {
 }
 
 $('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-cancel')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('.modal-backdrop', $('#weather-adjust-modal'))?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-players')?.addEventListener('click', (e) => {
+  const b = e.target.closest('.adjust-step'); if (!b) return;
+  const inp = b.closest('.adjust-row').querySelector('.adjust-input');
+  if (!inp) return;
+  const max = parseInt(inp.max, 10);
+  const next = (parseInt(inp.value, 10) || 0) + parseInt(b.dataset.step, 10);
+  inp.value = String(Math.max(0, Number.isFinite(max) ? Math.min(max, next) : next));
+  updateWeatherAdjust();
+});
+$('#weather-adjust-players')?.addEventListener('input', (e) => {
+  if (e.target.classList.contains('adjust-input')) updateWeatherAdjust();
+});
 $('#weather-adjust-submit')?.addEventListener('click', () => {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) {
