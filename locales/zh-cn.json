@@ -372,9 +372,9 @@
     "msg_download_fail": "下载失败，请稍后再试。"
   },
   "weather": {
-    "forecast_title": "气象预报 (N-2)",
+    "forecast_title": "【气象预报】",
     "forecast_sub": "天要变了。下一轮，你们有一次调节的机会。（当前文明 {current} ／ 预期 {expected}）",
-    "adjust_title": "气候调节 (N-1)",
+    "adjust_title": "【气候调节】",
     "adjust_sub_upgraded": "你们把天气救回来了。{old} → {new}",
     "adjust_sub_pending": "可用福慧换取文明。距离下一级天气，还差 {short} 点文明",
     "report_title": "气象情报生效",
@@ -400,6 +400,10 @@
     "worse_weather": "更糟的天气",
     "adjust_none": "至少投入 {rate} 点福慧才能兑换 1 点文明。",
     "adjust_spent_log": "{names} 投入 {cost} 福慧，集体文明 +{civ}",
-    "adjust_already_upgraded": "天气已抢救过。再兑换只增加文明，天气不再变。"
+    "adjust_already_upgraded": "天气已抢救过。再兑换只增加文明，天气不再变。",
+    "report_heading": "【{weather}】",
+    "adj_spend": "扣",
+    "adj_remain": "剩 {n}",
+    "adjust_leftover": "其中 {n} 点未满一换，不会扣除（实际投入 {spent}）"
   }
 }

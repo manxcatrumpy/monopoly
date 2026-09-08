@@ -828,7 +828,7 @@ function updateTopbar() {
       const title = $('#weather-banner-title');
       const sub = $('#weather-banner-sub');
       const btnAdjust = $('#btn-weather-adjust');
-      weatherBanner.className = ''; // reset classes
+      weatherBanner.className = 'weather-banner';
       
       if (phase === 'FORECAST' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
@@ -840,7 +840,7 @@ function updateTopbar() {
         btnAdjust.classList.add('hidden');
       } else if (phase === 'ADJUST' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
-        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`, 'is-adjust');
         title.textContent = t('weather.adjust_title');
         
         if (ev.upgraded) {
@@ -859,11 +859,11 @@ function updateTopbar() {
         }
         
         btnAdjust.classList.remove('hidden');
-        btnAdjust.onclick = openWeatherAdjustModal;
+        btnAdjust.onclick = (e) => { e.stopPropagation(); openWeatherAdjustModal(); };
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
-        title.textContent = t('weather.report_title');
+        title.textContent = t('weather.report_heading', { weather: getWeatherLabel(ev.lockedWeather) });
         sub.textContent = t(`weather.report_${ev.lockedWeather.toLowerCase()}`);
         btnAdjust.classList.add('hidden');
       } else {
@@ -1362,6 +1362,8 @@ function nextTurn() {
     ev.civAtLock = totalCiv();
     toast(t('weather.toast_forecast'), 'grad');
     logEvent(t('weather.toast_forecast_log'), 'grad');
+  } else if (phase === 'ADJUST' && ev) {
+    // 氣候調節以視窗為公告，不另 toast
   } else if (phase === 'REPORT' && ev) {
     const label = getWeatherLabel(ev.lockedWeather);
     toast(t('weather.toast_report', { weather: label }), 'grad');
@@ -1371,6 +1373,7 @@ function nextTurn() {
   }
   save();
   renderAll();
+  if (phase === 'ADJUST' && ev) openWeatherAdjustModal();
 }
 
 // ─────────── Topbar / sidebar bindings ───────────
@@ -2324,19 +2327,45 @@ function readWeatherAdjustInputs() {
   return { contributions, totalCost, civGain: Math.floor(totalCost / rate), rate };
 }
 
+function chargeWeatherAdjust(contributions, spent) {
+  let remain = spent;
+  return contributions.map(c => {
+    const f = Math.min(c.f, remain);
+    remain -= f;
+    const w = Math.min(c.w, remain);
+    remain -= w;
+    return { id: c.id, name: c.name, f, w };
+  });
+}
+
 function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) return;
   const modal = $('#weather-adjust-modal');
+  if (!modal.classList.contains('hidden')) return;
   $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
 
   const container = $('#weather-adjust-players');
   container.innerHTML = state.players.map(p => `
     <div class="weather-adj-row" data-id="${p.id}">
       <div class="weather-adj-name">${escapeHtml(p.name)}</div>
-      <div class="weather-adj-controls">
-        <label>${escapeHtml(t('players.fortune'))} <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></label>
-        <label>${escapeHtml(t('players.wisdom'))} <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></label>
+      <div class="adjust-row">
+        <span class="adjust-label"><span class="dot dot-fortune"></span>${escapeHtml(t('players.fortune'))}</span>
+        <div class="adjust-ctrl">
+          <button type="button" class="adjust-step" data-step="-1" aria-label="減少">−</button>
+          <input class="adjust-input adj-fortune" type="number" inputmode="numeric" min="0" max="${p.fortune}" value="0" aria-label="${escapeHtml(t('players.fortune'))}">
+          <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
+        </div>
+        <span class="adjust-preview" data-remain="fortune">${escapeHtml(t('ui.lbl_current_val', { val: p.fortune | 0 }))}</span>
+      </div>
+      <div class="adjust-row">
+        <span class="adjust-label"><span class="dot dot-wisdom"></span>${escapeHtml(t('players.wisdom'))}</span>
+        <div class="adjust-ctrl">
+          <button type="button" class="adjust-step" data-step="-1" aria-label="減少">−</button>
+          <input class="adjust-input adj-wisdom" type="number" inputmode="numeric" min="0" max="${p.wisdom}" value="0" aria-label="${escapeHtml(t('players.wisdom'))}">
+          <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
+        </div>
+        <span class="adjust-preview" data-remain="wisdom">${escapeHtml(t('ui.lbl_current_val', { val: p.wisdom | 0 }))}</span>
       </div>
     </div>
   `).join('');
@@ -2346,10 +2375,35 @@ function openWeatherAdjustModal() {
 }
 
 function updateWeatherAdjust() {
-  const { totalCost, civGain, rate } = readWeatherAdjustInputs();
+  const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+  const leftover = totalCost % rate;
+  const spent = civGain * rate;
+  const charged = chargeWeatherAdjust(contributions, spent);
 
-  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost" style="color:#d32f2f;">${totalCost}</span>` });
-  $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain" style="font-weight:bold;">${civGain}</span>` });
+  charged.forEach(c => {
+    const row = $(`#weather-adjust-players .weather-adj-row[data-id="${c.id}"]`);
+    if (!row) return;
+    const p = getPlayer(c.id);
+    if (!p) return;
+    const fEl = row.querySelector('[data-remain="fortune"]');
+    const wEl = row.querySelector('[data-remain="wisdom"]');
+    if (fEl) {
+      const have = p.fortune | 0;
+      fEl.textContent = c.f ? `${have} → ${have - c.f}　(−${c.f})` : t('ui.lbl_current_val', { val: have });
+    }
+    if (wEl) {
+      const have = p.wisdom | 0;
+      wEl.textContent = c.w ? `${have} → ${have - c.w}　(−${c.w})` : t('ui.lbl_current_val', { val: have });
+    }
+  });
+
+  $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost">${spent}</span>` });
+  $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain">${civGain}</span>` });
+  const leftoverEl = $('#weather-adjust-leftover');
+  if (leftoverEl) {
+    leftoverEl.textContent = leftover ? t('weather.adjust_leftover', { n: leftover, spent }) : '';
+    leftoverEl.classList.toggle('hidden', !leftover);
+  }
 
   const { ev } = getPhase(state.turnNum);
   if (ev) {
@@ -2383,6 +2437,24 @@ function updateWeatherAdjust() {
 }
 
 $('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-banner')?.addEventListener('click', (e) => {
+  if (e.target.closest('#btn-weather-adjust')) return;
+  if (getPhase(state.turnNum).phase === 'ADJUST') openWeatherAdjustModal();
+});
+$('#weather-adjust-cancel')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('.modal-backdrop', $('#weather-adjust-modal'))?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-players')?.addEventListener('click', (e) => {
+  const b = e.target.closest('.adjust-step'); if (!b) return;
+  const inp = b.closest('.adjust-row').querySelector('.adjust-input');
+  if (!inp) return;
+  const max = parseInt(inp.max, 10);
+  const next = (parseInt(inp.value, 10) || 0) + parseInt(b.dataset.step, 10);
+  inp.value = String(Math.max(0, Number.isFinite(max) ? Math.min(max, next) : next));
+  updateWeatherAdjust();
+});
+$('#weather-adjust-players')?.addEventListener('input', (e) => {
+  if (e.target.classList.contains('adjust-input')) updateWeatherAdjust();
+});
 $('#weather-adjust-submit')?.addEventListener('click', () => {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) {
@@ -2396,7 +2468,9 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     return;
   }
 
-  contributions.forEach(c => {
+  const spent = civGain * rate;
+  const charged = chargeWeatherAdjust(contributions, spent);
+  charged.forEach(c => {
     const p = getPlayer(c.id);
     if (!p) return;
     if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
@@ -2404,8 +2478,8 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
   });
   addCollectiveCiv(civGain);
 
-  const names = contributions.filter(c => c.f || c.w).map(c => c.name).join('、');
-  logEvent(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }), 'milestone');
+  const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
+  logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
 
   const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
   const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
@@ -2418,9 +2492,9 @@ $('#weather-adjust-submit')?.addEventListener('click', () => {
     toast(msg, 'grad');
     logEvent(msg, 'grad');
   } else if (ev.upgraded) {
-    toast(t('weather.adjust_spent_log', { names, cost: totalCost, civ: civGain }));
+    toast(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }));
   } else {
-    const msg = t('weather.adjust_fail', { cost: totalCost });
+    const msg = t('weather.adjust_fail', { cost: spent });
     toast(msg);
     logEvent(msg);
   }
