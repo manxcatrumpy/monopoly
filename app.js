@@ -2335,8 +2335,16 @@ function openWeatherAdjustModal() {
     <div class="weather-adj-row" data-id="${p.id}">
       <div class="weather-adj-name">${escapeHtml(p.name)}</div>
       <div class="weather-adj-controls">
-        <label>${escapeHtml(t('players.fortune'))} <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></label>
-        <label>${escapeHtml(t('players.wisdom'))} <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></label>
+        <label class="weather-adj-stat">
+          <span class="weather-adj-have">${escapeHtml(t('players.fortune'))} <strong>${p.fortune | 0}</strong></span>
+          <span>${escapeHtml(t('weather.adj_spend'))} <input type="number" min="0" max="${p.fortune}" value="0" class="adj-fortune" oninput="updateWeatherAdjust()"></span>
+          <span class="weather-adj-remain" data-remain="fortune">${escapeHtml(t('weather.adj_remain', { n: p.fortune | 0 }))}</span>
+        </label>
+        <label class="weather-adj-stat">
+          <span class="weather-adj-have">${escapeHtml(t('players.wisdom'))} <strong>${p.wisdom | 0}</strong></span>
+          <span>${escapeHtml(t('weather.adj_spend'))} <input type="number" min="0" max="${p.wisdom}" value="0" class="adj-wisdom" oninput="updateWeatherAdjust()"></span>
+          <span class="weather-adj-remain" data-remain="wisdom">${escapeHtml(t('weather.adj_remain', { n: p.wisdom | 0 }))}</span>
+        </label>
       </div>
     </div>
   `).join('');
@@ -2346,7 +2354,18 @@ function openWeatherAdjustModal() {
 }
 
 function updateWeatherAdjust() {
-  const { totalCost, civGain, rate } = readWeatherAdjustInputs();
+  const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+
+  contributions.forEach(c => {
+    const row = $(`#weather-adjust-players .weather-adj-row[data-id="${c.id}"]`);
+    if (!row) return;
+    const p = getPlayer(c.id);
+    if (!p) return;
+    const fEl = row.querySelector('[data-remain="fortune"]');
+    const wEl = row.querySelector('[data-remain="wisdom"]');
+    if (fEl) fEl.textContent = t('weather.adj_remain', { n: (p.fortune | 0) - c.f });
+    if (wEl) wEl.textContent = t('weather.adj_remain', { n: (p.wisdom | 0) - c.w });
+  });
 
   $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost" style="color:#d32f2f;">${totalCost}</span>` });
   $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain" style="font-weight:bold;">${civGain}</span>` });

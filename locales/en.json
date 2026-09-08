@@ -401,6 +401,8 @@
     "adjust_none": "Spend at least {rate} F/W to convert 1 Civ.",
     "adjust_spent_log": "{names} spent {cost} F/W → +{civ} collective Civ",
     "adjust_already_upgraded": "Weather already upgraded. Further exchanges add Civ only.",
-    "report_heading": "[{weather}]"
+    "report_heading": "[{weather}]",
+    "adj_spend": "spend",
+    "adj_remain": "left {n}"
   }
 }

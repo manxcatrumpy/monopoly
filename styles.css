@@ -878,8 +878,11 @@ button { font-family: inherit; }
   margin-right: 0.5rem;
 }
 #weather-banner-sub { display: block; margin-top: 0.2rem; font-size: 0.95rem; font-weight: 500; }
-.weather-adj-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; }
-.weather-adj-name { font-weight: bold; width: 30%; }
-.weather-adj-controls { display: flex; gap: 0.5rem; align-items: center; }
-.weather-adj-controls input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 0.25rem; font-size: 1rem; }
+.weather-adj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0.75rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; }
+.weather-adj-name { font-weight: bold; min-width: 5rem; }
+.weather-adj-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.weather-adj-stat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; }
+.weather-adj-have strong { font-variant-numeric: tabular-nums; }
+.weather-adj-remain { color: #666; min-width: 3.2rem; font-variant-numeric: tabular-nums; }
+.weather-adj-controls input { width: 56px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 0.25rem; font-size: 1rem; }
 
