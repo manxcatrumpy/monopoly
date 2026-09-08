@@ -863,7 +863,7 @@ function updateTopbar() {
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
-        title.textContent = t('weather.report_title');
+        title.textContent = t('weather.report_heading', { weather: getWeatherLabel(ev.lockedWeather) });
         sub.textContent = t(`weather.report_${ev.lockedWeather.toLowerCase()}`);
         btnAdjust.classList.add('hidden');
       } else {

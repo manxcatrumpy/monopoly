@@ -870,7 +870,14 @@ button { font-family: inherit; }
 .weather-disaster { background-color: #4a5c6a; color: #f5f6f1; }
 #weather-banner { margin-top: 0; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
 #weather-banner.hidden { display: none !important; }
-#weather-banner-title { font-weight: bold; font-size: 1.1rem; margin-right: 0.5rem; }
+#weather-banner-title {
+  display: block;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  margin-right: 0.5rem;
+}
+#weather-banner-sub { display: block; margin-top: 0.2rem; font-size: 0.95rem; font-weight: 500; }
 .weather-adj-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; }
 .weather-adj-name { font-weight: bold; width: 30%; }
 .weather-adj-controls { display: flex; gap: 0.5rem; align-items: center; }

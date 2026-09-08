@@ -400,6 +400,7 @@
     "worse_weather": "更糟的天气",
     "adjust_none": "至少投入 {rate} 点福慧才能兑换 1 点文明。",
     "adjust_spent_log": "{names} 投入 {cost} 福慧，集体文明 +{civ}",
-    "adjust_already_upgraded": "天气已抢救过。再兑换只增加文明，天气不再变。"
+    "adjust_already_upgraded": "天气已抢救过。再兑换只增加文明，天气不再变。",
+    "report_heading": "【{weather}】"
   }
 }
