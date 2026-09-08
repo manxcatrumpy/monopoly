@@ -840,7 +840,7 @@ function updateTopbar() {
         btnAdjust.classList.add('hidden');
       } else if (phase === 'ADJUST' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
-        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
+        weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`, 'is-adjust');
         title.textContent = t('weather.adjust_title');
         
         if (ev.upgraded) {
@@ -859,7 +859,7 @@ function updateTopbar() {
         }
         
         btnAdjust.classList.remove('hidden');
-        btnAdjust.onclick = openWeatherAdjustModal;
+        btnAdjust.onclick = (e) => { e.stopPropagation(); openWeatherAdjustModal(); };
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
@@ -1362,6 +1362,8 @@ function nextTurn() {
     ev.civAtLock = totalCiv();
     toast(t('weather.toast_forecast'), 'grad');
     logEvent(t('weather.toast_forecast_log'), 'grad');
+  } else if (phase === 'ADJUST' && ev) {
+    // 氣候調節以視窗為公告，不另 toast
   } else if (phase === 'REPORT' && ev) {
     const label = getWeatherLabel(ev.lockedWeather);
     toast(t('weather.toast_report', { weather: label }), 'grad');
@@ -1371,6 +1373,7 @@ function nextTurn() {
   }
   save();
   renderAll();
+  if (phase === 'ADJUST' && ev) openWeatherAdjustModal();
 }
 
 // ─────────── Topbar / sidebar bindings ───────────
@@ -2339,6 +2342,7 @@ function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) return;
   const modal = $('#weather-adjust-modal');
+  if (!modal.classList.contains('hidden')) return;
   $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
 
   const container = $('#weather-adjust-players');
@@ -2433,6 +2437,10 @@ function updateWeatherAdjust() {
 }
 
 $('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-banner')?.addEventListener('click', (e) => {
+  if (e.target.closest('#btn-weather-adjust')) return;
+  if (getPhase(state.turnNum).phase === 'ADJUST') openWeatherAdjustModal();
+});
 $('#weather-adjust-cancel')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
 $('.modal-backdrop', $('#weather-adjust-modal'))?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
 $('#weather-adjust-players')?.addEventListener('click', (e) => {
