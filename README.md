@@ -1,34 +1,37 @@
 # 福慧大富翁 Dashboard
 
-iPad 主持人控制台 — 純前端 PWA，無後端、可離線、可加到主畫面。
+iPad 主持人控制台 — 純前端 PWA，無後端、可離線、可加到主畫面。規則對齊 **v1.4.0**。
 
 ## 功能
 
-- 開新局：4–6 人動態、擲十面骰決定每人初始 福/慧、最高者擲 白×黑 訂文明高度（最低 30）
-- 玩家卡：福報 / 智慧 / 文明 三種積分，±1 觸控按鈕、可直接點數字改值
-- 自動偵測 25 / 35 / 45 / 50 里程，跳 Toast 並記錄到右側日誌
-- 福 ≥ 50 且 慧 ≥ 50 自動畢業（戴帽 + 金色光暈）；若回落自動降級
-- 計時器：開始 / 暫停，總時長依人數而定（4人/100 分、5人/105 分、6人/110 分），結束前 20 分鐘變黃、時間到變紅並提醒結算
-- 共用骰：d6、d10、2d6
-- 抉擇卡（文明反思／文明扣分）：每張兩個選項、可負分；「全體文明」增減會套用到場上每位玩家的文明；生態紅利依當前集體文明自動判定分支；衝刺階段增減自動 ×2
-- 所有狀態自動存到 `localStorage`，重新整理不掉資料
+- 開新局：4–6 人、十面骰決定每人初始福/慧、最高者擲白×黑訂文明高度（白骰 × 黑骰 ＋ 40）
+- 玩家卡：福報 / 智慧 / 文明，±1 或直接改值；起始點經過／停格一鍵加分；批次調分
+- 里程提醒（達標跳 Toast、記日誌、列入待抽卡）：
+  - 領航者：全場首位福慧雙達 15 / 35 / 55，各抽 1 張
+  - 自我突破：任一玩家福慧雙達 25 / 45，各抽 1 張
+  - 單項 55：抽卡、可宣告畢業（單項 25 / 35 / 45 不抽卡）
+- 畢業：福慧皆 ≥ 55（戴帽 + 金色光暈）；回落自動降級
+- 勝利：集體文明達標，或全員畢業；綜合分 ＝ 福 ＋ 慧 ＋ 文明×2
+- 計時：4 人 100 分、5 人 105 分、6 人 110 分；結束前 20 分鐘變黃；最後 15 分鐘「無常與恩典齊發」福慧加減 ×2（文明不吃倍率）；時間到變紅並提醒結算
+- 天氣（第 6、12 輪）：N−2 預報鎖定但不公布、N−1 以 3 福慧換 1 文明調節、N 套用倍率（風調雨順 / 歲事如常 / 災害交加）
+- 抽卡：行動指令牌、共好加速卡；抉擇卡兩選一；雙方卡可同時套兩人；生態紅利依集體文明鎖分支
+- 歷史局可檢視／切回；牌組可匯入 JSON；介面繁／簡切換
+- 狀態存 `localStorage`，重新整理不掉資料
 
 ## 本機開發
 
 ```bash
-cd /Users/wuandy/Projects/monopoly
 python3 -m http.server 8080
 # 或：npx serve .
 ```
 
-Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片功能會動，但 PWA 安裝 / 離線會失效。
+Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片功能會動，但 PWA 安裝 / 離線會失效。SW 採 network-first：有網就拿新檔，離線才用 cache。
 
 ## 部署到 GitHub Pages
 
 1. 在 GitHub 建立一個 repo（例如 `fuhui-dashboard`），把這個資料夾整個 push 上去：
 
    ```bash
-   cd /Users/wuandy/Projects/monopoly
    git init && git add . && git commit -m "init"
    git branch -M main
    git remote add origin git@github.com:<you>/fuhui-dashboard.git
@@ -47,12 +50,14 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 
 | 檔案 | 用途 |
 |---|---|
-| `index.html` | 主頁面結構 |
-| `styles.css` | 全部樣式（iPad 優先） |
-| `app.js` | 遊戲狀態、玩家邏輯、骰子、計時器、Toast |
-| `sw.js` | Service Worker（cache-first） |
+| `index.html` | 主頁面結構、說明 modal |
+| `styles.css` / `components.css` | 樣式（iPad 優先） |
+| `config.js` | 天氣時程、兌換率、倍率等規則旋鈕 |
+| `app.js` | 遊戲狀態、計分、天氣、抽卡、計時、Toast |
+| `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
+| `sw.js` | Service Worker（network-first） |
 | `manifest.webmanifest` | PWA 安裝 manifest |
-| `icons/icon.svg` | App icon |
+| `icons/` | App icon（iOS 用 PNG） |
 | `.nojekyll` | 關閉 GitHub Pages 的 Jekyll 處理 |
 
 ---

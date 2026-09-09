@@ -633,7 +633,7 @@ function escapeHtml(s) {
 }
 
 // ─────────── 待處理抽卡佇列 ───────────
-// 需要主持人「去抽一張卡」的里程（領航者 / 自我突破 / 接近畢業）在觸發時，
+// 需要主持人「去抽一張卡」的里程（領航者 / 自我突破 / 單項 55）在觸發時，
 // 除了 toast + log，還在面板上留一條待辦；主持人抽完卡點「已抽」才消失，避免漏抽。
 function addPendingDraw(text, playerId) {
   state.pendingDraws.push({
@@ -696,10 +696,14 @@ function processStatChange(player, stat, oldVal, newVal) {
   const k = key(stat, m);
   if (oldVal < m && newVal >= m && !player.notified[k]) {
     player.notified[k] = true;
-    const msg = `${player.name || t('common.player')} ${STAT_LABEL(stat)} 達 ${m}　抽卡、可宣告畢業`;
+    const msg = t('messages.grad_draw', {
+      name: player.name || t('common.player'),
+      stat: STAT_LABEL(stat),
+      val: m,
+    });
     toast(msg, 'grad');
     logEvent(msg, 'grad');
-    addPendingDraw(`${player.name || t('common.player')}　${STAT_LABEL(stat)}達 ${m}　抽卡、可宣告畢業`, player.id);
+    addPendingDraw(msg, player.id);
     flashCard(player.id);
   }
   checkGraduation(player);
@@ -713,10 +717,13 @@ function checkDualMilestones(player) {
   for (const n of NAV_THRESHOLDS) {
     if (both >= n && state.navigatorClaimed[n] == null) {
       state.navigatorClaimed[n] = player.id;
-      const msg = `領航者際遇　${player.name || '玩家'} 率先 福慧雙達 ${n}　抽 1 張`;
+      const msg = t('messages.leader_encounter', {
+        name: player.name || t('common.player'),
+        val: n,
+      });
       toast(msg, 'grad');
       logEvent(msg, 'grad');
-      addPendingDraw(`領航者際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`, player.id);
+      addPendingDraw(msg, player.id);
       flashCard(player.id, 'grad');
     }
   }
@@ -726,10 +733,13 @@ function checkDualMilestones(player) {
     const k = 'self' + n;
     if (both >= n && !player.notified[k]) {
       player.notified[k] = true;
-      const msg = `自我突破際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`;
+      const msg = t('messages.breakthrough_encounter', {
+        name: player.name || t('common.player'),
+        val: n,
+      });
       toast(msg);
       logEvent(msg, 'milestone');
-      addPendingDraw(`自我突破際遇　${player.name || '玩家'} 福慧雙達 ${n}　抽 1 張`, player.id);
+      addPendingDraw(msg, player.id);
       flashCard(player.id);
     } else if (both < n && player.notified[k]) {
       player.notified[k] = false;
@@ -741,13 +751,16 @@ function checkGraduation(player) {
   const meets = player.fortune >= GRAD_THRESHOLD && player.wisdom >= GRAD_THRESHOLD;
   if (meets && !player.graduated) {
     player.graduated = true;
-    const msg = `${player.name || '玩家'} 完成福慧雙修、畢業`;
+    const msg = t('messages.graduated_msg', { name: player.name || t('common.player') });
     toast(msg, 'grad');
     logEvent(msg, 'grad');
     flashCard(player.id, 'grad');
   } else if (!meets && player.graduated) {
     player.graduated = false;
-    const msg = `${player.name || '玩家'} 資格降級（福或慧 < ${GRAD_THRESHOLD}）`;
+    const msg = t('messages.downgrade_msg', {
+      name: player.name || t('common.player'),
+      threshold: GRAD_THRESHOLD,
+    });
     toast(msg);
     logEvent(msg);
   }
