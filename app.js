@@ -946,16 +946,16 @@ function buildPlayerCard(p) {
 
   // Event delegation
   card.addEventListener('click', (e) => {
-    const t = e.target;
-    if (t.matches('.tap')) {
-      const stat = t.dataset.stat;
-      const delta = parseInt(t.dataset.delta, 10);
+    const el = e.target;
+    if (el.matches('.tap')) {
+      const stat = el.dataset.stat;
+      const delta = parseInt(el.dataset.delta, 10);
       adjustStat(p.id, stat, delta);
-    } else if (t.closest('[data-act="origin"]')) {
+    } else if (el.closest('[data-act="origin"]')) {
       openOriginModal(p.id);
-    } else if (t.closest('[data-act="adjust"]')) {
+    } else if (el.closest('[data-act="adjust"]')) {
       openAdjustModal(p.id);
-    } else if (t.matches('[data-act="remove"]')) {
+    } else if (el.matches('[data-act="remove"]')) {
       confirmModal({ title: t('confirm.remove_player_title'), message: t('confirm.remove_player_msg', {name: p.name || t('common.player')}), confirmText: t('confirm.remove'), danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
     }
@@ -2168,8 +2168,8 @@ async function applyDecksImport(data) {
   const boostCount  = data.boostDeck ? data.boostDeck.length : null;
 
   const parts = [];
-  if (actionCount !== null) parts.push(`${t('dm.action_label')} ${actionCount} ${t('dm.count_suffix').strip()}`);
-  if (boostCount  !== null) parts.push(`${t('dm.boost_label')} ${boostCount} ${t('dm.count_suffix').strip()}`);
+  if (actionCount !== null) parts.push(`${t('dm.action_label')} ${actionCount} ${t('dm.count_suffix').trim()}`);
+  if (boostCount  !== null) parts.push(`${t('dm.boost_label')} ${boostCount} ${t('dm.count_suffix').trim()}`);
   const ok = await confirmModal({ title: t('confirm.import_deck_title'), message: t('confirm.import_deck_msg', {parts: parts.join(' · ')}), confirmText: t('confirm.import') });
   if (!ok) return;
 
@@ -2549,7 +2549,7 @@ function initHighlightFeature() {
 
   function downloadHighlightCard() {
     if (typeof html2canvas === 'undefined') {
-      showToast(t('highlight.msg_html2canvas_fail'));
+      toast(t('highlight.msg_html2canvas_fail'));
       return;
     }
     
@@ -2566,11 +2566,11 @@ function initHighlightFeature() {
       link.href = canvas.toDataURL('image/jpeg', 0.9);
       link.click();
       
-      showToast(t('highlight.msg_download_success'));
+      toast(t('highlight.msg_download_success'));
       closeHighlight();
     }).catch(err => {
       console.error('html2canvas error:', err);
-      showToast(t('highlight.msg_download_fail'));
+      toast(t('highlight.msg_download_fail'));
     });
   }
 
