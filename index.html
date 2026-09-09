@@ -48,6 +48,7 @@
       <div class="meta-item">
         <label data-i18n="ui.turn_label">輪次</label>
         <div class="meta-value" id="turn-num-container">第 <strong id="turn-num">1</strong> 輪</div>
+        <div class="turn-acted" id="turn-acted" hidden></div>
       </div>
       <div class="meta-item">
         <label data-i18n="meta.civ_label">文明高度</label>
@@ -81,7 +82,6 @@
         window.i18n.setLanguage(nextLang);
       ">🌐 繁 / 簡</button>
       <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">開始</button>
-      <button id="btn-next-turn" class="btn btn-primary" title="下一輪" data-i18n="ui.btn_next_turn">下一輪</button>
       <button id="btn-next-round" class="btn" title="進入下一局" data-i18n="ui.btn_next_round">下一局</button>
       <button id="btn-history" class="btn btn-ghost" title="查看 / 復原歷史局" hidden>歷史紀錄</button>
       <button id="btn-setup" class="btn btn-ghost" title="開新局 / 設定" data-i18n="ui.btn_setup">設定</button>
@@ -448,6 +448,13 @@
             <span class="adjust-preview"></span>
           </div>
         </div>
+        <label class="adjust-as-turn" id="adjust-as-turn-wrap">
+          <input type="checkbox" id="adjust-as-turn" />
+          <span>
+            <strong data-i18n="adjust.as_turn">這是本輪行動</strong>
+            <span class="adjust-as-turn-hint" data-i18n="adjust.as_turn_hint">套用後標記為本輪已行動。改錯或轉贈請取消勾選。</span>
+          </span>
+        </label>
       </div>
       <footer class="modal-foot">
         <button class="btn" id="adjust-cancel" type="button" data-i18n="adjust.btn_cancel">取消</button>
@@ -486,6 +493,7 @@
               <li><strong data-i18n="guide.s2_li1_strong">人數：</strong><span data-i18n="guide.s2_li1">4–6 人</span></li>
               <li><strong data-i18n="guide.s2_li2_strong">時間：</strong><span data-i18n="guide.s2_li2">至多 100 分鐘</span><span class="guide-note" data-i18n="guide.s2_li2_note">（本 App 依人數調整：4 人 100 分、5 人 105 分、6 人 110 分；最後 15 分鐘進入終局倒數）</span></li>
               <li><strong data-i18n="guide.s2_li3_strong">配件：</strong><span data-i18n="guide.s2_li3">遊戲棋盤、棋子 ×6、畢業禮帽 ×6、白骰子 ×2、黑骰子 ×1、十面骰子 ×1、積分表 ×1</span></li>
+              <li><strong data-i18n="guide.s2_li4_strong">輪次：</strong><span data-i18n="guide.s2_li4">分數請用「批次調分」。若尚未標記已行動，視窗內可勾「這是本輪行動」。沒改分的回合改點「本輪已行動」。有人在忙可點「本輪跳過」（進下一輪前可取消）。全員已行動或跳過即自動進入下一輪。</span></li>
             </ul>
             <p class="guide-sub" data-i18n="guide.s2_sub">牌庫</p>
             <ul>
@@ -736,7 +744,6 @@
           <div class="weather-adjust-forecast"><span data-i18n="weather.current_forecast">當前預報：</span><strong id="weather-adjust-current-label">災害交加</strong></div>
           <div class="weather-adjust-cost" id="weather-adjust-total-cost-container">總計將投入 <span id="weather-adjust-total-cost">0</span> 福慧</div>
           <div class="weather-adjust-gain" id="weather-adjust-civ-gain-container">→ 文明增加 <span id="weather-adjust-civ-gain">0</span> 點</div>
-          <div class="weather-adjust-leftover hidden" id="weather-adjust-leftover"></div>
           <div class="weather-adjust-gap" id="weather-adjust-gap"></div>
         </div>
         <div id="weather-adjust-players"></div>

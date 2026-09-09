@@ -97,6 +97,8 @@ const defaultState = () => ({
   history: [],
   navigatorClaimed: emptyNavClaim(),
   customDecks: { action: null, boost: null },
+  actedThisTurn: {},
+  skippedThisTurn: {},
   weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
 });
 
@@ -125,6 +127,12 @@ function load() {
     // Ensure customDecks shape (older saves predate this field)
     state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
     if (state.turnNum === undefined) state.turnNum = 1;
+    if (!state.actedThisTurn || typeof state.actedThisTurn !== 'object' || Array.isArray(state.actedThisTurn)) {
+      state.actedThisTurn = {};
+    }
+    if (!state.skippedThisTurn || typeof state.skippedThisTurn !== 'object' || Array.isArray(state.skippedThisTurn)) {
+      state.skippedThisTurn = {};
+    }
     if (!state.weatherEvents) {
       state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
     }
@@ -778,6 +786,19 @@ function flashCard(playerId, cls = 'pulse') {
 function updateTopbar() {
   $('#round-num').textContent = state.roundNum;
   if ($('#turn-num-container')) $('#turn-num-container').textContent = t('ui.turn_value', { n: state.turnNum });
+  const actedEl = $('#turn-acted');
+  if (actedEl) {
+    if (!state.players.length) {
+      actedEl.hidden = true;
+    } else {
+      const acted = actedCount();
+      const skipped = skippedCount();
+      const pending = pendingPlayers().length;
+      actedEl.hidden = false;
+      actedEl.textContent = t('ui.turn_status', { acted, skipped, pending });
+      actedEl.classList.toggle('is-complete', pending === 0);
+    }
+  }
   const started = state.players.length > 0;
   // 開局前尚未骰出文明高度目標，顯示破折號而非佔位數字。
   $('#civ-goal').textContent = started ? state.civGoal : '—';
@@ -924,7 +945,12 @@ function renderPlayers() {
 
 function buildPlayerCard(p) {
   const card = document.createElement('article');
-  card.className = 'player-card' + (p.graduated ? ' graduated' : '');
+  const acted = hasActed(p.id);
+  const skipped = hasSkipped(p.id);
+  card.className = 'player-card'
+    + (p.graduated ? ' graduated' : '')
+    + (acted ? ' acted' : '')
+    + (skipped ? ' skipped' : '');
   card.dataset.playerId = p.id;
 
   const total = comprehensiveScore(p);
@@ -948,6 +974,10 @@ function buildPlayerCard(p) {
     <div class="pc-actions">
       <button class="pc-origin-open" data-act="origin" title="${t('ui.origin_title')}">${t('ui.btn_origin')}</button>
       <button class="pc-adjust" data-act="adjust" title="${t('ui.adjust_title')}">${t('ui.btn_adjust')}</button>
+      <div class="pc-turn-flags">
+        <button class="pc-acted" data-act="acted" aria-pressed="${acted ? 'true' : 'false'}" title="${t('ui.acted_title')}">${acted ? t('ui.btn_acted_done') : t('ui.btn_acted')}</button>
+        <button class="pc-skip" data-act="skip" aria-pressed="${skipped ? 'true' : 'false'}" title="${t('ui.skip_title')}">${skipped ? t('ui.btn_skip_done') : t('ui.btn_skip')}</button>
+      </div>
     </div>
 
     <footer class="pc-foot">
@@ -959,14 +989,14 @@ function buildPlayerCard(p) {
   // Event delegation
   card.addEventListener('click', (e) => {
     const el = e.target;
-    if (el.matches('.tap')) {
-      const stat = el.dataset.stat;
-      const delta = parseInt(el.dataset.delta, 10);
-      adjustStat(p.id, stat, delta);
-    } else if (el.closest('[data-act="origin"]')) {
+    if (el.closest('[data-act="origin"]')) {
       openOriginModal(p.id);
     } else if (el.closest('[data-act="adjust"]')) {
       openAdjustModal(p.id);
+    } else if (el.closest('[data-act="acted"]')) {
+      toggleActed(p.id);
+    } else if (el.closest('[data-act="skip"]')) {
+      toggleSkipped(p.id);
     } else if (el.matches('[data-act="remove"]')) {
       confirmModal({ title: t('confirm.remove_player_title'), message: t('confirm.remove_player_msg', {name: p.name || t('common.player')}), confirmText: t('confirm.remove'), danger: true })
         .then((ok) => { if (ok) removePlayer(p.id); });
@@ -978,16 +1008,6 @@ function buildPlayerCard(p) {
     p.name = nameInput.value.trim();
     save();
     renderLog();
-  });
-
-  STATS.forEach(stat => {
-    const numEl = $(`.stat-${stat} .stat-num`, card);
-    numEl.addEventListener('focus', () => numEl.select());
-    numEl.addEventListener('change', () => {
-      const v = parseInt(numEl.value, 10);
-      if (Number.isFinite(v)) setStat(p.id, stat, v);
-      else numEl.value = String(p[stat]);
-    });
   });
 
   return card;
@@ -1014,20 +1034,13 @@ function statRow(p, stat) {
         <div class="stat-bar-fill" style="width:${pct}%"></div>
         ${marks}
       </div>
-      <button class="tap tap-minus" data-stat="${stat}" data-delta="-1" aria-label="減少">−</button>
-      <input class="stat-num" type="number" inputmode="numeric" value="${v}" />
-      <button class="tap tap-plus" data-stat="${stat}" data-delta="1" aria-label="增加">＋</button>
+      <span class="stat-num">${v}</span>
     </div>
   `;
 }
 
 // ─────────── Stat mutations ───────────
 function getPlayer(id) { return state.players.find(p => p.id === id); }
-
-function adjustStat(playerId, stat, delta) {
-  const p = getPlayer(playerId); if (!p) return;
-  setStat(playerId, stat, (p[stat] || 0) + delta);
-}
 
 // ─────────── 批次調分 ───────────
 // 一次設定 福/慧/文明 的增減量，送出後套用；衝刺階段三項自動 ×2。
@@ -1059,15 +1072,28 @@ function renderAdjustPreview() {
     }
   });
 }
+function syncAdjustAsTurn(playerId) {
+  const wrap = $('#adjust-as-turn-wrap');
+  const box = $('#adjust-as-turn');
+  if (!wrap || !box) return;
+  if (hasActed(playerId)) {
+    wrap.hidden = true;
+    box.checked = false;
+  } else {
+    wrap.hidden = false;
+    box.checked = true;
+  }
+}
 function openAdjustModal(id) {
   const p = getPlayer(id); if (!p) return;
   adjustTargetId = id;
-  $('#adjust-sub').textContent = p.name || '玩家';
+  $('#adjust-sub').textContent = p.name || t('common.player');
   STATS.forEach(stat => {
     const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
     if (inp) inp.value = '0';
   });
   $('#adjust-sprint').classList.toggle('hidden', !sprintActive());
+  syncAdjustAsTurn(id);
   renderAdjustPreview();
   $('#adjust-modal').classList.remove('hidden');
 }
@@ -1075,20 +1101,25 @@ function closeAdjustModal() {
   $('#adjust-modal').classList.add('hidden');
   adjustTargetId = null;
 }
-function applyAdjust() {
+async function applyAdjust() {
   const p = getPlayer(adjustTargetId); if (!p) { closeAdjustModal(); return; }
-  const name = p.name || '玩家';
+  const pid = p.id;
+  const name = p.name || t('common.player');
   const mult = scoreMultiplier();
   const scaled = scaleReward(adjustInputs(), mult);      // 衝刺階段三項 ×2
   const hasChange = STATS.some(stat => scaled[stat]);
   if (!hasChange) { closeAdjustModal(); return; }
+  const alreadyResolved = isResolved(pid);
+  const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
-  STATS.forEach(stat => { if (scaled[stat]) setStat(p.id, stat, base[stat] + scaled[stat]); });
+  STATS.forEach(stat => { if (scaled[stat]) setStat(pid, stat, base[stat] + scaled[stat]); });
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
+  if (markTurn) markActed(pid);
+  if (alreadyResolved) await maybeOfferSkipLeftover(pid);
 }
 
 // 起始點 · 回歸初心 快捷加分（基本表）。停格＝經過兩倍（福/慧）；畢業才加文明（自動判斷）。
@@ -1102,8 +1133,9 @@ function originReward(p, stop) {
     civ:     (stop ? 1 : 0) + (graduated ? 1 : 0),
   };
 }
-function scoreOrigin(playerId, stop) {
+async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
+  const alreadyResolved = isResolved(playerId);
   const mult = scoreMultiplier();
   const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
@@ -1114,6 +1146,7 @@ function scoreOrigin(playerId, stop) {
     : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
+  if (alreadyResolved) await maybeOfferSkipLeftover(playerId);
 }
 
 // 起始點加分 modal：選 經過／停格，衝刺階段顯示 ×2 提示與加倍後的獎勵。
@@ -1166,7 +1199,7 @@ function updatePlayerCard(p) {
     const max = stat === 'civ' ? Math.max(20, state.civGoal) : 60;
     const pct = Math.min(100, (v / max) * 100);
     const numEl = row.querySelector('.stat-num');
-    if (document.activeElement !== numEl) numEl.value = v;
+    if (numEl) numEl.textContent = v;
     row.querySelector('.stat-bar-fill').style.width = pct + '%';
     row.querySelectorAll('.stat-mark').forEach(mark => {
       mark.classList.toggle('reached', v >= +mark.dataset.mark);
@@ -1176,11 +1209,18 @@ function updatePlayerCard(p) {
   card.querySelector('.pc-status').textContent =
     p.graduated ? t('ui.graduated_status') : statusHint(p);
 
+  applyTurnStatusUI(card, p.id);
 }
 
 function removePlayer(id) {
   state.players = state.players.filter(p => p.id !== id);
+  delete actedSet()[id];
+  delete skippedSet()[id];
   save();
+  if (allPlayersResolved()) {
+    nextTurn();
+    return;
+  }
   renderPlayers();
   updateTopbar();
 }
@@ -1356,6 +1396,9 @@ async function applySetup() {
   });
   state.log = [];
   state.pendingDraws = [];
+  state.actedThisTurn = {};
+  state.skippedThisTurn = {};
+  resetSkipLeftoverPrompt();
   logEvent(isNext
     ? t('messages.round_started_log', {round: state.roundNum, goal: state.civGoal})
     : t('messages.round_restored_log', {round: state.roundNum, goal: state.civGoal}), 'grad');
@@ -1365,7 +1408,115 @@ async function applySetup() {
   if (isNext) toast(t('messages.round_started', {round: state.roundNum}));
 }
 
+function flagMap(key) {
+  if (!state[key] || typeof state[key] !== 'object' || Array.isArray(state[key])) {
+    state[key] = {};
+  }
+  return state[key];
+}
+function actedSet() { return flagMap('actedThisTurn'); }
+function skippedSet() { return flagMap('skippedThisTurn'); }
+function hasActed(id) { return !!actedSet()[id]; }
+function hasSkipped(id) { return !!skippedSet()[id]; }
+function isResolved(id) { return hasActed(id) || hasSkipped(id); }
+function actedCount() { return state.players.filter(p => hasActed(p.id)).length; }
+function skippedCount() { return state.players.filter(p => hasSkipped(p.id)).length; }
+function pendingPlayers() { return state.players.filter(p => !isResolved(p.id)); }
+function allPlayersResolved() {
+  return state.players.length > 0 && state.players.every(p => isResolved(p.id));
+}
+function sameIdSet(a, b) {
+  if (!b || a.length !== b.length) return false;
+  const set = new Set(b);
+  return a.every(id => set.has(id));
+}
+let skipLeftoverAskedIds = [];
+function resetSkipLeftoverPrompt() {
+  skipLeftoverAskedIds = [];
+}
+async function maybeOfferSkipLeftover(fromResolvedId) {
+  if (!fromResolvedId || !isResolved(fromResolvedId)) return;
+  const leftover = pendingPlayers();
+  if (!leftover.length) return;
+  const leftoverIds = leftover.map(p => p.id);
+  if (sameIdSet(leftoverIds, skipLeftoverAskedIds)) return;
+  const names = leftover.map(p => p.name || t('common.player')).join('、');
+  const ok = await confirmModal({
+    title: t('confirm.skip_leftover_title'),
+    message: t('confirm.skip_leftover_msg', { names, n: leftover.length }),
+    confirmText: t('confirm.skip_leftover_btn'),
+    cancelText: t('confirm.skip_leftover_wait'),
+  });
+  if (ok) {
+    leftover.forEach(p => {
+      delete actedSet()[p.id];
+      skippedSet()[p.id] = true;
+    });
+    nextTurn();
+    return;
+  }
+  skipLeftoverAskedIds = leftoverIds;
+}
+function applyTurnStatusUI(card, playerId) {
+  const acted = hasActed(playerId);
+  const skipped = hasSkipped(playerId);
+  card.classList.toggle('acted', acted);
+  card.classList.toggle('skipped', skipped);
+  const actedBtn = card.querySelector('[data-act="acted"]');
+  if (actedBtn) {
+    actedBtn.setAttribute('aria-pressed', acted ? 'true' : 'false');
+    actedBtn.textContent = acted ? t('ui.btn_acted_done') : t('ui.btn_acted');
+  }
+  const skipBtn = card.querySelector('[data-act="skip"]');
+  if (skipBtn) {
+    skipBtn.setAttribute('aria-pressed', skipped ? 'true' : 'false');
+    skipBtn.textContent = skipped ? t('ui.btn_skip_done') : t('ui.btn_skip');
+  }
+}
+function refreshTurnFlags(playerId) {
+  save();
+  if (allPlayersResolved()) {
+    nextTurn();
+    return;
+  }
+  const card = document.querySelector(`[data-player-id="${playerId}"]`);
+  if (card) applyTurnStatusUI(card, playerId);
+  updateTopbar();
+}
+function markActed(playerId) {
+  if (!getPlayer(playerId) || hasActed(playerId)) return;
+  delete skippedSet()[playerId];
+  actedSet()[playerId] = true;
+  refreshTurnFlags(playerId);
+}
+function markSkipped(playerId) {
+  if (!getPlayer(playerId) || hasSkipped(playerId)) return;
+  delete actedSet()[playerId];
+  skippedSet()[playerId] = true;
+  refreshTurnFlags(playerId);
+}
+function toggleActed(playerId) {
+  if (!getPlayer(playerId)) return;
+  if (hasActed(playerId)) {
+    delete actedSet()[playerId];
+    refreshTurnFlags(playerId);
+    return;
+  }
+  markActed(playerId);
+}
+function toggleSkipped(playerId) {
+  if (!getPlayer(playerId)) return;
+  if (hasSkipped(playerId)) {
+    delete skippedSet()[playerId];
+    refreshTurnFlags(playerId);
+    return;
+  }
+  markSkipped(playerId);
+}
 function nextTurn() {
+  state.actedThisTurn = {};
+  state.skippedThisTurn = {};
+  resetSkipLeftoverPrompt();
   state.turnNum++;
   const { phase, ev } = getPhase(state.turnNum);
   
@@ -1390,8 +1541,6 @@ function nextTurn() {
 
 // ─────────── Topbar / sidebar bindings ───────────
 function bindEvents() {
-  const btnNextTurn = $('#btn-next-turn');
-  if (btnNextTurn) btnNextTurn.addEventListener('click', nextTurn);
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   $('#btn-history').addEventListener('click', openHistory);
@@ -1479,11 +1628,14 @@ function bindEvents() {
 function snapshotRound() {
   return JSON.parse(JSON.stringify({
     roundNum: state.roundNum,
+    turnNum: state.turnNum,
     civGoal: state.civGoal,
     timer: state.timer,
     players: state.players,
     log: state.log,
     navigatorClaimed: state.navigatorClaimed,
+    actedThisTurn: state.actedThisTurn,
+    skippedThisTurn: state.skippedThisTurn,
   }));
 }
 
@@ -1507,11 +1659,14 @@ async function restoreRound(idx) {
 
   // Load the chosen past round as the live game.
   state.roundNum = entry.roundNum;
+  state.turnNum = entry.turnNum || 1;
   state.civGoal = entry.civGoal;
   state.timer = entry.timer;
   state.players = entry.players;
   state.log = entry.log;
   state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
+  state.actedThisTurn = Object.assign({}, entry.actedThisTurn || {});
+  state.skippedThisTurn = Object.assign({}, entry.skippedThisTurn || {});
 
   // The vacated slot now holds the round we just left — a swap, so the round
   // count is unchanged and no round disappears.
@@ -2388,7 +2543,6 @@ function openWeatherAdjustModal() {
 
 function updateWeatherAdjust() {
   const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
-  const leftover = totalCost % rate;
   const spent = civGain * rate;
   const charged = chargeWeatherAdjust(contributions, spent);
 
@@ -2411,11 +2565,6 @@ function updateWeatherAdjust() {
 
   $('#weather-adjust-total-cost-container').innerHTML = t('weather.total_cost', { cost: `<span id="weather-adjust-total-cost">${spent}</span>` });
   $('#weather-adjust-civ-gain-container').innerHTML = t('weather.civ_gain', { civ: `<span id="weather-adjust-civ-gain">${civGain}</span>` });
-  const leftoverEl = $('#weather-adjust-leftover');
-  if (leftoverEl) {
-    leftoverEl.textContent = leftover ? t('weather.adjust_leftover', { n: leftover, spent }) : '';
-    leftoverEl.classList.toggle('hidden', !leftover);
-  }
 
   const { ev } = getPhase(state.turnNum);
   if (ev) {

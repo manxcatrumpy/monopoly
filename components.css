@@ -531,7 +531,7 @@
   .civ-progress { padding: 14px 16px 0; max-width: none; }
   .dashboard    { padding: 14px 16px 24px; gap: 16px; }
   .section-head { flex-wrap: wrap; gap: 8px; }
-  .stat-row { grid-template-columns: 48px 1fr 40px 56px 40px; gap: 8px; }
+  .stat-row { grid-template-columns: 48px 1fr 56px; gap: 8px; }
   .stat-row .stat-num { font-size: 22px; min-width: 56px; }
   .pc-name { font-size: 17px; }
   .player-card { padding: 20px 18px 14px; }
@@ -561,8 +561,7 @@
   .actions .btn { padding: 7px 11px; font-size: 11px; min-height: 36px; }
   .meta-value { font-size: 16px; }
   .meta-item label { font-size: 8.5px; }
-  .stat-row { grid-template-columns: 44px 1fr 36px 50px 36px; gap: 6px; }
-  .tap { width: 36px; height: 36px; font-size: 18px; }
+  .stat-row { grid-template-columns: 44px 1fr 50px; gap: 6px; }
   .stat-row .stat-num { font-size: 20px; min-width: 50px; }
   .pc-name { font-size: 16px; }
   .player-card { padding: 18px 15px 12px; }
