@@ -13,7 +13,11 @@ export default [
         // Custom globals defined in the project
         $: 'readonly',
         $$: 'readonly',
-        t: 'readonly'
+        t: 'readonly',
+        APP_SEMVER: 'readonly',
+        APP_BUILD: 'readonly',
+        APP_CACHE_SUFFIX: 'readonly',
+        importScripts: 'readonly'
       }
     },
     rules: {
@@ -24,5 +28,9 @@ export default [
       'no-empty': ['error', { 'allowEmptyCatch': true }],
       'no-irregular-whitespace': ['error', { 'skipTemplates': true, 'skipStrings': true, 'skipComments': true }]
     }
+  },
+  {
+    files: ['version.js'],
+    rules: { 'no-unused-vars': 'off' }
   }
 ];

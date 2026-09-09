@@ -1,10 +1,12 @@
-const CACHE = 'fuhui-dashboard-v56';
+importScripts('./version.js');
+const CACHE = 'fuhui-dashboard-v' + APP_BUILD + APP_CACHE_SUFFIX;
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './components.css',
   './config.js',
+  './version.js',
   './app.js',
   './i18n.js',
   './locales/zh-tw.json',

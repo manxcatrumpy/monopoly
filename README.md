@@ -53,6 +53,7 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `index.html` | 主頁面結構、說明 modal |
 | `styles.css` / `components.css` | 樣式（iPad 優先） |
 | `config.js` | 天氣時程、兌換率、倍率等規則旋鈕 |
+| `version.js` | 版號單一來源（畫面 + SW cache） |
 | `app.js` | 遊戲狀態、計分、天氣、抽卡、計時、Toast |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |

@@ -79,9 +79,8 @@ function emptyNavClaim() {
   return NAV_THRESHOLDS.reduce((o, n) => (o[n] = null, o), {});
 }
 
-// App version — single source of truth. Keep the trailing build number in sync
-// when you prepare to ship new features or bug fixes.
-const APP_VERSION = '1.4.0 (build 56)';
+// Display string from version.js (APP_SEMVER / APP_BUILD).
+const APP_VERSION = APP_SEMVER + ' (build ' + APP_BUILD + ')';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
