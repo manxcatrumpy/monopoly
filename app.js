@@ -1135,7 +1135,6 @@ function originReward(p, stop) {
 }
 async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
-  const alreadyActed = hasActed(playerId);
   const mult = scoreMultiplier();
   const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
@@ -1146,8 +1145,14 @@ async function scoreOrigin(playerId, stop) {
     : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  markActed(playerId);
-  if (alreadyActed) await maybeOfferSkipLeftover(playerId);
+  await markCardActor(playerId);
+}
+
+async function markCardActor(actorId) {
+  if (!getPlayer(actorId)) return;
+  const alreadyActed = hasActed(actorId);
+  markActed(actorId);
+  if (alreadyActed) await maybeOfferSkipLeftover(actorId);
 }
 
 // 起始點加分 modal：選 經過／停格，衝刺階段顯示 ×2 提示與加倍後的獎勵。
@@ -2100,7 +2105,7 @@ function renderChoiceCard(c) {
 
 // 套用抉擇：`each`（含個人文明 each.civ）給每位收受者；`civAll` 套用到場上所有玩家的文明。
 // 負分安全（setStat 夾 0）。
-function applyChoiceCard(playerIds, card, optIdx) {
+async function applyChoiceCard(playerIds, card, optIdx) {
   const opt = (card.options || [])[optIdx];
   if (!opt) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
@@ -2124,6 +2129,7 @@ function applyChoiceCard(playerIds, card, optIdx) {
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
   closeCard();
+  await markCardActor(ids[0]);
 }
 
 // ─────────── Card catalog (read-only browsing) ───────────
@@ -2388,7 +2394,7 @@ function catalogBoostCardHtml(c) {
 
 // Apply a card's reward to one player, or — for 「雙方」boost cards — to several
 // at once (each recipient gets the full per-player reward).
-function applyCardReward(playerIds, card) {
+async function applyCardReward(playerIds, card) {
   if (!card) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
   const mult = scoreMultiplier();
@@ -2414,6 +2420,7 @@ function applyCardReward(playerIds, card) {
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
+  await markCardActor(ids[0]);
 }
 
 // ─────────── Render all ───────────
