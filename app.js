@@ -1443,7 +1443,7 @@ function resetSkipLeftoverPrompt() {
 async function maybeOfferSkipLeftover(fromResolvedId) {
   if (!fromResolvedId || !isResolved(fromResolvedId)) return;
   const leftover = pendingPlayers();
-  if (!leftover.length) return;
+  if (leftover.length !== 1) return;
   const leftoverIds = leftover.map(p => p.id);
   if (sameIdSet(leftoverIds, skipLeftoverAskedIds)) return;
   const names = leftover.map(p => p.name || t('common.player')).join('、');

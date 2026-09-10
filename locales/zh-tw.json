@@ -182,7 +182,7 @@
     "remove_player_title": "移除玩家",
     "remove_player_msg": "確定要移除「{name}」？",
     "remove": "移除",
-    "skip_leftover_title": "本輪還有人未走",
+    "skip_leftover_title": "本輪還有一位未走",
     "skip_leftover_msg": "本輪只剩 {names} 未走。要跳過並進入下一輪嗎？",
     "skip_leftover_btn": "跳過並進入下一輪",
     "skip_leftover_wait": "繼續等他",
