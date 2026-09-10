@@ -200,7 +200,7 @@
     "title": "Origin Bonus",
     "sub": "Player",
     "sprint": "Sprint - Auto ×2",
-    "hint": "Apply Fortune, Wisdom, Civ bonuses when passing/stopping at Origin.",
+    "hint": "Apply Fortune, Wisdom, Civ bonuses when passing/stopping at Origin, and mark this turn as acted.",
     "pass_title": "Pass Origin",
     "stop_title": "Stop at Origin",
     "btn_cancel": "Cancel"
@@ -305,7 +305,7 @@
     "s10_title": "Origin scoring",
     "s10_li1": "Pass origin: Fortune +1, Wisdom +1.",
     "s10_li2": "Stop on origin: Fortune +2, Wisdom +2, Civ +1.",
-    "s10_li3": "Graduates get extra Civ +1. Fortune/Wisdom auto-double during the sprint."
+    "s10_li3": "Graduates get extra Civ +1. Fortune/Wisdom auto-double during the sprint. Applying also marks them as acted this turn."
   },
   "draw_mile": {
     "title": "Milestone Draws",

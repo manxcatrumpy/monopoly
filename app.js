@@ -1135,7 +1135,7 @@ function originReward(p, stop) {
 }
 async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
-  const alreadyResolved = isResolved(playerId);
+  const alreadyActed = hasActed(playerId);
   const mult = scoreMultiplier();
   const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
@@ -1146,7 +1146,8 @@ async function scoreOrigin(playerId, stop) {
     : t('messages.origin_pass_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  if (alreadyResolved) await maybeOfferSkipLeftover(playerId);
+  markActed(playerId);
+  if (alreadyActed) await maybeOfferSkipLeftover(playerId);
 }
 
 // 起始點加分 modal：選 經過／停格，衝刺階段顯示 ×2 提示與加倍後的獎勵。
