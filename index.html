@@ -380,6 +380,19 @@
     </div>
   </div>
 
+  <!-- 社會福利救濟全場彈窗（§7）：確認啟動或已執行後共見 -->
+  <div id="relief-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="relief-title" aria-describedby="relief-message">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel confirm-panel relief-panel">
+      <h2 id="relief-title" class="confirm-title" data-i18n="relief.title">【社會福利救濟啟動】</h2>
+      <p id="relief-message" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="btn hidden" id="relief-later" type="button" data-i18n="relief.offer_later">取消</button>
+        <button class="btn btn-primary" id="relief-ok" type="button" data-i18n="relief.offer_start">啟動救濟</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 起始點加分 modal -->
   <div id="origin-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="origin-title">
     <div class="modal-backdrop"></div>
@@ -616,6 +629,22 @@
               <li data-i18n="guide.s10_li1">經過起始點：福報 +1、智慧 +1。</li>
               <li data-i18n="guide.s10_li2">停在起始點：福報 +2、智慧 +2、文明 +1。</li>
               <li data-i18n="guide.s10_li3">已畢業者額外文明 +1。終局倒數期間福慧自動 ×2。套用後標記本輪已行動。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="guide-sec">
+          <summary data-i18n="guide.s11_title">社會福利救濟</summary>
+          <div class="guide-sec-body">
+            <p data-i18n="guide.s11_p1">福報或智慧因運氣不好歸零時，不是遊戲結束，而是國家救濟。每人每局一次。</p>
+            <ul>
+              <li data-i18n="guide.s11_li1">前 3 輪無條件可救；第 4 輪起須集體文明低於目標的 25%。</li>
+              <li data-i18n="guide.s11_li2">抽卡套用導致「從正數扣到 0」會跳出提示，由主持人按「啟動救濟」後恢復到 3 點。</li>
+              <li data-i18n="guide.s11_li3">批次調分、轉贈不會自動救；條件符合時會跳出提示，由主持人按「啟動救濟」。氣候調節是主動換文明，歸零不救、也不出提示。</li>
+              <li data-i18n="guide.s11_li4">已經是 0 再扣同一項，不會自動救。</li>
+              <li data-i18n="guide.s11_li5">執行當下若福報與智慧都是 0，兩項都恢復到 3，仍只算一次。</li>
+              <li data-i18n="guide.s11_li6">救濟當輪不含保護。接下來兩輪幸運庇護：福慧加分 ×1.5、扣分 ×0.5（四捨五入與天氣相同）。文明不吃倍率。</li>
+              <li data-i18n="guide.s11_li7">終局倒數覆蓋庇護倍率（×2／×2）；庇護狀態保留。氣象情報輪若在庇護期間，用庇護不用天氣。</li>
             </ul>
           </div>
         </details>

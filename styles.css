@@ -633,6 +633,29 @@ button { font-family: inherit; }
 .pc-origin-open:hover { background: var(--fortune-tint); color: var(--fortune-ink); border-color: var(--fortune-soft); }
 .pc-adjust { background: var(--surface); }
 .pc-adjust:hover { background: var(--wisdom-tint); color: var(--wisdom-ink); border-color: var(--wisdom-soft); }
+.pc-shelter.hidden { display: none; }
+.pc-shelter {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--fortune-tint);
+  border-left: 3px solid var(--fortune);
+  color: var(--fortune-ink);
+}
+.pc-shelter-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.pc-shelter-rates {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
 .pc-turn-flags {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }

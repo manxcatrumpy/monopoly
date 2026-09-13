@@ -50,6 +50,7 @@
     "btn_origin": "Start Point Bonus",
     "adjust_title": "Batch adjust stats",
     "btn_adjust": "Batch Adjust",
+    "btn_relief": "Start Relief",
     "graduated_status": "Graduated, Keep Encouraging",
     "btn_remove": "Remove",
     "status_near_grad": "Near Grad",
@@ -305,7 +306,16 @@
     "s10_title": "Origin scoring",
     "s10_li1": "Pass origin: Fortune +1, Wisdom +1.",
     "s10_li2": "Stop on origin: Fortune +2, Wisdom +2, Civ +1.",
-    "s10_li3": "Graduates get extra Civ +1. Fortune/Wisdom auto-double during the sprint. Applying also marks them as acted this turn."
+    "s10_li3": "Graduates get extra Civ +1. Fortune/Wisdom auto-double during the sprint. Applying also marks them as acted this turn.",
+    "s11_title": "Social welfare relief",
+    "s11_p1": "When Fortune or Wisdom hits 0 from bad luck, the game does not end — relief kicks in. Once per player per game.",
+    "s11_li1": "Turns 1–3: always available. From turn 4: only if collective Civ is below 25% of the goal.",
+    "s11_li2": "Applying a card that drops a stat from a positive value to 0 shows a prompt; the host taps Start relief to restore it to 3.",
+    "s11_li3": "Batch adjust and gifts do not auto-trigger; if eligible, a prompt asks the host to start relief. Weather exchange is a voluntary spend — hitting 0 does not offer relief.",
+    "s11_li4": "Deducting a stat that is already 0 does not auto-trigger.",
+    "s11_li5": "If both Fortune and Wisdom are 0 when relief runs, both restore to 3, still counting as one use.",
+    "s11_li6": "The trigger turn has no shelter. The next two turns: Fortune/Wisdom gains ×1.5, losses ×0.5 (same rounding as weather). Civ is never multiplied.",
+    "s11_li7": "Endgame overrides shelter rates (×2 / ×2); shelter state is kept. A weather-report turn during shelter uses shelter, not weather."
   },
   "draw_mile": {
     "title": "Milestone Draws",
@@ -356,7 +366,8 @@
     "batch_adjust_msg": "{name} Batch Adjust: {reward}{tag}",
     "origin_pass_msg": "{name} passed Origin: {reward}{tag}",
     "origin_stop_msg": "{name} stopped at Origin: {reward}{tag}",
-    "enter_turn": "Entering turn {n}"
+    "enter_turn": "Entering turn {n}",
+    "relief_log": "{name} social welfare relief: restored {items} to {restore}. Lucky shelter: turns {from}–{to}"
   },
   "common": {
     "player": "Player"
@@ -434,5 +445,19 @@
     "report_heading": "[{weather}]",
     "adj_spend": "spend",
     "adj_remain": "left {n}"
+  },
+  "relief": {
+    "title": "[Social welfare relief]",
+    "btn_ok": "Got it",
+    "offer_later": "Cancel",
+    "offer_start": "Start relief",
+    "shelter_label": "Lucky shelter",
+    "badge": "Lucky shelter · turns {from}–{to} (now {n})",
+    "badge_rates": "+gain ×1.5  −loss ×0.5",
+    "items_both": "Fortune and Wisdom",
+    "body_one": "{name}'s {stat} has hit bottom.\nThe national safety net is on.\n\nRestore {name}'s {stat} to {restore}.\nFor the next two turns, {name} is looked after —\ngood things grow, bad things shrink.\n\nImpermanence still carries a turn of luck.",
+    "body_both": "{name}'s Fortune/Wisdom has hit bottom.\nThe national safety net is on.\n\nRestore {name}'s Fortune and Wisdom to {restore}.\nFor the next two turns, {name} is looked after —\ngood things grow, bad things shrink.\n\nImpermanence still carries a turn of luck.",
+    "adjust_shelter": "Lucky shelter — Fortune/Wisdom gains ×1.5, losses ×0.5 (Civ ignored)",
+    "adjust_weather": "This turn “{weather}” — gains ×{gain}, losses ×{loss} (Civ ignored)"
   }
 }
