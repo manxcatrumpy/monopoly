@@ -615,7 +615,7 @@ button { font-family: inherit; }
 }
 .pc-remove:hover { color: var(--danger-deep); background: #FBEEEA; }
 
-/* 卡片底部動作：起始點加分 / 批次調分（皆開啟 modal） */
+/* 卡片底部動作：起始點加分 / 加減分（皆開啟 modal） */
 .pc-actions {
   padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line);
   display: flex; flex-direction: column; gap: 8px;
@@ -705,7 +705,7 @@ button { font-family: inherit; }
 .origin-choice-btn .oc-desc { font-size: 13px; color: var(--fortune-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .origin-choice-btn.stop .oc-desc { color: var(--wisdom-ink); }
 
-/* 批次調分 modal */
+/* 加減分 modal */
 .modal-panel.adjust-panel { width: min(420px, 100%); }
 .adjust-sub { margin: 0 0 12px; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
 .adjust-sprint {

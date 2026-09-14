@@ -1273,7 +1273,7 @@ function statRow(p, stat) {
 // ─────────── Stat mutations ───────────
 function getPlayer(id) { return state.players.find(p => p.id === id); }
 
-// ─────────── 批次調分 ───────────
+// ─────────── 加減分 ───────────
 // 一次設定 福/慧/文明 的增減量，送出後套用；衝刺階段三項自動 ×2。
 let adjustTargetId = null;
 function adjustInputs() {
@@ -1827,7 +1827,7 @@ function bindEvents() {
   $('#origin-pass-btn').addEventListener('click', () => pickOrigin(false));
   $('#origin-stop-btn').addEventListener('click', () => pickOrigin(true));
 
-  // 批次調分 modal
+  // 加減分 modal
   $('#adjust-close').addEventListener('click', closeAdjustModal);
   $('#adjust-cancel').addEventListener('click', closeAdjustModal);
   $('.modal-backdrop', $('#adjust-modal')).addEventListener('click', closeAdjustModal);
