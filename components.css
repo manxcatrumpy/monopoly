@@ -94,6 +94,20 @@
 
 /* Confirm dialog — compact centered panel */
 .confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
+.relief-panel { width: min(460px, 100%); padding: 32px 30px 24px; gap: 16px; }
+.relief-panel .confirm-title {
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+}
+.relief-panel .confirm-message {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--ink);
+}
+.relief-panel .confirm-actions { justify-content: center; }
+#relief-later.hidden { display: none; }
 .confirm-title { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
 .confirm-message { margin: 0; font-size: 14px; line-height: 1.7; color: var(--ink-dim); white-space: pre-line; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
