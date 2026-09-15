@@ -195,23 +195,15 @@ function comprehensiveScore(p) {
 }
 // ─────────── Weather System ───────────
 function expectedCiv(turn, civGoal) {
-  return civGoal * turn / GAME_CONFIG.EXPECTED_ROUNDS;
+  return GameRules.expectedCiv(turn, civGoal, GAME_CONFIG.EXPECTED_ROUNDS);
 }
 
 function judgeWeather(civCurrent, turn, civGoal) {
-  const expected = expectedCiv(turn, civGoal);
-  if (civCurrent >= expected * 1.2) return 'FAVORABLE';
-  if (civCurrent <= expected * 0.8) return 'DISASTER';
-  return 'NORMAL';
+  return GameRules.judgeWeather(civCurrent, turn, civGoal, GAME_CONFIG.EXPECTED_ROUNDS);
 }
 
 function getPhase(turn) {
-  for (const ev of state.weatherEvents) {
-    if (turn === ev.targetRound - 2) return { phase: 'FORECAST', ev };
-    if (turn === ev.targetRound - 1) return { phase: 'ADJUST', ev };
-    if (turn === ev.targetRound) return { phase: 'REPORT', ev };
-  }
-  return { phase: 'NORMAL', ev: null };
+  return GameRules.getPhase(turn, state.weatherEvents);
 }
 
 function getActiveWeather() {
@@ -570,43 +562,34 @@ function scoreMultiplier(playerId) {
 }
 
 function reliefCfg() {
-  return GAME_CONFIG.RELIEF || { EARLY_TURNS: 3, RESTORE_TO: 3, SHELTER_TURNS: 2, LATE_CIV_PERCENT: 25 };
+  return GameRules.reliefCfg(GAME_CONFIG.RELIEF);
 }
 
 function reliefPhaseOk() {
-  const cfg = reliefCfg();
-  if (state.turnNum <= cfg.EARLY_TURNS) return true;
-  const goal = state.civGoal || 0;
-  if (goal <= 0) return false;
-  return totalCiv() * 100 < goal * cfg.LATE_CIV_PERCENT;
+  return GameRules.reliefPhaseOk(
+    { turnNum: state.turnNum, civGoal: state.civGoal, totalCiv: totalCiv() },
+    GAME_CONFIG.RELIEF
+  );
 }
 
 function reliefEligible(p) {
-  return !!(p && !p.reliefUsed && reliefPhaseOk());
+  return GameRules.reliefEligible(p, reliefPhaseOk());
 }
 
 function reliefNeeded(p) {
-  return reliefEligible(p) && ((p.fortune || 0) === 0 || (p.wisdom || 0) === 0);
+  return GameRules.reliefNeeded(p, reliefPhaseOk());
 }
 
 function zeroedFwStats(p) {
-  const stats = [];
-  if ((p.fortune || 0) === 0) stats.push('fortune');
-  if ((p.wisdom || 0) === 0) stats.push('wisdom');
-  return stats;
+  return GameRules.zeroedFwStats(p);
 }
 
 function playerInShelter(p) {
-  if (!p || !p.reliefUsed) return false;
-  const from = p.shelterFromTurn;
-  const to = p.shelterToTurn;
-  if (typeof from !== 'number' || typeof to !== 'number') return false;
-  const n = state.turnNum;
-  return n >= from && n <= to;
+  return GameRules.playerInShelter(p, state.turnNum);
 }
 
 function isNewlyZeroed(oldVal, newVal) {
-  return (oldVal || 0) > 0 && (newVal || 0) === 0;
+  return GameRules.isNewlyZeroed(oldVal, newVal);
 }
 
 function snapshotFw(p) {
@@ -779,16 +762,11 @@ async function maybeOfferReliefAfterZero(playerId, oldStats) {
 }
 
 function applyMult(val, stat, multObj) {
-  if (!val) return 0;
-  if (stat === 'civ' || stat === 'civAll') return val; // 文明不吃倍率
-  const rate = val >= 0 ? multObj.gain : multObj.loss;
-  return Math.round(val * rate);
+  return GameRules.applyMult(val, stat, multObj);
 }
 
-function scaleReward(base = {}, mult = { gain: 1, loss: 1 }) {
-  const out = {};
-  STATS.forEach(stat => { out[stat] = applyMult(base[stat] || 0, stat, mult); });
-  return out;
+function scaleReward(base, mult) {
+  return GameRules.scaleReward(base, mult);
 }
 // 把 reward 物件描述成 "福報 +4 · 智慧 +2"（保留正負號、略過 0）。
 function describeReward(r = {}) {
@@ -1359,12 +1337,7 @@ async function applyAdjust() {
 // 卡片加成（豐盛/覺醒）此版不處理，若玩家持有請主持人手動補。
 // 起始點加分的基礎獎勵（停格＝經過兩倍福慧；畢業才加文明）。
 function originReward(p, stop) {
-  const graduated = !!p.graduated;
-  return {
-    fortune: stop ? 2 : 1,
-    wisdom:  stop ? 2 : 1,
-    civ:     (stop ? 1 : 0) + (graduated ? 1 : 0),
-  };
+  return GameRules.originReward(p, stop);
 }
 async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
@@ -1474,13 +1447,13 @@ const setupTmp = {
 
 // 文明高度 ＝ 白骰 × 黑骰 ＋ 玩家人數 × 10（骰點鉗制在 1–6）
 function clampDie(v) {
-  const n = parseInt(v, 10);
-  if (!Number.isFinite(n)) return DIE_MIN;
-  return Math.min(DIE_MAX, Math.max(DIE_MIN, n));
+  return GameRules.clampDie(v, DIE_MIN, DIE_MAX);
 }
 function computeCivGoal(white, black, playerCount) {
   const n = playerCount || setupTmp.count || state.players.length || 4;
-  return clampDie(white) * clampDie(black) + n * CIV_PER_PLAYER;
+  return GameRules.computeCivGoal(white, black, n, {
+    dieMin: DIE_MIN, dieMax: DIE_MAX, civPerPlayer: CIV_PER_PLAYER,
+  });
 }
 // Refresh the live "白 × 黑 ＋ 人數 × 10 ＝ N" readout from the two dice inputs.
 function updateCivCalc() {
@@ -2759,14 +2732,7 @@ function readWeatherAdjustInputs() {
 }
 
 function chargeWeatherAdjust(contributions, spent) {
-  let remain = spent;
-  return contributions.map(c => {
-    const f = Math.min(c.f, remain);
-    remain -= f;
-    const w = Math.min(c.w, remain);
-    remain -= w;
-    return { id: c.id, name: c.name, f, w };
-  });
+  return GameRules.chargeWeatherAdjust(contributions, spent);
 }
 
 function openWeatherAdjustModal() {

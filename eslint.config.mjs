@@ -17,6 +17,8 @@ export default [
         APP_SEMVER: 'readonly',
         APP_BUILD: 'readonly',
         APP_CACHE_SUFFIX: 'readonly',
+        GAME_CONFIG: 'readonly',
+        GameRules: 'readonly',
         importScripts: 'readonly'
       }
     },
@@ -32,5 +34,19 @@ export default [
   {
     files: ['version.js'],
     rules: { 'no-unused-vars': 'off' }
+  },
+  {
+    files: ['js/rules.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { ...globals.browser, ...globals.node }
+    }
+  },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { ...globals.node }
+    }
   }
 ];
