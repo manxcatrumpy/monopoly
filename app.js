@@ -641,45 +641,19 @@ function showReliefOffer(opts) {
 }
 
 function showReliefPromptNow({ name, items, mode }) {
-  return new Promise((resolve) => {
-    const modal = $('#relief-modal');
-    const okBtn = $('#relief-ok');
-    const laterBtn = $('#relief-later');
-    const backdrop = modal ? $('.modal-backdrop', modal) : null;
-    if (!modal || !okBtn) { resolve(mode === 'offer' ? false : undefined); return; }
-    const title = $('#relief-title');
-    const message = $('#relief-message');
-    const isOffer = mode === 'offer';
-    if (title) title.textContent = t('relief.title');
-    if (message) message.textContent = reliefBodyText(name, items);
-    okBtn.textContent = isOffer ? t('relief.offer_start') : t('relief.btn_ok');
-    if (laterBtn) {
-      laterBtn.textContent = t('relief.offer_later');
-      laterBtn.classList.toggle('hidden', !isOffer);
-    }
-
-    const done = (value) => {
-      modal.classList.add('hidden');
-      okBtn.removeEventListener('click', onOk);
-      if (laterBtn) laterBtn.removeEventListener('click', onLater);
-      if (backdrop) backdrop.removeEventListener('click', onBackdrop);
-      document.removeEventListener('keydown', onKey);
-      resolve(value);
-    };
-    const onOk = () => done(isOffer ? true : undefined);
-    const onLater = () => done(false);
-    const onBackdrop = () => { if (isOffer) onLater(); };
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); isOffer ? onLater() : onOk(); }
-      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
-    };
-    okBtn.addEventListener('click', onOk);
-    if (laterBtn) laterBtn.addEventListener('click', onLater);
-    if (backdrop) backdrop.addEventListener('click', onBackdrop);
-    document.addEventListener('keydown', onKey);
-    modal.classList.remove('hidden');
-    okBtn.focus();
-  });
+  const isOffer = mode === 'offer';
+  return UiModal.promptDialog({
+    modalSel: '#relief-modal',
+    titleSel: '#relief-title',
+    messageSel: '#relief-message',
+    okSel: '#relief-ok',
+    cancelSel: '#relief-later',
+    title: t('relief.title'),
+    message: reliefBodyText(name, items),
+    ok: isOffer ? t('relief.offer_start') : t('relief.btn_ok'),
+    cancel: t('relief.offer_later'),
+    hideCancel: !isOffer
+  }).then(res => isOffer ? res : undefined);
 }
 
 async function executeRelief(playerId, { announce = true } = {}) {
@@ -770,40 +744,17 @@ function toast(msg, kind = '') {
 
 // In-app confirm dialog (replaces native confirm()). Returns a Promise<boolean>.
 function confirmModal({ title = t('confirm.title'), message = '', confirmText = t('confirm.btn_ok'), cancelText = t('confirm.btn_cancel'), danger = false } = {}) {
-  return new Promise((resolve) => {
-    const modal = $('#confirm-modal');
-    const okBtn = $('#confirm-ok');
-    const cancelBtn = $('#confirm-cancel');
-    const backdrop = $('.modal-backdrop', modal);
-    if (!modal) { resolve(window.confirm(message || title)); return; } // graceful fallback
-
-    $('#confirm-title').textContent = title;
-    $('#confirm-message').textContent = message;
-    okBtn.textContent = confirmText;
-    cancelBtn.textContent = cancelText;
-    okBtn.classList.toggle('btn-danger', !!danger);
-    okBtn.classList.toggle('btn-primary', !danger);
-
-    const done = (result) => {
-      modal.classList.add('hidden');
-      okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancel);
-      backdrop.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
-      resolve(result);
-    };
-    const onOk = () => done(true);
-    const onCancel = () => done(false);
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
-    };
-    okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancel);
-    backdrop.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
-    modal.classList.remove('hidden');
-    okBtn.focus();
+  return UiModal.promptDialog({
+    modalSel: '#confirm-modal',
+    titleSel: '#confirm-title',
+    messageSel: '#confirm-message',
+    okSel: '#confirm-ok',
+    cancelSel: '#confirm-cancel',
+    title,
+    message,
+    ok: confirmText,
+    cancel: cancelText,
+    danger
   });
 }
 function logEvent(text, kind = '') {
@@ -860,7 +811,7 @@ function renderDrawModal() {
 function openDrawModal() {
   if (!(state.pendingDraws || []).length) return;
   renderDrawModal();
-  $('#draw-modal').classList.remove('hidden');
+  UiModal.openModal('#draw-modal');
 }
 function renderPendingDraws() {
   const ul = $('#pending-draws');
@@ -1293,23 +1244,20 @@ function openAdjustModal(id) {
   syncMultiplierBanner($('#adjust-sprint'), id, 'adjust.sprint');
   syncAdjustAsTurn(id);
   renderAdjustPreview();
-  $('#adjust-modal').classList.remove('hidden');
+  UiModal.openModal('#adjust-modal');
 }
-function closeAdjustModal() {
-  $('#adjust-modal').classList.add('hidden');
-  adjustTargetId = null;
-}
+
 async function applyAdjust() {
-  const p = getPlayer(adjustTargetId); if (!p) { closeAdjustModal(); return; }
+  const p = getPlayer(adjustTargetId); if (!p) { UiModal.closeModal('#adjust-modal'); return; }
   const pid = p.id;
   const name = p.name || t('common.player');
   const mult = scoreMultiplier(pid);
   const scaled = scaleReward(adjustInputs(), mult);
   const hasChange = STATS.some(stat => scaled[stat]);
-  if (!hasChange) { closeAdjustModal(); return; }
+  if (!hasChange) { UiModal.closeModal('#adjust-modal'); return; }
   const alreadyResolved = isResolved(pid);
   const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
-  closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
+  UiModal.closeModal('#adjust-modal');   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const old = snapshotFw(p);
   applyStatDeltas(pid, scaled);
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
@@ -1358,15 +1306,12 @@ function openOriginModal(id) {
   syncMultiplierBanner($('#origin-sprint'), id, 'origin.sprint');
   $('#origin-pass-desc').textContent = describeReward(scaleReward(originReward(p, false), mult));
   $('#origin-stop-desc').textContent = describeReward(scaleReward(originReward(p, true), mult));
-  $('#origin-modal').classList.remove('hidden');
+  UiModal.openModal('#origin-modal');
 }
-function closeOriginModal() {
-  $('#origin-modal').classList.add('hidden');
-  originTargetId = null;
-}
+
 function pickOrigin(stop) {
   const id = originTargetId;
-  closeOriginModal();      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
+  UiModal.closeModal('#origin-modal');      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   if (id != null) scoreOrigin(id, stop);
 }
 let statBatch = null;
@@ -1518,9 +1463,9 @@ function openSetup(opts = {}) {
   renderSetup();
   if (!d10Built) buildD10();
   resetDiceStage();
-  $('#setup-modal').classList.remove('hidden');
+  UiModal.openModal('#setup-modal');
 }
-function closeSetup() { $('#setup-modal').classList.add('hidden'); }
+
 
 function setSetupCount(n) {
   setupTmp.count = n;
@@ -1646,7 +1591,7 @@ async function applySetup() {
     ? t('messages.round_started_log', {round: state.roundNum, goal: state.civGoal})
     : t('messages.round_restored_log', {round: state.roundNum, goal: state.civGoal}), 'grad');
   save();
-  closeSetup();
+  UiModal.closeModal('#setup-modal');
   renderAll();
   if (isNext) toast(t('messages.round_started', {round: state.roundNum}));
 }
@@ -1784,23 +1729,28 @@ function nextTurn() {
 
 // ─────────── Topbar / sidebar bindings ───────────
 function bindEvents() {
+  $('#btn-toggle-lang').addEventListener('click', () => {
+    const langs = ['zh-tw', 'zh-cn'];
+    const nextLang = langs[(langs.indexOf(window.i18n.currentLang) + 1) % langs.length];
+    window.i18n.setLanguage(nextLang);
+  });
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   $('#btn-history').addEventListener('click', openHistory);
-  $('#history-close').addEventListener('click', closeHistory);
+  UiModal.bindModal('#history-modal', { close: ['#history-close'] });
   $('#btn-draw-action').addEventListener('click', () => openCardDraw('action'));
   $('#btn-draw-boost').addEventListener('click', () => openCardDraw('boost'));
   $('#btn-quick-action').addEventListener('click', () => openCardDraw('action'));
   $('#btn-quick-boost').addEventListener('click', () => openCardDraw('boost'));
   $('#btn-browse-cards').addEventListener('click', () => openCatalog('action'));
-  $('#catalog-close').addEventListener('click', closeCatalog);
+  UiModal.bindModal('#catalog-modal', { close: ['#catalog-close'] });
   $$('.catalog-tab').forEach(b => {
     b.addEventListener('click', () => renderCatalog(b.dataset.tab));
   });
 
   // Deck manager
   $('#btn-deck-manager').addEventListener('click', openDeckManager);
-  $('#dm-close').addEventListener('click', closeDeckManager);
+  UiModal.bindModal('#deck-manager-modal', { close: ['#dm-close'] });
   $('#dm-export').addEventListener('click', exportDecks);
   $('#dm-file-btn').addEventListener('click', () => $('#dm-file').click());
   $('#dm-file').addEventListener('change', (e) => {
@@ -1810,25 +1760,20 @@ function bindEvents() {
   });
   $('#dm-paste-apply').addEventListener('click', importPastedJSON);
   $('#dm-reset').addEventListener('click', resetDecksToDefault);
-  $('#card-close').addEventListener('click', closeCard);
+  UiModal.bindModal('#card-modal', { close: ['#card-close'] });
   $('#btn-setup').addEventListener('click', openSetup);
-  $('#setup-close').addEventListener('click', closeSetup);
-  $('#setup-cancel').addEventListener('click', closeSetup);
+  UiModal.bindModal('#setup-modal', { close: ['#setup-close', '#setup-cancel'], backdrop: false });
   $('#setup-start').addEventListener('click', applySetup);
   $('#setup-civ-white').addEventListener('input', updateCivCalc);
   $('#setup-civ-black').addEventListener('input', updateCivCalc);
 
   // 起始點加分 modal
-  $('#origin-close').addEventListener('click', closeOriginModal);
-  $('#origin-cancel').addEventListener('click', closeOriginModal);
-  $('.modal-backdrop', $('#origin-modal')).addEventListener('click', closeOriginModal);
+  UiModal.bindModal('#origin-modal', { close: ['#origin-close', '#origin-cancel'] });
   $('#origin-pass-btn').addEventListener('click', () => pickOrigin(false));
   $('#origin-stop-btn').addEventListener('click', () => pickOrigin(true));
 
   // 加減分 modal
-  $('#adjust-close').addEventListener('click', closeAdjustModal);
-  $('#adjust-cancel').addEventListener('click', closeAdjustModal);
-  $('.modal-backdrop', $('#adjust-modal')).addEventListener('click', closeAdjustModal);
+  UiModal.bindModal('#adjust-modal', { close: ['#adjust-close', '#adjust-cancel'] });
   $('#adjust-apply').addEventListener('click', applyAdjust);
   $('#adjust-rows').addEventListener('click', (e) => {
     const b = e.target.closest('.adjust-step'); if (!b) return;
@@ -1841,21 +1786,84 @@ function bindEvents() {
   });
 
   // 遊戲說明 modal
-  $('#btn-guide').addEventListener('click', () => $('#guide-modal').classList.remove('hidden'));
-  $('#guide-close').addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
-  $('.modal-backdrop', $('#guide-modal')).addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
+  $('#btn-guide').addEventListener('click', () => UiModal.openModal('#guide-modal'));
+  UiModal.bindModal('#guide-modal', { close: ['#guide-close'] });
 
   // 抽卡里程 modal：稍後再抽（保留面板待辦）/ 全部已抽（清空）
-  $('#draw-later').addEventListener('click', () => $('#draw-modal').classList.add('hidden'));
+  UiModal.bindModal('#draw-modal', { close: ['#draw-later'], backdrop: false });
   $('#draw-all-done').addEventListener('click', () => {
     state.pendingDraws = [];
     save();
     renderPendingDraws();
-    $('#draw-modal').classList.add('hidden');
+    UiModal.closeModal('#draw-modal');
   });
 
   $$('.player-count-pick .chip').forEach(b =>
     b.addEventListener('click', () => setSetupCount(+b.dataset.count)));
+
+  
+  $('#weather-banner')?.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-weather-adjust')) return;
+    if (getPhase(state.turnNum).phase === 'ADJUST') openWeatherAdjustModal();
+  });
+  $('#weather-adjust-players')?.addEventListener('click', (e) => {
+    const b = e.target.closest('.adjust-step'); if (!b) return;
+    const inp = b.closest('.adjust-row').querySelector('.adjust-input');
+    if (!inp) return;
+    const max = parseInt(inp.max, 10);
+    const next = (parseInt(inp.value, 10) || 0) + parseInt(b.dataset.step, 10);
+    inp.value = String(Math.max(0, Number.isFinite(max) ? Math.min(max, next) : next));
+    updateWeatherAdjust();
+  });
+  $('#weather-adjust-players')?.addEventListener('input', (e) => {
+    if (e.target.classList.contains('adjust-input')) updateWeatherAdjust();
+  });
+  $('#weather-adjust-submit')?.addEventListener('click', async () => {
+    const { phase, ev } = getPhase(state.turnNum);
+    if (phase !== 'ADJUST' || !ev) {
+      UiModal.closeModal('#weather-adjust-modal');
+      return;
+    }
+
+    const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+    if (civGain <= 0) {
+      toast(t('weather.adjust_none', { rate }));
+      return;
+    }
+
+    const spent = civGain * rate;
+    const charged = chargeWeatherAdjust(contributions, spent);
+    withStatBatch(() => {
+      charged.forEach(c => {
+        if (!getPlayer(c.id)) return;
+        applyStatDeltas(c.id, { fortune: c.f ? -c.f : 0, wisdom: c.w ? -c.w : 0 });
+      });
+      addCollectiveCiv(civGain);
+    });
+
+    const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
+    logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
+
+    const upgrade = GameRules.tryUpgradeWeather(
+      ev, totalCiv(), state.civGoal, GAME_CONFIG.EXPECTED_ROUNDS, weatherRatioOpts()
+    );
+    if (GameRules.applyWeatherUpgrade(ev, upgrade)) {
+      const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
+      toast(msg, 'grad');
+      logEvent(msg, 'grad');
+    } else if (ev.upgraded) {
+      toast(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }));
+    } else {
+      const msg = t('weather.adjust_fail', { cost: spent });
+      toast(msg);
+      logEvent(msg);
+    }
+
+    UiModal.closeModal('#weather-adjust-modal');
+    save();
+    renderAll();
+  });
+
 
   $('#btn-reset-game').addEventListener('click', async () => {
     const ok = await confirmModal({ title: t('confirm.reset_game_title'), message: t('confirm.reset_game_msg'), confirmText: t('confirm.reset'), danger: true });
@@ -1893,7 +1901,7 @@ async function restoreRound(idx) {
   syncUiFlags();
   save();
   renderAll();
-  closeHistory();
+  UiModal.closeModal('#history-modal');
   toast(t('messages.round_restored', {round: state.roundNum, oldRound: leaving.roundNum}), 'grad');
 }
 
@@ -1912,11 +1920,9 @@ function refreshHistoryButton() {
 function openHistory() {
   renderHistoryList();
   backToHistoryList(); // always open on the list, not a stale detail view
-  $('#history-modal').classList.remove('hidden');
+  UiModal.openModal('#history-modal');
 }
-function closeHistory() {
-  $('#history-modal').classList.add('hidden');
-}
+
 
 function renderHistoryList() {
   const ul = $('#history-list');
@@ -2050,7 +2056,7 @@ function openCardDraw(deckKey) {
   currentChoiceOpt = null;
   $('#card-title').textContent = deckKey === 'action' ? t('card.title_action') : t('card.title_boost');
   renderCard();
-  $('#card-modal').classList.remove('hidden');
+  UiModal.openModal('#card-modal');
 }
 function closeCard() {
   $('#card-modal').classList.add('hidden');
@@ -2388,11 +2394,9 @@ function openCatalog(deckKey = 'action') {
     b.textContent = `${DECKS[k].title} · ${n}`;
   });
   renderCatalog(deckKey);
-  $('#catalog-modal').classList.remove('hidden');
+  UiModal.openModal('#catalog-modal');
 }
-function closeCatalog() {
-  $('#catalog-modal').classList.add('hidden');
-}
+
 
 function renderCatalog(deckKey) {
   $$('.catalog-tab').forEach(b => {
@@ -2465,11 +2469,9 @@ function catalogChoiceCardHtml(c) {
 function openDeckManager() {
   renderDeckManager();
   const p = $('#dm-paste'); if (p) p.value = '';
-  $('#deck-manager-modal').classList.remove('hidden');
+  UiModal.openModal('#deck-manager-modal');
 }
-function closeDeckManager() {
-  $('#deck-manager-modal').classList.add('hidden');
-}
+
 
 function deckSourceLabel(side) {
   const custom = state.customDecks && state.customDecks[side];
@@ -2856,70 +2858,6 @@ function updateWeatherAdjust() {
   }
 }
 
-$('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
-$('#weather-banner')?.addEventListener('click', (e) => {
-  if (e.target.closest('#btn-weather-adjust')) return;
-  if (getPhase(state.turnNum).phase === 'ADJUST') openWeatherAdjustModal();
-});
-$('#weather-adjust-cancel')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
-$('.modal-backdrop', $('#weather-adjust-modal'))?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
-$('#weather-adjust-players')?.addEventListener('click', (e) => {
-  const b = e.target.closest('.adjust-step'); if (!b) return;
-  const inp = b.closest('.adjust-row').querySelector('.adjust-input');
-  if (!inp) return;
-  const max = parseInt(inp.max, 10);
-  const next = (parseInt(inp.value, 10) || 0) + parseInt(b.dataset.step, 10);
-  inp.value = String(Math.max(0, Number.isFinite(max) ? Math.min(max, next) : next));
-  updateWeatherAdjust();
-});
-$('#weather-adjust-players')?.addEventListener('input', (e) => {
-  if (e.target.classList.contains('adjust-input')) updateWeatherAdjust();
-});
-$('#weather-adjust-submit')?.addEventListener('click', async () => {
-  const { phase, ev } = getPhase(state.turnNum);
-  if (phase !== 'ADJUST' || !ev) {
-    $('#weather-adjust-modal').classList.add('hidden');
-    return;
-  }
-
-  const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
-  if (civGain <= 0) {
-    toast(t('weather.adjust_none', { rate }));
-    return;
-  }
-
-  const spent = civGain * rate;
-  const charged = chargeWeatherAdjust(contributions, spent);
-  withStatBatch(() => {
-    charged.forEach(c => {
-      if (!getPlayer(c.id)) return;
-      applyStatDeltas(c.id, { fortune: c.f ? -c.f : 0, wisdom: c.w ? -c.w : 0 });
-    });
-    addCollectiveCiv(civGain);
-  });
-
-  const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
-  logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
-
-  const upgrade = GameRules.tryUpgradeWeather(
-    ev, totalCiv(), state.civGoal, GAME_CONFIG.EXPECTED_ROUNDS, weatherRatioOpts()
-  );
-  if (GameRules.applyWeatherUpgrade(ev, upgrade)) {
-    const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
-    toast(msg, 'grad');
-    logEvent(msg, 'grad');
-  } else if (ev.upgraded) {
-    toast(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }));
-  } else {
-    const msg = t('weather.adjust_fail', { cost: spent });
-    toast(msg);
-    logEvent(msg);
-  }
-
-  $('#weather-adjust-modal').classList.add('hidden');
-  save();
-  renderAll();
-});
 
 // ─────────── 精彩時刻 金句卡 ───────────
 function initHighlightFeature() {

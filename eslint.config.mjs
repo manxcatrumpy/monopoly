@@ -20,6 +20,7 @@ export default [
         GAME_CONFIG: 'readonly',
         GameRules: 'readonly',
         GameState: 'readonly',
+        UiModal: 'readonly',
         importScripts: 'readonly'
       }
     },

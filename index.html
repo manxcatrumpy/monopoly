@@ -76,11 +76,7 @@
     </div>
 
     <div class="actions">
-      <button id="btn-toggle-lang" class="btn btn-ghost" title="Language" data-i18n="ui.btn_toggle_lang" onclick="
-        const langs = ['zh-tw', 'zh-cn'];
-        const nextLang = langs[(langs.indexOf(window.i18n.currentLang) + 1) % langs.length];
-        window.i18n.setLanguage(nextLang);
-      ">🌐 繁 / 簡</button>
+      <button id="btn-toggle-lang" class="btn btn-ghost" title="Language" data-i18n="ui.btn_toggle_lang">🌐 繁 / 簡</button>
       <button id="btn-toggle-timer" class="btn btn-primary" title="開始 / 暫停 計時">開始</button>
       <button id="btn-next-round" class="btn" title="進入下一局" data-i18n="ui.btn_next_round">下一局</button>
       <button id="btn-history" class="btn btn-ghost" title="查看 / 復原歷史局" hidden>歷史紀錄</button>
@@ -792,6 +788,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="./config.js"></script>
   <script src="./version.js"></script>
+  <script src="./js/ui-modal.js"></script>
   <script src="./js/rules.js"></script>
   <script src="./js/state.js"></script>
   <script src="./app.js"></script>
