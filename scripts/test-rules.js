@@ -179,6 +179,38 @@ test('originReward: pass/stop × graduated civ extra', () => {
   assert.deepEqual(R.originReward(grad, true), { fortune: 2, wisdom: 2, civ: 2 });
 });
 
+// ── applyStatPatch / deltasToPatch ──
+test('nextStatValue clamps at 0 and truncates', () => {
+  assert.equal(R.nextStatValue(5), 5);
+  assert.equal(R.nextStatValue(-3), 0);
+  assert.equal(R.nextStatValue(3.9), 3);
+  assert.equal(R.nextStatValue('8'), 8);
+});
+
+test('deltasToPatch skips zero deltas and adds to current', () => {
+  const p = { fortune: 5, wisdom: 2, civ: 1 };
+  assert.deepEqual(
+    R.deltasToPatch(p, { fortune: 3, wisdom: 0, civ: -4 }),
+    { fortune: 8, civ: -3 }
+  );
+});
+
+test('applyStatPatch writes once, skips no-ops, clamps 0', () => {
+  const p = { fortune: 5, wisdom: 2, civ: 1 };
+  const changes = R.applyStatPatch(p, { fortune: 8, wisdom: -9, civ: 1 });
+  assert.deepEqual(p, { fortune: 8, wisdom: 0, civ: 1 });
+  assert.deepEqual(changes, [
+    { stat: 'fortune', old: 5, next: 8 },
+    { stat: 'wisdom', old: 2, next: 0 },
+  ]);
+});
+
+test('applyStatPatch then dual check sees final stats not intermediates', () => {
+  const p = { fortune: 20, wisdom: 30 };
+  R.applyStatPatch(p, { fortune: 30, wisdom: 10 });
+  assert.equal(Math.min(p.fortune, p.wisdom), 10);
+});
+
 console.log('');
 console.log(passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

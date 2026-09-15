@@ -137,6 +137,36 @@ const GameRules = (function () {
     };
   }
 
+  function nextStatValue(value) {
+    return Math.max(0, value | 0);
+  }
+
+  function deltasToPatch(player, deltas, stats) {
+    const list = stats || STATS;
+    const src = deltas || {};
+    const patch = {};
+    list.forEach(stat => {
+      if (!src[stat]) return;
+      patch[stat] = (player[stat] || 0) + src[stat];
+    });
+    return patch;
+  }
+
+  function applyStatPatch(player, patch, stats) {
+    const list = stats || STATS;
+    const src = patch || {};
+    const changes = [];
+    list.forEach(stat => {
+      if (src[stat] === undefined) return;
+      const old = player[stat] || 0;
+      const next = nextStatValue(src[stat]);
+      if (next === old) return;
+      player[stat] = next;
+      changes.push({ stat, old, next });
+    });
+    return changes;
+  }
+
   return {
     STATS,
     DEFAULTS,
@@ -156,6 +186,9 @@ const GameRules = (function () {
     isNewlyZeroed,
     chargeWeatherAdjust,
     originReward,
+    nextStatValue,
+    deltasToPatch,
+    applyStatPatch,
   };
 })();
 
