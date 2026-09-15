@@ -21,16 +21,105 @@ const GameRules = (function () {
     },
   };
 
+  const WEATHER_RANKS = ['DISASTER', 'NORMAL', 'FAVORABLE'];
+
   function expectedCiv(turn, civGoal, expectedRounds) {
     const rounds = expectedRounds == null ? DEFAULTS.EXPECTED_ROUNDS : expectedRounds;
     return civGoal * turn / rounds;
   }
 
-  function judgeWeather(civCurrent, turn, civGoal, expectedRounds) {
-    const expected = expectedCiv(turn, civGoal, expectedRounds);
-    if (civCurrent >= expected * DEFAULTS.WEATHER_FAVORABLE_RATIO) return 'FAVORABLE';
-    if (civCurrent <= expected * DEFAULTS.WEATHER_DISASTER_RATIO) return 'DISASTER';
+  function weatherRatios(ratios) {
+    const r = ratios || {};
+    return {
+      favorable: r.favorable != null ? r.favorable : DEFAULTS.WEATHER_FAVORABLE_RATIO,
+      disaster: r.disaster != null ? r.disaster : DEFAULTS.WEATHER_DISASTER_RATIO,
+    };
+  }
+
+  function weatherThresholds(expected, ratios) {
+    const r = weatherRatios(ratios);
+    return {
+      disasterMax: expected * r.disaster,
+      favorableMin: expected * r.favorable,
+    };
+  }
+
+  function weatherLockTurn(ev) {
+    return ev.targetRound - 2;
+  }
+
+  function weatherRank(id) {
+    const i = WEATHER_RANKS.indexOf(id);
+    return i < 0 ? 0 : i;
+  }
+
+  function weatherByRank(rank) {
+    const i = Math.max(0, Math.min(WEATHER_RANKS.length - 1, rank | 0));
+    return WEATHER_RANKS[i];
+  }
+
+  function nextWeather(id) {
+    return weatherByRank(weatherRank(id) + 1);
+  }
+
+  function isMaxWeather(id) {
+    return weatherRank(id) >= WEATHER_RANKS.length - 1;
+  }
+
+  function judgeWeatherAtExpected(civCurrent, expected, ratios) {
+    const th = weatherThresholds(expected, ratios);
+    if (civCurrent >= th.favorableMin) return 'FAVORABLE';
+    if (civCurrent <= th.disasterMax) return 'DISASTER';
     return 'NORMAL';
+  }
+
+  function judgeWeather(civCurrent, turn, civGoal, expectedRounds, ratios) {
+    return judgeWeatherAtExpected(civCurrent, expectedCiv(turn, civGoal, expectedRounds), ratios);
+  }
+
+  function civNeededToUpgrade(lockedWeather, expected, ratios) {
+    if (isMaxWeather(lockedWeather)) return null;
+    const th = weatherThresholds(expected, ratios);
+    if (lockedWeather === 'DISASTER') return Math.floor(th.disasterMax) + 1;
+    if (lockedWeather === 'NORMAL') return Math.ceil(th.favorableMin);
+    return null;
+  }
+
+  function civShortToUpgrade(lockedWeather, civNow, expected, ratios) {
+    const need = civNeededToUpgrade(lockedWeather, expected, ratios);
+    if (need == null) return 0;
+    return Math.max(0, need - civNow);
+  }
+
+  function tryUpgradeWeather(ev, civNow, civGoal, expectedRounds, ratios) {
+    if (!ev || ev.upgraded) return { changed: false };
+    const now = judgeWeather(civNow, weatherLockTurn(ev), civGoal, expectedRounds, ratios);
+    if (weatherRank(now) <= weatherRank(ev.lockedWeather)) return { changed: false };
+    return {
+      changed: true,
+      oldWeather: ev.lockedWeather,
+      newWeather: nextWeather(ev.lockedWeather),
+    };
+  }
+
+  function applyWeatherUpgrade(ev, result) {
+    if (!ev || !result || !result.changed) return false;
+    ev.oldWeather = result.oldWeather;
+    ev.lockedWeather = result.newWeather;
+    ev.upgraded = true;
+    return true;
+  }
+
+  function resolveMultiplierId({ sprint, inShelter, reportWeather } = {}) {
+    if (sprint) return 'ENDGAME';
+    if (inShelter) return 'SHELTER';
+    return reportWeather || null;
+  }
+
+  function multiplierFromConfig(id, multipliers) {
+    const table = multipliers || {};
+    if (id && table[id]) return Object.assign({ id }, table[id]);
+    return { gain: 1, loss: 1, id: null };
   }
 
   function getPhase(turn, weatherEvents) {
@@ -170,8 +259,23 @@ const GameRules = (function () {
   return {
     STATS,
     DEFAULTS,
+    WEATHER_RANKS,
     expectedCiv,
+    weatherRatios,
+    weatherThresholds,
+    weatherLockTurn,
+    weatherRank,
+    weatherByRank,
+    nextWeather,
+    isMaxWeather,
+    judgeWeatherAtExpected,
     judgeWeather,
+    civNeededToUpgrade,
+    civShortToUpgrade,
+    tryUpgradeWeather,
+    applyWeatherUpgrade,
+    resolveMultiplierId,
+    multiplierFromConfig,
     getPhase,
     applyMult,
     scaleReward,

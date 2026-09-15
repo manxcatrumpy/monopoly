@@ -14,7 +14,10 @@ window.GAME_CONFIG = {
       { id: 'W2', targetRound: 12 }
     ],
     // 氣候調節的兌換率：幾點福慧可換 1 點文明
-    EXCHANGE_RATE_COST: 3
+    EXCHANGE_RATE_COST: 3,
+    // 相對預期文明的天氣帶：≥ 此倍率為風調雨順，≤ 此倍率為災害交加
+    FAVORABLE_RATIO: 1.2,
+    DISASTER_RATIO: 0.8
   },
 
   // 終局倒數分鐘數 (預設最後 15 分鐘)

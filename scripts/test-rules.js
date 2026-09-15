@@ -76,6 +76,49 @@ test('judgeWeather uses 1.2 / 0.8 bands inclusive', () => {
   assert.equal(R.judgeWeather(50, 5, 100, 10), 'NORMAL');
 });
 
+test('weatherThresholds and civNeededToUpgrade match judgeWeather', () => {
+  const th = R.weatherThresholds(50);
+  assert.equal(th.disasterMax, 40);
+  assert.equal(th.favorableMin, 60);
+  assert.equal(R.civNeededToUpgrade('DISASTER', 50), 41);
+  assert.equal(R.civNeededToUpgrade('NORMAL', 50), 60);
+  assert.equal(R.civNeededToUpgrade('FAVORABLE', 50), null);
+  assert.equal(R.civShortToUpgrade('DISASTER', 30, 50), 11);
+  assert.equal(R.civShortToUpgrade('FAVORABLE', 80, 50), 0);
+  // non-integer disasterMax: upgrade civ is the first integer judgeWeather would call NORMAL
+  const expected = 51;
+  const disasterMax = expected * 0.8; // 40.8
+  assert.equal(R.civNeededToUpgrade('DISASTER', expected), Math.floor(disasterMax) + 1);
+  assert.equal(R.judgeWeatherAtExpected(41, expected), 'NORMAL');
+  assert.equal(R.judgeWeatherAtExpected(40, expected), 'DISASTER');
+});
+
+test('tryUpgradeWeather upgrades one rank only', () => {
+  const ev = { targetRound: 6, lockedWeather: 'DISASTER', upgraded: false };
+  // lock turn 4, goal 100, 10 rounds → expected 40; civ 50 is FAVORABLE but only step to NORMAL
+  const jump = R.tryUpgradeWeather(ev, 50, 100, 10);
+  assert.equal(jump.changed, true);
+  assert.equal(jump.oldWeather, 'DISASTER');
+  assert.equal(jump.newWeather, 'NORMAL');
+  assert.equal(ev.lockedWeather, 'DISASTER'); // pure: does not mutate
+  assert.equal(R.applyWeatherUpgrade(ev, jump), true);
+  assert.equal(ev.lockedWeather, 'NORMAL');
+  assert.equal(ev.upgraded, true);
+  assert.equal(R.tryUpgradeWeather(ev, 50, 100, 10).changed, false);
+  assert.equal(R.tryUpgradeWeather({ targetRound: 6, lockedWeather: 'FAVORABLE', upgraded: false }, 99, 100, 10).changed, false);
+});
+
+test('resolveMultiplierId: endgame > shelter > report weather', () => {
+  assert.equal(R.resolveMultiplierId({ sprint: true, inShelter: true, reportWeather: 'DISASTER' }), 'ENDGAME');
+  assert.equal(R.resolveMultiplierId({ sprint: false, inShelter: true, reportWeather: 'NORMAL' }), 'SHELTER');
+  assert.equal(R.resolveMultiplierId({ sprint: false, inShelter: false, reportWeather: 'FAVORABLE' }), 'FAVORABLE');
+  assert.equal(R.resolveMultiplierId({}), null);
+  const m = R.multiplierFromConfig('DISASTER', { DISASTER: { gain: 1, loss: 2, labelKey: 'x' } });
+  assert.equal(m.id, 'DISASTER');
+  assert.equal(m.loss, 2);
+  assert.deepEqual(R.multiplierFromConfig(null, {}), { gain: 1, loss: 1, id: null });
+});
+
 // ── getPhase ──
 test('getPhase maps N-2 / N-1 / N for each scheduled event', () => {
   assert.equal(R.getPhase(4, WEATHER).phase, 'FORECAST');

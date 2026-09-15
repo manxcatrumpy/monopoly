@@ -167,22 +167,38 @@ function comprehensiveScore(p) {
   return (p.fortune || 0) + (p.wisdom || 0) + (p.civ || 0) * 2;
 }
 // ─────────── Weather System ───────────
+function weatherRatioOpts() {
+  const w = GAME_CONFIG.WEATHER || {};
+  return { favorable: w.FAVORABLE_RATIO, disaster: w.DISASTER_RATIO };
+}
+
 function expectedCiv(turn, civGoal) {
   return GameRules.expectedCiv(turn, civGoal, GAME_CONFIG.EXPECTED_ROUNDS);
 }
 
 function judgeWeather(civCurrent, turn, civGoal) {
-  return GameRules.judgeWeather(civCurrent, turn, civGoal, GAME_CONFIG.EXPECTED_ROUNDS);
+  return GameRules.judgeWeather(civCurrent, turn, civGoal, GAME_CONFIG.EXPECTED_ROUNDS, weatherRatioOpts());
 }
 
 function getPhase(turn) {
   return GameRules.getPhase(turn, state.weatherEvents);
 }
 
-function getActiveWeather() {
-  if (sprintActive()) return 'ENDGAME';
+function weatherLockExpected(ev) {
+  return expectedCiv(GameRules.weatherLockTurn(ev), state.civGoal);
+}
+
+function reportWeatherId() {
   const { phase, ev } = getPhase(state.turnNum);
-  return phase === 'REPORT' ? ev.lockedWeather : null;
+  return phase === 'REPORT' && ev ? ev.lockedWeather : null;
+}
+
+function getActiveWeather() {
+  return GameRules.resolveMultiplierId({
+    sprint: sprintActive(),
+    inShelter: false,
+    reportWeather: reportWeatherId(),
+  });
 }
 
 // ─────────── Dice ───────────
@@ -518,17 +534,11 @@ function getWeatherLabel(w) {
 }
 
 function scoreMultiplier(playerId) {
-  if (sprintActive() && GAME_CONFIG.MULTIPLIERS.ENDGAME) {
-    return Object.assign({ id: 'ENDGAME' }, GAME_CONFIG.MULTIPLIERS.ENDGAME);
-  }
   const p = playerId != null ? getPlayer(playerId) : null;
-  if (playerInShelter(p) && GAME_CONFIG.MULTIPLIERS.SHELTER) {
-    return Object.assign({ id: 'SHELTER' }, GAME_CONFIG.MULTIPLIERS.SHELTER);
-  }
-  const { phase, ev } = getPhase(state.turnNum);
-  const w = phase === 'REPORT' && ev ? ev.lockedWeather : null;
-  if (w && GAME_CONFIG.MULTIPLIERS[w]) return Object.assign({ id: w }, GAME_CONFIG.MULTIPLIERS[w]);
-  return { gain: 1, loss: 1, id: null };
+  const id = (!sprintActive() && playerInShelter(p))
+    ? 'SHELTER'
+    : getActiveWeather();
+  return GameRules.multiplierFromConfig(id, GAME_CONFIG.MULTIPLIERS);
 }
 
 function reliefCfg() {
@@ -1057,7 +1067,7 @@ function updateTopbar() {
         weatherBanner.classList.add('weather-forecast');
         title.textContent = t('weather.forecast_title');
         
-        const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
+        const expected = weatherLockExpected(ev);
         sub.textContent = t('weather.forecast_sub', { current: totalCiv(), expected: Math.ceil(expected) });
         btnAdjust.classList.add('hidden');
       } else if (phase === 'ADJUST' && ev && ev.lockedWeather) {
@@ -1071,12 +1081,9 @@ function updateTopbar() {
             new: getWeatherLabel(ev.lockedWeather),
           });
         } else {
-          const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-          const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
-          let targetCiv = 0;
-          if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
-          if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
-          const short = ranks[ev.lockedWeather] < 2 ? Math.max(0, targetCiv - totalCiv()) : 0;
+          const short = GameRules.civShortToUpgrade(
+            ev.lockedWeather, totalCiv(), weatherLockExpected(ev), weatherRatioOpts()
+          );
           sub.textContent = t('weather.adjust_sub_pending', { short });
         }
         
@@ -2078,11 +2085,43 @@ function cardPlayersRefHtml() {
   </div>`;
 }
 
+function selectedCardPlayerId() {
+  const el = $('#card-recipient');
+  return el && el.value ? el.value : null;
+}
+
+function cardRecipientSnapshot() {
+  const two = $('#card-recipient2');
+  return {
+    pid: selectedCardPlayerId(),
+    pid2: two && two.value ? two.value : '',
+  };
+}
+
+function applyCardRecipientSnapshot(snap) {
+  if (!snap) return;
+  if (snap.pid && $('#card-recipient')) $('#card-recipient').value = snap.pid;
+  if (snap.pid2 && $('#card-recipient2')) $('#card-recipient2').value = snap.pid2;
+}
+
+function bindCardRecipientPreview() {
+  ['#card-recipient', '#card-recipient2'].forEach(sel => {
+    const el = $(sel);
+    if (el) el.addEventListener('change', () => renderCard());
+  });
+}
+
 function renderCard() {
   if (!currentCard) return;
   const c = currentCard;
-  if (Array.isArray(c.options)) { renderChoiceCard(c); return; }   // 抉擇卡（文明反思／文明扣分）
-  const bodyHtml = c.type === 'boost' ? renderBoostBody(c) : renderActionBody(c);
+  const snap = cardRecipientSnapshot();
+  if (Array.isArray(c.options)) {
+    renderChoiceCard(c, snap.pid);
+    applyCardRecipientSnapshot(snap);
+    bindCardRecipientPreview();
+    return;
+  }
+  const bodyHtml = c.type === 'boost' ? renderBoostBody(c, snap.pid) : renderActionBody(c, snap.pid);
   $('#card-body').innerHTML = bodyHtml;
 
   const playerOpts = state.players.map(p =>
@@ -2111,6 +2150,9 @@ function renderCard() {
     </div>
   `;
 
+  applyCardRecipientSnapshot(snap);
+  bindCardRecipientPreview();
+
   $('#card-redraw').addEventListener('click', () => {
     currentCard = drawFromDeck(currentDeckKey);
     renderCard();
@@ -2131,8 +2173,8 @@ function renderCard() {
 
 // The reward line on a drawn card. During the sprint it previews the doubled
 // tally so the host sees what 套用獎勵 will actually grant.
-function rewardLineHtml(c) {
-  const mult = scoreMultiplier();
+function rewardLineHtml(c, playerId) {
+  const mult = scoreMultiplier(playerId);
   if (mult.id !== null) {
     const doubled = describeReward(scaleReward(c.reward || {}, mult));
     return `<div class="card-reward sprint">${t('weather.card_multiplier_applied', { weather: getWeatherLabel(mult.id), doubled: escapeHtml(doubled) })}` +
@@ -2143,28 +2185,28 @@ function rewardLineHtml(c) {
 
 // The 附加 (side) line. Side effects are applied by hand, so during the sprint
 // they are NOT auto-doubled — remind the host to apply this one at ×2 manually.
-function sideLineHtml(c) {
+function sideLineHtml(c, playerId) {
   if (!c.side) return '';
-  const mult = scoreMultiplier();
+  const mult = scoreMultiplier(playerId);
   const note = mult.id !== null
     ? `<span class="card-side-x2">${t('weather.card_manual_calc', { weather: getWeatherLabel(mult.id) })}</span>`
     : '';
   return `<p class="card-side">${t('card.side_prefix')}${escapeHtml(c.side)}${note}</p>`;
 }
 
-function renderActionBody(c) {
+function renderActionBody(c, playerId) {
   return `
     <div class="card-display">
       <div class="card-category">${escapeHtml(c.category)}</div>
       <h3 class="card-name">${escapeHtml(c.name)}</h3>
       <p class="card-desc">${escapeHtml(c.desc)}</p>
-      ${sideLineHtml(c)}
-      ${rewardLineHtml(c)}
+      ${sideLineHtml(c, playerId)}
+      ${rewardLineHtml(c, playerId)}
     </div>
   `;
 }
 
-function renderBoostBody(c) {
+function renderBoostBody(c, playerId) {
   return `
     <div class="card-display">
       <div class="card-category">${t('card.title_boost')}</div>
@@ -2177,8 +2219,8 @@ function renderBoostBody(c) {
         <div class="card-section-label">${t('card.lbl_insight')}</div>
         <p class="card-section-text">${escapeHtml(c.insight)}</p>
       </div>
-      ${sideLineHtml(c)}
-      ${rewardLineHtml(c)}
+      ${sideLineHtml(c, playerId)}
+      ${rewardLineHtml(c, playerId)}
     </div>
   `;
 }
@@ -2195,8 +2237,8 @@ function choiceEffects(opt, playerId) {
   return { each: scaleReward(opt.each || {}, mult), civAll: applyMult(opt.civAll || 0, 'civAll', mult), mult };
 }
 // 「雙方各 福報 -1 · 智慧 -1　·　全體文明 -2」— 一行描述一個選項的效果。
-function describeChoiceOption(card, opt) {
-  const { each, civAll } = choiceEffects(opt);
+function describeChoiceOption(card, opt, playerId) {
+  const { each, civAll } = choiceEffects(opt, playerId);
   const parts = [];
   const eachTxt = describeReward(each);
   if (eachTxt) parts.push((card.both ? '雙方各　' : '') + eachTxt);
@@ -2204,8 +2246,8 @@ function describeChoiceOption(card, opt) {
   return parts.length ? parts.join('　·　') : '無點數變化';
 }
 
-function renderChoiceCard(c) {
-  const mult = scoreMultiplier();
+function renderChoiceCard(c, playerId) {
+  const mult = scoreMultiplier(playerId);
   const label = c.type === 'boost' ? (c.series || '共好加速卡') : (c.category || '行動指令牌');
 
   // 條件卡：適用分支由當前集體文明自動鎖定。
@@ -2225,7 +2267,7 @@ function renderChoiceCard(c) {
       <button type="button" class="dilemma-opt${selected ? ' selected' : ''}${disabled ? ' disabled' : ''}"
               data-opt="${i}" ${disabled ? 'disabled' : ''}>
         <span class="do-label">${escapeHtml(opt.label)}</span>
-        <span class="do-effects">${escapeHtml(describeChoiceOption(c, opt))}</span>
+        <span class="do-effects">${escapeHtml(describeChoiceOption(c, opt, playerId))}</span>
         ${opt.side ? `<span class="do-side">附加：${escapeHtml(opt.side)}（手動套用）</span>` : ''}
         ${opt.insight ? `<span class="do-insight">${escapeHtml(opt.insight)}</span>` : ''}
       </button>`;
@@ -2791,25 +2833,21 @@ function updateWeatherAdjust() {
   if (ev) {
     const currentCiv = totalCiv();
     const newCiv = currentCiv + civGain;
-    const nowWeather = judgeWeather(newCiv, ev.targetRound - 2, state.civGoal);
-    const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
+    const upgrade = GameRules.tryUpgradeWeather(
+      ev, newCiv, state.civGoal, GAME_CONFIG.EXPECTED_ROUNDS, weatherRatioOpts()
+    );
 
-    let gapMsg = '';
+    let gapMsg;
     if (ev.upgraded) {
       gapMsg = t('weather.adjust_already_upgraded');
-    } else if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
-      const nextRankName = Object.keys(ranks).find(k => ranks[k] === ranks[ev.lockedWeather] + 1);
+    } else if (upgrade.changed) {
       gapMsg = '✨ ' + t('weather.adjust_sub_upgraded', {
         old: getWeatherLabel(ev.lockedWeather),
-        new: getWeatherLabel(nextRankName),
+        new: getWeatherLabel(upgrade.newWeather),
       });
-    } else if (ranks[ev.lockedWeather] < 2) {
-      const expected = expectedCiv(ev.targetRound - 2, state.civGoal);
-      let targetCiv = 0;
-      if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
-      if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
-
-      const civShort = targetCiv - newCiv;
+    } else if (!GameRules.isMaxWeather(ev.lockedWeather)) {
+      const need = GameRules.civNeededToUpgrade(ev.lockedWeather, weatherLockExpected(ev), weatherRatioOpts());
+      const civShort = need - newCiv;
       gapMsg = t('weather.gap_msg', { civ: civShort, pts: civShort * rate - (totalCost % rate) });
     } else {
       gapMsg = t('weather.adjust_maxed');
@@ -2863,13 +2901,10 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
   const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
   logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
 
-  const now = judgeWeather(totalCiv(), ev.targetRound - 2, state.civGoal);
-  const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-  if (!ev.upgraded && ranks[now] > ranks[ev.lockedWeather]) {
-    const nextRank = Math.min(ranks[ev.lockedWeather] + 1, 2);
-    ev.oldWeather = ev.lockedWeather;
-    ev.lockedWeather = Object.keys(ranks).find(k => ranks[k] === nextRank);
-    ev.upgraded = true;
+  const upgrade = GameRules.tryUpgradeWeather(
+    ev, totalCiv(), state.civGoal, GAME_CONFIG.EXPECTED_ROUNDS, weatherRatioOpts()
+  );
+  if (GameRules.applyWeatherUpgrade(ev, upgrade)) {
     const msg = t('weather.adjust_sub_upgraded', { old: getWeatherLabel(ev.oldWeather), new: getWeatherLabel(ev.lockedWeather) });
     toast(msg, 'grad');
     logEvent(msg, 'grad');
