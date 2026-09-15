@@ -8,6 +8,7 @@ const ASSETS = [
   './config.js',
   './version.js',
   './js/rules.js',
+  './js/state.js',
   './app.js',
   './i18n.js',
   './locales/zh-tw.json',

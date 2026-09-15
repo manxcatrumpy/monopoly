@@ -75,8 +75,25 @@ const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福�
 const STATS = ['fortune', 'wisdom', 'civ'];
 const STAT_LABEL = (stat) => t('players.' + stat);
 
-function emptyNavClaim() {
-  return NAV_THRESHOLDS.reduce((o, n) => (o[n] = null, o), {});
+function stateOpts() {
+  return {
+    navThresholds: NAV_THRESHOLDS,
+    weatherSchedule: GAME_CONFIG.WEATHER.SCHEDULE,
+  };
+}
+function defaultState() {
+  return GameState.defaultState(stateOpts());
+}
+function snapshotRound() {
+  return GameState.snapshotRound(state, stateOpts());
+}
+function syncUiFlags() {
+  Object.assign(state, GameState.deriveUiFlags({
+    civReached: state.players.length > 0 && totalCiv() >= state.civGoal,
+    sprint: sprintActive(),
+    timeUp: elapsedSeconds() >= maxGameSeconds(),
+    allGraduated: state.players.length > 0 && state.players.every(p => p.graduated),
+  }));
 }
 
 // Display string from version.js (APP_SEMVER / APP_BUILD).
@@ -86,26 +103,10 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 // ─────────── State ───────────
-const defaultState = () => ({
-  roundNum: 1,
-  turnNum: 1,
-  civGoal: 30,
-  timer: { accumulated: 0, lastStartedAt: null, running: false },
-  players: [],
-  log: [],
-  pendingDraws: [],   // 尚未處理的「抽卡」里程：主持人抽完卡後手動清除
-  history: [],
-  navigatorClaimed: emptyNavClaim(),
-  customDecks: { action: null, boost: null },
-  actedThisTurn: {},
-  skippedThisTurn: {},
-  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
-});
-
 let state = defaultState();
 
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(GameState.persistableState(state))); } catch (_) {}
 }
 function load() {
   try {
@@ -113,33 +114,11 @@ function load() {
     if (!raw) return false;
     const parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.players)) return false;
-    state = Object.assign(defaultState(), parsed);
-    // Migrate v1 single-snapshot undo to v2 history array
-    if (!Array.isArray(state.history)) state.history = [];
-    if (state.previousRound) {
-      state.history.push(state.previousRound);
-      delete state.previousRound;
-    }
-    // Ensure navigatorClaimed shape (older saves predate this field)
-    state.navigatorClaimed = Object.assign(emptyNavClaim(), state.navigatorClaimed || {});
-    // Ensure pendingDraws shape (older saves predate this field)
-    if (!Array.isArray(state.pendingDraws)) state.pendingDraws = [];
-    // Ensure customDecks shape (older saves predate this field)
-    state.customDecks = Object.assign({ action: null, boost: null }, state.customDecks || {});
-    if (state.turnNum === undefined) state.turnNum = 1;
-    if (!state.actedThisTurn || typeof state.actedThisTurn !== 'object' || Array.isArray(state.actedThisTurn)) {
-      state.actedThisTurn = {};
-    }
-    if (!state.skippedThisTurn || typeof state.skippedThisTurn !== 'object' || Array.isArray(state.skippedThisTurn)) {
-      state.skippedThisTurn = {};
-    }
-    if (!state.weatherEvents) {
-      state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
-    }
-    migratePlayersRelief(state.players);
+    state = GameState.migrateState(parsed, stateOpts());
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
+    syncUiFlags();
     return state.players.length > 0;
   } catch (_) { return false; }
 }
@@ -159,14 +138,6 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     shelterFromTurn: null,
     shelterToTurn: null,
   };
-}
-
-function migratePlayersRelief(players) {
-  (players || []).forEach(p => {
-    if (p.reliefUsed !== true) p.reliefUsed = false;
-    if (typeof p.shelterFromTurn !== 'number') p.shelterFromTurn = null;
-    if (typeof p.shelterToTurn !== 'number') p.shelterToTurn = null;
-  });
 }
 
 function totalCiv() {
@@ -536,9 +507,6 @@ function pauseTimer() {
 }
 function toggleTimer() {
   state.timer.running ? pauseTimer() : startTimer();
-}
-function resetTimer() {
-  state.timer = { accumulated: 0, lastStartedAt: null, running: false };
 }
 
 // ─────────── 倒數衝刺：無常與恩典齊發 ───────────
@@ -1627,22 +1595,28 @@ async function applySetup() {
   }
   const isNext = setupTmp.mode === 'next';
   // 下一局：先把目前這一局存進歷史（之後可從歷史檢視／切回），再建立新的一局。
+  let history = state.history || [];
+  const customDecks = state.customDecks;
   if (isNext && state.players.length) {
     if (state.timer.running) pauseTimer();
     const snap = snapshotRound();
     snap.completedAt = Date.now();
-    state.history.push(snap);
+    history = history.concat([snap]);
+  } else if (!isNext) {
+    history = [];
   }
-  state.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
-  state.turnNum = 1;
-  state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
-  state.players = setupTmp.rolls.map((r, i) => makePlayer({
+
+  const next = defaultState();
+  next.history = history;
+  next.customDecks = customDecks;
+  next.roundNum = Math.max(1, parseInt($('#setup-round').value, 10) || 1);
+  next.players = setupTmp.rolls.map((r, i) => makePlayer({
     name: r.name || `玩家 ${i + 1}`,
     fortune: r.fortune || 0,
     wisdom: r.wisdom || 0,
   }));
   // Pre-mark milestones already reached so we don't spam toasts on game start
-  state.players.forEach(p => {
+  next.players.forEach(p => {
     ['fortune', 'wisdom'].forEach(stat => {
       MILESTONES.forEach(m => { if (p[stat] >= m) p.notified[key(stat, m)] = true; });
     });
@@ -1652,23 +1626,14 @@ async function applySetup() {
     });
     if (p.fortune >= GRAD_THRESHOLD && p.wisdom >= GRAD_THRESHOLD) p.graduated = true;
   });
-  state.civGoal = computeCivGoal($('#setup-civ-white').value, $('#setup-civ-black').value, setupTmp.count);
-  resetTimer();
-  state._timeUpNoticed = false;
-  state._sprintNoticed = false;
-  state._civGoalNoticed = false;
-  state._allGradNoticed = false;
-  if (!isNext) state.history = [];   // only a brand-new game clears history; 下一局 keeps it
-  state.navigatorClaimed = emptyNavClaim();
+  next.civGoal = computeCivGoal($('#setup-civ-white').value, $('#setup-civ-black').value, setupTmp.count);
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
   NAV_THRESHOLDS.forEach(n => {
-    const first = state.players.find(p => Math.min(p.fortune, p.wisdom) >= n);
-    if (first) state.navigatorClaimed[n] = first.id;
+    const first = next.players.find(p => Math.min(p.fortune, p.wisdom) >= n);
+    if (first) next.navigatorClaimed[n] = first.id;
   });
-  state.log = [];
-  state.pendingDraws = [];
-  state.actedThisTurn = {};
-  state.skippedThisTurn = {};
+
+  state = next;
   resetSkipLeftoverPrompt();
   logEvent(isNext
     ? t('messages.round_started_log', {round: state.roundNum, goal: state.civGoal})
@@ -1896,20 +1861,6 @@ function bindEvents() {
 }
 
 // ─────────── Round navigation (history archive + restore) ───────────
-function snapshotRound() {
-  return JSON.parse(JSON.stringify({
-    roundNum: state.roundNum,
-    turnNum: state.turnNum,
-    civGoal: state.civGoal,
-    timer: state.timer,
-    players: state.players,
-    log: state.log,
-    navigatorClaimed: state.navigatorClaimed,
-    actedThisTurn: state.actedThisTurn,
-    skippedThisTurn: state.skippedThisTurn,
-  }));
-}
-
 // Switch the live game to a past round without losing the current one. The round
 // you're leaving is archived into the slot the chosen round vacated (a swap), so
 // every round stays available and you can switch back any time — nothing is lost.
@@ -1928,26 +1879,11 @@ async function restoreRound(idx) {
   const leaving = snapshotRound();
   leaving.completedAt = Date.now();
 
-  // Load the chosen past round as the live game.
-  state.roundNum = entry.roundNum;
-  state.turnNum = entry.turnNum || 1;
-  state.civGoal = entry.civGoal;
-  state.timer = entry.timer;
-  state.players = entry.players;
-  state.log = entry.log;
-  state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
-  state.actedThisTurn = Object.assign({}, entry.actedThisTurn || {});
-  state.skippedThisTurn = Object.assign({}, entry.skippedThisTurn || {});
-  migratePlayersRelief(state.players);
-
+  GameState.applyRoundSnapshot(state, entry, stateOpts());
   // The vacated slot now holds the round we just left — a swap, so the round
   // count is unchanged and no round disappears.
   state.history[idx] = leaving;
-
-  state._timeUpNoticed = elapsedSeconds() >= maxGameSeconds();
-  state._sprintNoticed = sprintActive();
-  state._civGoalNoticed = totalCiv() >= state.civGoal;
-  state._allGradNoticed = state.players.length > 0 && state.players.every(p => p.graduated);
+  syncUiFlags();
   save();
   renderAll();
   closeHistory();

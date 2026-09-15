@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "build": "mkdir -p dist && cp -r *.html *.js *.css *.webmanifest icons locales js dist/ && node scripts/test-bump.js",
-    "test": "node scripts/test-rules.js",
+    "test": "node scripts/test-rules.js && node scripts/test-state.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
