@@ -136,6 +136,7 @@ function load() {
     if (!state.weatherEvents) {
       state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
     }
+    migratePlayersRelief(state.players);
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
     }
@@ -154,7 +155,18 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     civ: 0,
     graduated: false,
     notified: {},
+    reliefUsed: false,
+    shelterFromTurn: null,
+    shelterToTurn: null,
   };
+}
+
+function migratePlayersRelief(players) {
+  (players || []).forEach(p => {
+    if (p.reliefUsed !== true) p.reliefUsed = false;
+    if (typeof p.shelterFromTurn !== 'number') p.shelterFromTurn = null;
+    if (typeof p.shelterToTurn !== 'number') p.shelterToTurn = null;
+  });
 }
 
 function totalCiv() {
@@ -543,10 +555,227 @@ function getWeatherLabel(w) {
   return w && GAME_CONFIG.MULTIPLIERS[w] ? t(GAME_CONFIG.MULTIPLIERS[w].labelKey) : '';
 }
 
-function scoreMultiplier() {
-  const w = getActiveWeather();
+function scoreMultiplier(playerId) {
+  if (sprintActive() && GAME_CONFIG.MULTIPLIERS.ENDGAME) {
+    return Object.assign({ id: 'ENDGAME' }, GAME_CONFIG.MULTIPLIERS.ENDGAME);
+  }
+  const p = playerId != null ? getPlayer(playerId) : null;
+  if (playerInShelter(p) && GAME_CONFIG.MULTIPLIERS.SHELTER) {
+    return Object.assign({ id: 'SHELTER' }, GAME_CONFIG.MULTIPLIERS.SHELTER);
+  }
+  const { phase, ev } = getPhase(state.turnNum);
+  const w = phase === 'REPORT' && ev ? ev.lockedWeather : null;
   if (w && GAME_CONFIG.MULTIPLIERS[w]) return Object.assign({ id: w }, GAME_CONFIG.MULTIPLIERS[w]);
   return { gain: 1, loss: 1, id: null };
+}
+
+function reliefCfg() {
+  return GAME_CONFIG.RELIEF || { EARLY_TURNS: 3, RESTORE_TO: 3, SHELTER_TURNS: 2, LATE_CIV_PERCENT: 25 };
+}
+
+function reliefPhaseOk() {
+  const cfg = reliefCfg();
+  if (state.turnNum <= cfg.EARLY_TURNS) return true;
+  const goal = state.civGoal || 0;
+  if (goal <= 0) return false;
+  return totalCiv() * 100 < goal * cfg.LATE_CIV_PERCENT;
+}
+
+function reliefEligible(p) {
+  return !!(p && !p.reliefUsed && reliefPhaseOk());
+}
+
+function reliefNeeded(p) {
+  return reliefEligible(p) && ((p.fortune || 0) === 0 || (p.wisdom || 0) === 0);
+}
+
+function zeroedFwStats(p) {
+  const stats = [];
+  if ((p.fortune || 0) === 0) stats.push('fortune');
+  if ((p.wisdom || 0) === 0) stats.push('wisdom');
+  return stats;
+}
+
+function playerInShelter(p) {
+  if (!p || !p.reliefUsed) return false;
+  const from = p.shelterFromTurn;
+  const to = p.shelterToTurn;
+  if (typeof from !== 'number' || typeof to !== 'number') return false;
+  const n = state.turnNum;
+  return n >= from && n <= to;
+}
+
+function isNewlyZeroed(oldVal, newVal) {
+  return (oldVal || 0) > 0 && (newVal || 0) === 0;
+}
+
+function snapshotFw(p) {
+  return { fortune: p.fortune || 0, wisdom: p.wisdom || 0 };
+}
+
+function syncMultiplierBanner(el, playerId, endgameKey) {
+  if (!el) return;
+  const mult = scoreMultiplier(playerId);
+  if (mult.id == null) {
+    el.classList.add('hidden');
+    return;
+  }
+  el.classList.remove('hidden');
+  if (mult.id === 'ENDGAME') el.textContent = t(endgameKey);
+  else if (mult.id === 'SHELTER') el.textContent = t('relief.adjust_shelter');
+  else el.textContent = t('relief.adjust_weather', {
+    weather: getWeatherLabel(mult.id),
+    gain: mult.gain,
+    loss: mult.loss,
+  });
+}
+
+function shelterBadgeHtml(p) {
+  if (!playerInShelter(p)) {
+    return '<div class="pc-shelter hidden"></div>';
+  }
+  return `<div class="pc-shelter">
+      <span class="pc-shelter-title">${escapeHtml(t('relief.badge', { from: p.shelterFromTurn, to: p.shelterToTurn, n: state.turnNum }))}</span>
+      <span class="pc-shelter-rates">${escapeHtml(t('relief.badge_rates'))}</span>
+    </div>`;
+}
+
+function syncShelterUI(card, p) {
+  if (!card) return;
+  let badge = card.querySelector('.pc-shelter');
+  if (!badge) return;
+  if (playerInShelter(p)) {
+    badge.classList.remove('hidden');
+    badge.innerHTML = `<span class="pc-shelter-title">${escapeHtml(t('relief.badge', { from: p.shelterFromTurn, to: p.shelterToTurn, n: state.turnNum }))}</span>
+      <span class="pc-shelter-rates">${escapeHtml(t('relief.badge_rates'))}</span>`;
+  } else {
+    badge.classList.add('hidden');
+    badge.innerHTML = '';
+  }
+}
+
+let reliefModalQueue = Promise.resolve();
+
+function enqueueReliefUi(fn) {
+  const queued = reliefModalQueue.then(fn, fn);
+  reliefModalQueue = queued.catch(() => {});
+  return queued;
+}
+
+function reliefBodyText(name, items) {
+  const cfg = reliefCfg();
+  return items.length === 2
+    ? t('relief.body_both', { name, restore: cfg.RESTORE_TO })
+    : t('relief.body_one', { name, stat: STAT_LABEL(items[0]), restore: cfg.RESTORE_TO });
+}
+
+function showReliefModal(opts) {
+  return enqueueReliefUi(() => showReliefPromptNow(Object.assign({ mode: 'done' }, opts)));
+}
+
+function showReliefOffer(opts) {
+  return enqueueReliefUi(() => showReliefPromptNow(Object.assign({ mode: 'offer' }, opts)));
+}
+
+function showReliefPromptNow({ name, items, mode }) {
+  return new Promise((resolve) => {
+    const modal = $('#relief-modal');
+    const okBtn = $('#relief-ok');
+    const laterBtn = $('#relief-later');
+    const backdrop = modal ? $('.modal-backdrop', modal) : null;
+    if (!modal || !okBtn) { resolve(mode === 'offer' ? false : undefined); return; }
+    const title = $('#relief-title');
+    const message = $('#relief-message');
+    const isOffer = mode === 'offer';
+    if (title) title.textContent = t('relief.title');
+    if (message) message.textContent = reliefBodyText(name, items);
+    okBtn.textContent = isOffer ? t('relief.offer_start') : t('relief.btn_ok');
+    if (laterBtn) {
+      laterBtn.textContent = t('relief.offer_later');
+      laterBtn.classList.toggle('hidden', !isOffer);
+    }
+
+    const done = (value) => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      if (laterBtn) laterBtn.removeEventListener('click', onLater);
+      if (backdrop) backdrop.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+      resolve(value);
+    };
+    const onOk = () => done(isOffer ? true : undefined);
+    const onLater = () => done(false);
+    const onBackdrop = () => { if (isOffer) onLater(); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); isOffer ? onLater() : onOk(); }
+      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
+    };
+    okBtn.addEventListener('click', onOk);
+    if (laterBtn) laterBtn.addEventListener('click', onLater);
+    if (backdrop) backdrop.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    modal.classList.remove('hidden');
+    okBtn.focus();
+  });
+}
+
+async function executeRelief(playerId, { announce = true } = {}) {
+  const p = getPlayer(playerId);
+  if (!p || p.reliefUsed || !reliefPhaseOk()) return false;
+  const stats = [];
+  if ((p.fortune || 0) === 0) stats.push('fortune');
+  if ((p.wisdom || 0) === 0) stats.push('wisdom');
+  if (!stats.length) return false;
+
+  const cfg = reliefCfg();
+  const name = p.name || t('common.player');
+  p.reliefUsed = true;
+  p.shelterFromTurn = state.turnNum + 1;
+  p.shelterToTurn = state.turnNum + cfg.SHELTER_TURNS;
+  stats.forEach(stat => setStat(playerId, stat, cfg.RESTORE_TO));
+
+  const itemsLabel = stats.length === 2 ? t('relief.items_both') : STAT_LABEL(stats[0]);
+  const msg = t('messages.relief_log', {
+    name,
+    items: itemsLabel,
+    restore: cfg.RESTORE_TO,
+    from: p.shelterFromTurn,
+    to: p.shelterToTurn,
+  });
+  logEvent(msg, 'grad');
+  save();
+  updatePlayerCard(p);
+  updateTopbar();
+  if (announce) await showReliefModal({ name, items: stats });
+  return true;
+}
+
+async function maybeAutoRelief(playerId, oldStats) {
+  const p = getPlayer(playerId);
+  if (!reliefEligible(p) || !oldStats) return;
+  if (!isNewlyZeroed(oldStats.fortune, p.fortune) && !isNewlyZeroed(oldStats.wisdom, p.wisdom)) return;
+  await maybeOfferRelief(playerId, { force: true });
+}
+
+async function maybeOfferRelief(playerId, { force = false } = {}) {
+  const p = getPlayer(playerId);
+  if (!reliefNeeded(p)) return;
+  if (!force && p.reliefOfferedTurn === state.turnNum) return;
+  const stats = zeroedFwStats(p);
+  if (!stats.length) return;
+  p.reliefOfferedTurn = state.turnNum;
+  save();
+  const name = p.name || t('common.player');
+  const ok = await showReliefOffer({ name, items: stats });
+  if (ok) await executeRelief(playerId, { announce: false });
+}
+
+async function maybeOfferReliefAfterZero(playerId, oldStats) {
+  const p = getPlayer(playerId);
+  if (!p || !oldStats) return;
+  const newly = isNewlyZeroed(oldStats.fortune, p.fortune) || isNewlyZeroed(oldStats.wisdom, p.wisdom);
+  if (!newly && !reliefNeeded(p)) return;
+  await maybeOfferRelief(playerId, { force: newly });
 }
 
 function applyMult(val, stat, multObj) {
@@ -971,6 +1200,8 @@ function buildPlayerCard(p) {
 
     ${STATS.map(stat => statRow(p, stat)).join('')}
 
+    ${shelterBadgeHtml(p)}
+
     <div class="pc-actions">
       <button class="pc-origin-open" data-act="origin" title="${t('ui.origin_title')}">${t('ui.btn_origin')}</button>
       <button class="pc-adjust" data-act="adjust" title="${t('ui.adjust_title')}">${t('ui.btn_adjust')}</button>
@@ -1042,7 +1273,7 @@ function statRow(p, stat) {
 // ─────────── Stat mutations ───────────
 function getPlayer(id) { return state.players.find(p => p.id === id); }
 
-// ─────────── 批次調分 ───────────
+// ─────────── 加減分 ───────────
 // 一次設定 福/慧/文明 的增減量，送出後套用；衝刺階段三項自動 ×2。
 let adjustTargetId = null;
 function adjustInputs() {
@@ -1055,7 +1286,7 @@ function adjustInputs() {
 }
 function renderAdjustPreview() {
   const p = getPlayer(adjustTargetId); if (!p) return;
-  const mult = scoreMultiplier();
+  const mult = scoreMultiplier(adjustTargetId);
   const raw = adjustInputs();
   const scaled = scaleReward(raw, mult);
   STATS.forEach(stat => {
@@ -1092,7 +1323,7 @@ function openAdjustModal(id) {
     const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
     if (inp) inp.value = '0';
   });
-  $('#adjust-sprint').classList.toggle('hidden', !sprintActive());
+  syncMultiplierBanner($('#adjust-sprint'), id, 'adjust.sprint');
   syncAdjustAsTurn(id);
   renderAdjustPreview();
   $('#adjust-modal').classList.remove('hidden');
@@ -1105,19 +1336,21 @@ async function applyAdjust() {
   const p = getPlayer(adjustTargetId); if (!p) { closeAdjustModal(); return; }
   const pid = p.id;
   const name = p.name || t('common.player');
-  const mult = scoreMultiplier();
-  const scaled = scaleReward(adjustInputs(), mult);      // 衝刺階段三項 ×2
+  const mult = scoreMultiplier(pid);
+  const scaled = scaleReward(adjustInputs(), mult);
   const hasChange = STATS.some(stat => scaled[stat]);
   if (!hasChange) { closeAdjustModal(); return; }
   const alreadyResolved = isResolved(pid);
   const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
+  const old = { fortune: base.fortune, wisdom: base.wisdom };
   STATS.forEach(stat => { if (scaled[stat]) setStat(pid, stat, base[stat] + scaled[stat]); });
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
+  await maybeOfferReliefAfterZero(pid, old);
   if (markTurn) markActed(pid);
   if (alreadyResolved) await maybeOfferSkipLeftover(pid);
 }
@@ -1135,8 +1368,8 @@ function originReward(p, stop) {
 }
 async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
-  const mult = scoreMultiplier();
-  const r = scaleReward(originReward(p, stop), mult);   // 衝刺階段自動 ×2
+  const mult = scoreMultiplier(playerId);
+  const r = scaleReward(originReward(p, stop), mult);
   const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
   STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
@@ -1160,9 +1393,9 @@ let originTargetId = null;
 function openOriginModal(id) {
   const p = getPlayer(id); if (!p) return;
   originTargetId = id;
-  const mult = scoreMultiplier();
+  const mult = scoreMultiplier(id);
   $('#origin-sub').textContent = p.name || '玩家';
-  $('#origin-sprint').classList.toggle('hidden', mult.id === null);
+  syncMultiplierBanner($('#origin-sprint'), id, 'origin.sprint');
   $('#origin-pass-desc').textContent = describeReward(scaleReward(originReward(p, false), mult));
   $('#origin-stop-desc').textContent = describeReward(scaleReward(originReward(p, true), mult));
   $('#origin-modal').classList.remove('hidden');
@@ -1215,6 +1448,7 @@ function updatePlayerCard(p) {
   card.querySelector('.pc-status').textContent =
     p.graduated ? t('ui.graduated_status') : statusHint(p);
 
+  syncShelterUI(card, p);
   applyTurnStatusUI(card, p.id);
 }
 
@@ -1593,7 +1827,7 @@ function bindEvents() {
   $('#origin-pass-btn').addEventListener('click', () => pickOrigin(false));
   $('#origin-stop-btn').addEventListener('click', () => pickOrigin(true));
 
-  // 批次調分 modal
+  // 加減分 modal
   $('#adjust-close').addEventListener('click', closeAdjustModal);
   $('#adjust-cancel').addEventListener('click', closeAdjustModal);
   $('.modal-backdrop', $('#adjust-modal')).addEventListener('click', closeAdjustModal);
@@ -1678,6 +1912,7 @@ async function restoreRound(idx) {
   state.navigatorClaimed = Object.assign(emptyNavClaim(), entry.navigatorClaimed || {});
   state.actedThisTurn = Object.assign({}, entry.actedThisTurn || {});
   state.skippedThisTurn = Object.assign({}, entry.skippedThisTurn || {});
+  migratePlayersRelief(state.players);
 
   // The vacated slot now holds the round we just left — a swap, so the round
   // count is unchanged and no round disappears.
@@ -1992,9 +2227,9 @@ function renderBoostBody(c) {
 // 依當前集體文明自動鎖定分支。衝刺階段所有增減自動 ×2。
 
 // 一個選項在目前衝刺倍率下的實際效果。civAll＝套用到「場上所有玩家」的文明增減。
-function choiceEffects(opt) {
-  const mult = scoreMultiplier();
-  // civAll 是數字；scoreMultiplier() 回的是 {gain,loss,id}。文明不吃天氣／終局倍率（見 applyMult）。
+function choiceEffects(opt, playerId) {
+  const mult = scoreMultiplier(playerId);
+  // civAll 是數字；scoreMultiplier() 回的是 {gain,loss,id}。文明不吃天氣／終局／庇護倍率（見 applyMult）。
   return { each: scaleReward(opt.each || {}, mult), civAll: applyMult(opt.civAll || 0, 'civAll', mult), mult };
 }
 // 「雙方各 福報 -1 · 智慧 -1　·　全體文明 -2」— 一行描述一個選項的效果。
@@ -2109,26 +2344,32 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   const opt = (card.options || [])[optIdx];
   if (!opt) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
-  const { each, civAll, mult } = choiceEffects(opt);
+  const table = choiceEffects(opt);
   const names = [];
+  const pending = [];
   ids.forEach(pid => {
     const p = getPlayer(pid);
     if (!p) return;
+    const old = snapshotFw(p);
+    const { each } = choiceEffects(opt, pid);
     STATS.forEach(stat => { if (each[stat]) setStat(pid, stat, (p[stat] || 0) + each[stat]); });
     names.push(p.name || t('common.player'));
+    pending.push({ pid, old });
   });
   if (!names.length) return;
+  const civAll = table.civAll;
   if (civAll) {
     state.players.forEach(p => setStat(p.id, 'civ', (p.civ || 0) + civAll));   // 集體文明＝場上所有玩家
   }
   const fx = describeChoiceOption(card, opt);
-  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
+  const tag = table.mult.id !== null ? getWeatherLabel(table.mult.id) : '';
   const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
-  const positive = describeReward(each).indexOf('-') === -1 && civAll >= 0;
+  const positive = describeReward(table.each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
   closeCard();
+  for (const item of pending) await maybeAutoRelief(item.pid, item.old);
   await markCardActor(ids[0]);
 }
 
@@ -2397,29 +2638,39 @@ function catalogBoostCardHtml(c) {
 async function applyCardReward(playerIds, card) {
   if (!card) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
-  const mult = scoreMultiplier();
-  const r = scaleReward(card.reward || {}, mult);
-  const names = [];
+  const applied = [];
   ids.forEach(pid => {
     const p = getPlayer(pid);
     if (!p) return;
+    const old = snapshotFw(p);
+    const mult = scoreMultiplier(pid);
+    const r = scaleReward(card.reward || {}, mult);
     if (r.fortune) setStat(pid, 'fortune', (p.fortune || 0) + r.fortune);
     if (r.wisdom)  setStat(pid, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
     if (r.civ)     setStat(pid, 'civ',     (p.civ     || 0) + r.civ);
-    names.push(p.name || t('common.player'));
+    applied.push({ p, r, mult, old, pid });
   });
-  if (!names.length) return;
-  // During the sprint show the doubled per-player tally plus a clear ×2 tag;
-  // otherwise the card's own wording. For 雙方 cards spell out the per-player
-  // grant so two names + the value read unambiguously.
-  const rewardText = mult.id !== null
-    ? describeReward(r)
-    : (ids.length > 1 ? t('messages.both_receive', {reward: describeReward(r)}) : card.rewardText);
-  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
+  if (!applied.length) return;
+  const names = applied.map(a => a.p.name || t('common.player'));
+  const first = applied[0];
+  const sameReward = applied.every(a => describeReward(a.r) === describeReward(first.r) && a.mult.id === first.mult.id);
+  let rewardText;
+  let tag = '';
+  if (!sameReward) {
+    rewardText = applied.map(a =>
+      `${a.p.name || t('common.player')} ${describeReward(a.r) || card.rewardText || ''}`
+    ).join('　');
+  } else if (first.mult.id !== null) {
+    rewardText = describeReward(first.r);
+    tag = getWeatherLabel(first.mult.id);
+  } else {
+    rewardText = ids.length > 1 ? t('messages.both_receive', {reward: describeReward(first.r)}) : card.rewardText;
+  }
   const msg = t('messages.card_completed', {names: names.join('、'), card: card.name, reward: rewardText, tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
+  for (const a of applied) await maybeAutoRelief(a.pid, a.old);
   await markCardActor(ids[0]);
 }
 
@@ -2629,7 +2880,7 @@ $('#weather-adjust-players')?.addEventListener('click', (e) => {
 $('#weather-adjust-players')?.addEventListener('input', (e) => {
   if (e.target.classList.contains('adjust-input')) updateWeatherAdjust();
 });
-$('#weather-adjust-submit')?.addEventListener('click', () => {
+$('#weather-adjust-submit')?.addEventListener('click', async () => {
   const { phase, ev } = getPhase(state.turnNum);
   if (phase !== 'ADJUST' || !ev) {
     $('#weather-adjust-modal').classList.add('hidden');

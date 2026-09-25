@@ -20,11 +20,20 @@ window.GAME_CONFIG = {
   // 終局倒數分鐘數 (預設最後 15 分鐘)
   ENDGAME_MINUTES: 15,
 
+  // 社會福利救濟（防護網，不是獎勵）
+  RELIEF: {
+    EARLY_TURNS: 3,       // 第 1–3 輪無條件可救（含第 3 輪）
+    RESTORE_TO: 3,        // 恢復目標點數
+    SHELTER_TURNS: 2,     // 庇護長度：救濟輪次 N 的 N+1 … N+SHELTER_TURNS
+    LATE_CIV_PERCENT: 25  // 第 4 輪起：文明現值/目標 < 此值才可救（等於門檻不救）
+  },
+
   // 點數倍率表
   MULTIPLIERS: {
     FAVORABLE: { gain: 2.0, loss: 1.0, labelKey: 'ui.weather_favorable' },
     NORMAL:    { gain: 1.3, loss: 1.3, labelKey: 'ui.weather_normal' },
     DISASTER:  { gain: 1.0, loss: 2.0, labelKey: 'ui.weather_disaster' },
-    ENDGAME:   { gain: 2.0, loss: 2.0, labelKey: 'weather.endgame_banner' }
+    ENDGAME:   { gain: 2.0, loss: 2.0, labelKey: 'weather.endgame_banner' },
+    SHELTER:   { gain: 1.5, loss: 0.5, labelKey: 'relief.shelter_label' }
   }
 };
