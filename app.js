@@ -66,12 +66,12 @@ function maxGameSeconds() {
 }
 const SPRINT_SECONDS = () => GAME_CONFIG.ENDGAME_MINUTES * 60;
 const SPRINT_MULTIPLIER = 2;
-const GRAD_THRESHOLD = 55;          // 福慧雙項皆 ≥ 55 即可畢業（手冊「條件二：全員畢業」）
+const GRAD_THRESHOLD = 30;          // 福慧雙項皆 ≥ 30 即可畢業
 const CIV_PER_PLAYER = 10;          // 文明高度：白骰 × 黑骰 ＋ 玩家人數 × 此值
 const DIE_MIN = 1, DIE_MAX = 6;     // 實體白/黑骰點數範圍
-const MILESTONES = [25, 35, 45, 55]; // 單項里程；最後一階＝畢業線
-const NAV_THRESHOLDS = [15, 35, 55];   // 領航者際遇：場上首位福慧雙達者
-const SELF_THRESHOLDS = [25, 45];      // 自我突破際遇：任一玩家福慧雙達者
+const MILESTONES = [30];             // 單項里程：單項 30 (不再分四階)
+const NAV_THRESHOLDS = [10, 20, 30];   // 領航者際遇：場上首位福慧雙達者
+const SELF_THRESHOLDS = [12, 22];      // 自我突破際遇：任一玩家福慧雙達者
 const STATS = ['fortune', 'wisdom', 'civ'];
 const STAT_LABEL = (stat) => t('players.' + stat);
 
@@ -925,11 +925,10 @@ function key(stat, m) { return stat[0] + m; } // e.g. f25, w50
 
 function processStatChange(player, stat, oldVal, newVal) {
   if (stat === 'civ') return;
-  // Only the graduation-line milestone (55) is announced. The single-stat
-  // 25/35/45 「抽里程際遇卡」 prompts were removed — they aren't in the rulebook
-  // (the only card-draw milestones are the dual 領航者 / 自我突破 際遇).
+  
+  // 單項達標：福或慧任一項先到畢業門檻，抽 1 張機會卡 (每位玩家只會觸發一次)
   const m = GRAD_THRESHOLD;
-  const k = key(stat, m);
+  const k = 'single_' + m;
   if (oldVal < m && newVal >= m && !player.notified[k]) {
     player.notified[k] = true;
     const msg = t('messages.grad_draw', {
@@ -1246,7 +1245,7 @@ function buildPlayerCard(p) {
 
 function statusHint(p) {
   if (p.fortune >= GRAD_THRESHOLD - 5 && p.wisdom >= GRAD_THRESHOLD - 5) return t('ui.status_near_grad');
-  if (p.fortune >= 35 || p.wisdom >= 35) return t('ui.status_mid');
+  if (p.fortune >= 15 || p.wisdom >= 15) return t('ui.status_mid');
   return t('ui.status_training');
 }
 
@@ -1617,6 +1616,7 @@ async function applySetup() {
   }));
   // Pre-mark milestones already reached so we don't spam toasts on game start
   state.players.forEach(p => {
+    if (Math.max(p.fortune, p.wisdom) >= GRAD_THRESHOLD) p.notified['single_' + GRAD_THRESHOLD] = true;
     ['fortune', 'wisdom'].forEach(stat => {
       MILESTONES.forEach(m => { if (p[stat] >= m) p.notified[key(stat, m)] = true; });
     });
