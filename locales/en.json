@@ -358,7 +358,7 @@
     "empty_history": "No history yet. Saves automatically.",
     "not_started_title": "Game Not Started",
     "not_started_desc": "Click 'Setup' on the top right to start a new game.",
-    "grad_draw": "{name} {stat} reached {val} - Draw card, can graduate",
+    "grad_draw": "{name} {stat} reached {val} - Draw 1 card",
     "leader_encounter": "Leader Encounter: {name} first to reach {val} Fort & Wis - Draw 1",
     "breakthrough_encounter": "Breakthrough Encounter: {name} reached {val} Fort & Wis - Draw 1",
     "graduated_msg": "{name} completed Fort & Wis, Graduated",
