@@ -17,7 +17,9 @@ export default [
         APP_SEMVER: 'readonly',
         APP_BUILD: 'readonly',
         APP_CACHE_SUFFIX: 'readonly',
-        importScripts: 'readonly'
+        importScripts: 'readonly',
+        GAME_CONFIG: 'readonly',
+        html2canvas: 'readonly'
       }
     },
     rules: {
@@ -27,6 +29,14 @@ export default [
       'quotes': ['warn', 'single', { 'avoidEscape': true }],
       'no-empty': ['error', { 'allowEmptyCatch': true }],
       'no-irregular-whitespace': ['error', { 'skipTemplates': true, 'skipStrings': true, 'skipComments': true }]
+    }
+  },
+  {
+    files: ['scripts/**'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
     }
   },
   {
