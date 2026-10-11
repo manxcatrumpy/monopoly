@@ -380,12 +380,16 @@
     </div>
   </div>
 
-  <!-- 社會福利救濟全場彈窗（§7）：確認啟動或已執行後共見 -->
+  <!-- 社會福利救濟全場彈窗（v2.1）：審核確認或全場宣讀 -->
   <div id="relief-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="relief-title" aria-describedby="relief-message">
     <div class="modal-backdrop"></div>
     <div class="modal-panel confirm-panel relief-panel">
-      <h2 id="relief-title" class="confirm-title" data-i18n="relief.title">【社會福利救濟啟動】</h2>
+      <h2 id="relief-title" class="confirm-title" data-i18n="relief.title">【社會救濟】</h2>
       <p id="relief-message" class="confirm-message"></p>
+      <label id="relief-ack-wrap" class="relief-ack-wrap hidden">
+        <input type="checkbox" id="relief-ack-cb">
+        <span data-i18n="relief.ack_read">我已閱讀並確認</span>
+      </label>
       <div class="confirm-actions">
         <button class="btn hidden" id="relief-later" type="button" data-i18n="relief.offer_later">取消</button>
         <button class="btn btn-primary" id="relief-ok" type="button" data-i18n="relief.offer_start">啟動救濟</button>

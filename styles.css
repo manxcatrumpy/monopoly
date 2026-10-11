@@ -548,6 +548,32 @@ button { font-family: inherit; }
   display: flex; align-items: center; gap: 8px;
   letter-spacing: 0.1em;
 }
+.pc-quota-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: auto;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.pc-quota-dot.avail {
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+.pc-quota-dot.used {
+  background: var(--ink-dim);
+  opacity: 0.35;
+}
+.stat-self-low {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--ink-dim);
+  opacity: 0.7;
+  padding-left: 2px;
+  margin-top: -6px;
+  margin-bottom: 2px;
+}
+.stat-self-low.hidden { display: none !important; }
 .stat-row .stat-label::before {
   content: ""; width: 8px; height: 8px; border-radius: 50%;
 }

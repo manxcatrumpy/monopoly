@@ -20,12 +20,13 @@ window.GAME_CONFIG = {
   // 終局倒數分鐘數 (預設最後 15 分鐘)
   ENDGAME_MINUTES: 15,
 
-  // 社會福利救濟（防護網，不是獎勵）
+  // 社會福利救濟（防護網，不是獎勵 — v2.1 規格）
   RELIEF: {
-    EARLY_TURNS: 3,       // 第 1–3 輪無條件可救（含第 3 輪）
-    RESTORE_TO: 3,        // 恢復目標點數
-    SHELTER_TURNS: 2,     // 庇護長度：救濟輪次 N 的 N+1 … N+SHELTER_TURNS
-    LATE_CIV_PERCENT: 25  // 第 4 輪起：文明現值/目標 < 此值才可救（等於門檻不救）
+    RESTORE_TO: 5,        // 補到 5 點（非加 5）
+    THRESHOLD_EARLY: 0,   // 開局期救濟線（歸零才救）
+    THRESHOLD_LATE: 3,    // 預報後期救濟線（<= 3 就救）
+    CLEAR_TAG_AT: 4,      // 回升至 >= 4 點清除自選低點標記
+    SHELTER_TURNS: 2      // 庇護長度：救濟輪次 N 的 N+1 … N+SHELTER_TURNS
   },
 
   // 點數倍率表

@@ -99,7 +99,8 @@ const defaultState = () => ({
   customDecks: { action: null, boost: null },
   actedThisTurn: {},
   skippedThisTurn: {},
-  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }))
+  weatherEvents: GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null })),
+  reliefSweepDone: false
 });
 
 let state = defaultState();
@@ -136,6 +137,7 @@ function load() {
     if (!state.weatherEvents) {
       state.weatherEvents = GAME_CONFIG.WEATHER.SCHEDULE.map(ev => Object.assign({}, ev, { lockedWeather: null, upgraded: false, civAtLock: null }));
     }
+    if (typeof state.reliefSweepDone !== 'boolean') state.reliefSweepDone = false;
     migratePlayersRelief(state.players);
     if (state.timer.running) {
       state.timer.lastStartedAt = Date.now();
@@ -155,7 +157,8 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
     civ: 0,
     graduated: false,
     notified: {},
-    reliefUsed: false,
+    reliefUsed: { fortune: false, wisdom: false },
+    selfSelectedLow: { fortune: false, wisdom: false },
     shelterFromTurn: null,
     shelterToTurn: null,
   };
@@ -163,7 +166,20 @@ function makePlayer({ name = '', fortune = 0, wisdom = 0 } = {}) {
 
 function migratePlayersRelief(players) {
   (players || []).forEach(p => {
-    if (p.reliefUsed !== true) p.reliefUsed = false;
+    if (typeof p.reliefUsed === 'boolean') {
+      p.reliefUsed = { fortune: p.reliefUsed, wisdom: p.reliefUsed };
+    } else if (!p.reliefUsed || typeof p.reliefUsed !== 'object') {
+      p.reliefUsed = { fortune: false, wisdom: false };
+    } else {
+      if (typeof p.reliefUsed.fortune !== 'boolean') p.reliefUsed.fortune = false;
+      if (typeof p.reliefUsed.wisdom !== 'boolean') p.reliefUsed.wisdom = false;
+    }
+    if (!p.selfSelectedLow || typeof p.selfSelectedLow !== 'object') {
+      p.selfSelectedLow = { fortune: false, wisdom: false };
+    } else {
+      if (typeof p.selfSelectedLow.fortune !== 'boolean') p.selfSelectedLow.fortune = false;
+      if (typeof p.selfSelectedLow.wisdom !== 'boolean') p.selfSelectedLow.wisdom = false;
+    }
     if (typeof p.shelterFromTurn !== 'number') p.shelterFromTurn = null;
     if (typeof p.shelterToTurn !== 'number') p.shelterToTurn = null;
   });
@@ -570,34 +586,47 @@ function scoreMultiplier(playerId) {
 }
 
 function reliefCfg() {
-  return GAME_CONFIG.RELIEF || { EARLY_TURNS: 3, RESTORE_TO: 3, SHELTER_TURNS: 2, LATE_CIV_PERCENT: 25 };
+  return GAME_CONFIG.RELIEF || {
+    RESTORE_TO: 5,
+    THRESHOLD_EARLY: 0,
+    THRESHOLD_LATE: 3,
+    CLEAR_TAG_AT: 4,
+    SHELTER_TURNS: 2
+  };
 }
 
-function reliefPhaseOk() {
+function getFirstForecastTurn() {
+  const events = state.weatherEvents || [];
+  if (events.length > 0 && typeof events[0].targetRound === 'number') {
+    return Math.max(1, events[0].targetRound - 2);
+  }
+  return 4;
+}
+
+function isLateReliefPhase() {
+  if (sprintActive()) return true;
+  return state.turnNum >= getFirstForecastTurn();
+}
+
+function currentReliefThreshold() {
   const cfg = reliefCfg();
-  if (state.turnNum <= cfg.EARLY_TURNS) return true;
-  const goal = state.civGoal || 0;
-  if (goal <= 0) return false;
-  return totalCiv() * 100 < goal * cfg.LATE_CIV_PERCENT;
+  return isLateReliefPhase()
+    ? (cfg.THRESHOLD_LATE !== undefined ? cfg.THRESHOLD_LATE : 3)
+    : (cfg.THRESHOLD_EARLY !== undefined ? cfg.THRESHOLD_EARLY : 0);
 }
 
-function reliefEligible(p) {
-  return !!(p && !p.reliefUsed && reliefPhaseOk());
-}
-
-function reliefNeeded(p) {
-  return reliefEligible(p) && ((p.fortune || 0) === 0 || (p.wisdom || 0) === 0);
-}
-
-function zeroedFwStats(p) {
-  const stats = [];
-  if ((p.fortune || 0) === 0) stats.push('fortune');
-  if ((p.wisdom || 0) === 0) stats.push('wisdom');
-  return stats;
+function reliefEligible(p, stat) {
+  if (!p) return false;
+  if (stat) {
+    if (p.reliefUsed && p.reliefUsed[stat]) return false;
+    if (p.selfSelectedLow && p.selfSelectedLow[stat]) return false;
+    return true;
+  }
+  return reliefEligible(p, 'fortune') || reliefEligible(p, 'wisdom');
 }
 
 function playerInShelter(p) {
-  if (!p || !p.reliefUsed) return false;
+  if (!p) return false;
   const from = p.shelterFromTurn;
   const to = p.shelterToTurn;
   if (typeof from !== 'number' || typeof to !== 'number') return false;
@@ -605,8 +634,9 @@ function playerInShelter(p) {
   return n >= from && n <= to;
 }
 
-function isNewlyZeroed(oldVal, newVal) {
-  return (oldVal || 0) > 0 && (newVal || 0) === 0;
+function shelterTurnsRemaining(p) {
+  if (!playerInShelter(p)) return 0;
+  return Math.max(0, p.shelterToTurn - state.turnNum + 1);
 }
 
 function snapshotFw(p) {
@@ -634,8 +664,9 @@ function shelterBadgeHtml(p) {
   if (!playerInShelter(p)) {
     return '<div class="pc-shelter hidden"></div>';
   }
+  const rem = shelterTurnsRemaining(p);
   return `<div class="pc-shelter">
-      <span class="pc-shelter-title">${escapeHtml(t('relief.badge', { from: p.shelterFromTurn, to: p.shelterToTurn, n: state.turnNum }))}</span>
+      <span class="pc-shelter-title">${escapeHtml(t('relief.badge', { rem }))}</span>
       <span class="pc-shelter-rates">${escapeHtml(t('relief.badge_rates'))}</span>
     </div>`;
 }
@@ -646,7 +677,8 @@ function syncShelterUI(card, p) {
   if (!badge) return;
   if (playerInShelter(p)) {
     badge.classList.remove('hidden');
-    badge.innerHTML = `<span class="pc-shelter-title">${escapeHtml(t('relief.badge', { from: p.shelterFromTurn, to: p.shelterToTurn, n: state.turnNum }))}</span>
+    const rem = shelterTurnsRemaining(p);
+    badge.innerHTML = `<span class="pc-shelter-title">${escapeHtml(t('relief.badge', { rem }))}</span>
       <span class="pc-shelter-rates">${escapeHtml(t('relief.badge_rates'))}</span>`;
   } else {
     badge.classList.add('hidden');
@@ -662,83 +694,133 @@ function enqueueReliefUi(fn) {
   return queued;
 }
 
-function reliefBodyText(name, items) {
+function reliefAnnounceText({ name, items = [], scores = {}, restore, multiPlayers }) {
   const cfg = reliefCfg();
-  return items.length === 2
-    ? t('relief.body_both', { name, restore: cfg.RESTORE_TO })
-    : t('relief.body_one', { name, stat: STAT_LABEL(items[0]), restore: cfg.RESTORE_TO });
+  const rest = restore || cfg.RESTORE_TO || 5;
+  if (multiPlayers && multiPlayers.length > 0) {
+    const names = multiPlayers.map(m => {
+      const statsStr = m.items.map(s => STAT_LABEL(s)).join('、');
+      return `${m.name}（${statsStr}）`;
+    }).join('、');
+    return t('relief.body_multi', { names, restore: rest });
+  }
+  if (items.length === 2) {
+    return t('relief.body_both', { name, restore: rest });
+  }
+  const statKey = items[0] || 'fortune';
+  const scoreVal = scores[statKey] !== undefined ? scores[statKey] : 0;
+  return t('relief.body_one', {
+    name,
+    stat: STAT_LABEL(statKey),
+    score: scoreVal,
+    restore: rest,
+  });
 }
 
 function showReliefModal(opts) {
-  return enqueueReliefUi(() => showReliefPromptNow(Object.assign({ mode: 'done' }, opts)));
+  return enqueueReliefUi(() => showReliefPromptNow(opts));
 }
 
-function showReliefOffer(opts) {
-  return enqueueReliefUi(() => showReliefPromptNow(Object.assign({ mode: 'offer' }, opts)));
-}
-
-function showReliefPromptNow({ name, items, mode }) {
+function showReliefPromptNow(opts) {
   return new Promise((resolve) => {
     const modal = $('#relief-modal');
     const okBtn = $('#relief-ok');
     const laterBtn = $('#relief-later');
+    const ackWrap = $('#relief-ack-wrap');
+    const ackCb = $('#relief-ack-cb');
     const backdrop = modal ? $('.modal-backdrop', modal) : null;
-    if (!modal || !okBtn) { resolve(mode === 'offer' ? false : undefined); return; }
+    if (!modal || !okBtn) { resolve(false); return; }
+
     const title = $('#relief-title');
     const message = $('#relief-message');
-    const isOffer = mode === 'offer';
-    if (title) title.textContent = t('relief.title');
-    if (message) message.textContent = reliefBodyText(name, items);
-    okBtn.textContent = isOffer ? t('relief.offer_start') : t('relief.btn_ok');
-    if (laterBtn) {
-      laterBtn.textContent = t('relief.offer_later');
-      laterBtn.classList.toggle('hidden', !isOffer);
+
+    if (title) title.textContent = opts.title || t('relief.title');
+    if (message) {
+      message.textContent = opts.message || reliefAnnounceText(opts);
     }
 
-    const done = (value) => {
+    if (ackWrap) ackWrap.classList.remove('hidden');
+    if (ackCb) ackCb.checked = false;
+
+    okBtn.textContent = opts.okText || t('relief.offer_start');
+    okBtn.disabled = true;
+
+    if (laterBtn) {
+      laterBtn.textContent = opts.laterText || t('relief.offer_later');
+      laterBtn.classList.remove('hidden');
+    }
+
+    const onAckChange = () => {
+      if (ackCb) okBtn.disabled = !ackCb.checked;
+    };
+    if (ackCb) ackCb.addEventListener('change', onAckChange);
+
+    const cleanup = () => {
       modal.classList.add('hidden');
       okBtn.removeEventListener('click', onOk);
       if (laterBtn) laterBtn.removeEventListener('click', onLater);
       if (backdrop) backdrop.removeEventListener('click', onBackdrop);
+      if (ackCb) ackCb.removeEventListener('change', onAckChange);
       document.removeEventListener('keydown', onKey);
+    };
+
+    const done = (value) => {
+      cleanup();
       resolve(value);
     };
-    const onOk = () => done(isOffer ? true : undefined);
-    const onLater = () => done(false);
-    const onBackdrop = () => { if (isOffer) onLater(); };
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); isOffer ? onLater() : onOk(); }
-      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
+
+    const onOk = () => {
+      if (okBtn.disabled) return;
+      done(true);
     };
+    const onLater = () => done(false);
+    const onBackdrop = () => onLater();
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onLater();
+      } else if (e.key === 'Enter') {
+        if (!okBtn.disabled) {
+          e.preventDefault();
+          onOk();
+        }
+      }
+    };
+
     okBtn.addEventListener('click', onOk);
     if (laterBtn) laterBtn.addEventListener('click', onLater);
     if (backdrop) backdrop.addEventListener('click', onBackdrop);
     document.addEventListener('keydown', onKey);
     modal.classList.remove('hidden');
-    okBtn.focus();
+    if (ackCb) ackCb.focus();
   });
 }
 
-async function executeRelief(playerId, { announce = true } = {}) {
+async function executeRelief(playerId, statsToRelieve = []) {
   const p = getPlayer(playerId);
-  if (!p || p.reliefUsed || !reliefPhaseOk()) return false;
-  const stats = [];
-  if ((p.fortune || 0) === 0) stats.push('fortune');
-  if ((p.wisdom || 0) === 0) stats.push('wisdom');
-  if (!stats.length) return false;
-
+  if (!p) return false;
   const cfg = reliefCfg();
-  const name = p.name || t('common.player');
-  p.reliefUsed = true;
-  p.shelterFromTurn = state.turnNum + 1;
-  p.shelterToTurn = state.turnNum + cfg.SHELTER_TURNS;
-  stats.forEach(stat => setStat(playerId, stat, cfg.RESTORE_TO));
+  const eligibleStats = statsToRelieve.filter(stat => (stat === 'fortune' || stat === 'wisdom') && reliefEligible(p, stat));
+  if (!eligibleStats.length) return false;
 
-  const itemsLabel = stats.length === 2 ? t('relief.items_both') : STAT_LABEL(stats[0]);
+  const restoreTo = cfg.RESTORE_TO || 5;
+  const name = p.name || t('common.player');
+
+  eligibleStats.forEach(stat => {
+    if (!p.reliefUsed) p.reliefUsed = { fortune: false, wisdom: false };
+    p.reliefUsed[stat] = true;
+    setStat(playerId, stat, restoreTo);
+  });
+
+  p.shelterFromTurn = state.turnNum + 1;
+  const targetEnd = state.turnNum + (cfg.SHELTER_TURNS || 2);
+  p.shelterToTurn = typeof p.shelterToTurn === 'number' ? Math.max(p.shelterToTurn, targetEnd) : targetEnd;
+
+  const itemsLabel = eligibleStats.length === 2 ? t('relief.items_both') : STAT_LABEL(eligibleStats[0]);
   const msg = t('messages.relief_log', {
     name,
     items: itemsLabel,
-    restore: cfg.RESTORE_TO,
+    restore: restoreTo,
     from: p.shelterFromTurn,
     to: p.shelterToTurn,
   });
@@ -746,43 +828,90 @@ async function executeRelief(playerId, { announce = true } = {}) {
   save();
   updatePlayerCard(p);
   updateTopbar();
-  if (announce) await showReliefModal({ name, items: stats });
   return true;
 }
 
-async function maybeAutoRelief(playerId, oldStats) {
-  const p = getPlayer(playerId);
-  if (!reliefEligible(p) || !oldStats) return;
-  if (!isNewlyZeroed(oldStats.fortune, p.fortune) && !isNewlyZeroed(oldStats.wisdom, p.wisdom)) return;
-  await maybeOfferRelief(playerId, { force: true });
-}
-
-async function maybeOfferRelief(playerId, { force = false } = {}) {
-  const p = getPlayer(playerId);
-  if (!reliefNeeded(p)) return;
-  if (!force && p.reliefOfferedTurn === state.turnNum) return;
-  const stats = zeroedFwStats(p);
-  if (!stats.length) return;
-  p.reliefOfferedTurn = state.turnNum;
-  save();
-  const name = p.name || t('common.player');
-  const ok = await showReliefOffer({ name, items: stats });
-  if (ok) await executeRelief(playerId, { announce: false });
-}
-
-async function maybeOfferReliefAfterZero(playerId, oldStats) {
+async function maybeCheckReliefAfterForcedLoss(playerId, oldStats) {
   const p = getPlayer(playerId);
   if (!p || !oldStats) return;
-  const newly = isNewlyZeroed(oldStats.fortune, p.fortune) || isNewlyZeroed(oldStats.wisdom, p.wisdom);
-  if (!newly && !reliefNeeded(p)) return;
-  await maybeOfferRelief(playerId, { force: newly });
+  const threshold = currentReliefThreshold();
+  const qualifying = [];
+  const scores = {};
+  ['fortune', 'wisdom'].forEach(stat => {
+    const oldVal = oldStats[stat] ?? 0;
+    const newVal = p[stat] ?? 0;
+    if (newVal < oldVal && newVal <= threshold && reliefEligible(p, stat)) {
+      qualifying.push(stat);
+      scores[stat] = newVal;
+    }
+  });
+  if (!qualifying.length) return;
+
+  const cfg = reliefCfg();
+  const restore = cfg.RESTORE_TO || 5;
+  const name = p.name || t('common.player');
+
+  const ok = await showReliefModal({
+    name,
+    items: qualifying,
+    scores,
+    restore
+  });
+
+  if (ok) {
+    await executeRelief(playerId, qualifying);
+  }
+}
+
+async function sweepReliefOnBoundary() {
+  const threshold = currentReliefThreshold();
+  const candidates = [];
+  state.players.forEach(p => {
+    const pQual = [];
+    const pScores = {};
+    ['fortune', 'wisdom'].forEach(stat => {
+      const val = p[stat] || 0;
+      if (val <= threshold && reliefEligible(p, stat)) {
+        pQual.push(stat);
+        pScores[stat] = val;
+      }
+    });
+    if (pQual.length > 0) {
+      candidates.push({ player: p, items: pQual, scores: pScores });
+    }
+  });
+
+  if (!candidates.length) return;
+
+  const cfg = reliefCfg();
+  const restore = cfg.RESTORE_TO || 5;
+  const multiList = candidates.map(c => ({
+    name: c.player.name || t('common.player'),
+    items: c.items,
+    scores: c.scores
+  }));
+
+  const ok = await showReliefModal({
+    multiPlayers: multiList.length > 1 ? multiList : null,
+    name: multiList[0].name,
+    items: multiList[0].items,
+    scores: multiList[0].scores,
+    restore
+  });
+
+  if (ok) {
+    for (const c of candidates) {
+      await executeRelief(c.player.id, c.items);
+    }
+  }
 }
 
 function applyMult(val, stat, multObj) {
   if (!val) return 0;
   if (stat === 'civ' || stat === 'civAll') return val; // 文明不吃倍率
-  const rate = val >= 0 ? multObj.gain : multObj.loss;
-  return Math.round(val * rate);
+  return val >= 0
+    ? Math.round(val * multObj.gain)
+    : -Math.round(Math.abs(val) * multObj.loss);
 }
 
 function scaleReward(base = {}, mult = { gain: 1, loss: 1 }) {
@@ -1140,6 +1269,11 @@ function updateTopbar() {
     state._sprintNoticed = true;
     toast(t('messages.sprint_started'), 'grad');
     logEvent(t('messages.sprint_started_log'), 'grad');
+    if (!state.reliefSweepDone) {
+      state.reliefSweepDone = true;
+      save();
+      sweepReliefOnBoundary();
+    }
   }
 
   if (sec >= maxSec && !state._timeUpNoticed) {
@@ -1257,14 +1391,24 @@ function statRow(p, stat) {
     const pos = (m / max) * 100;
     return `<span class="stat-mark ${v >= m ? 'reached' : ''}" data-mark="${m}" style="left:${pos}%"></span>`;
   }).join('');
+  const isFW = stat === 'fortune' || stat === 'wisdom';
+  const quotaUsed = !!(isFW && p.reliefUsed && p.reliefUsed[stat]);
+  const quotaDot = isFW
+    ? `<span class="pc-quota-dot ${quotaUsed ? 'used' : 'avail'}" title="${escapeHtml(t(quotaUsed ? 'relief.quota_used' : 'relief.quota_avail'))}"></span>`
+    : '';
+  const selfLow = !!(isFW && p.selfSelectedLow && p.selfSelectedLow[stat]);
+  const selfLowHtml = isFW
+    ? `<div class="stat-self-low ${selfLow ? '' : 'hidden'}">${escapeHtml(t('relief.self_low_tag'))}</div>`
+    : '';
   return `
     <div class="stat-row stat-${stat}">
-      <div class="stat-label">${STAT_LABEL(stat)}</div>
+      <div class="stat-label"><span>${STAT_LABEL(stat)}</span>${quotaDot}</div>
       <div class="stat-bar">
         <div class="stat-bar-fill" style="width:${pct}%"></div>
         ${marks}
       </div>
       <span class="stat-num">${v}</span>
+      ${selfLowHtml}
     </div>
   `;
 }
@@ -1349,7 +1493,7 @@ async function applyAdjust() {
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  await maybeOfferReliefAfterZero(pid, old);
+  await maybeCheckReliefAfterForcedLoss(pid, old);
   if (markTurn) markActed(pid);
   if (alreadyResolved) await maybeOfferSkipLeftover(pid);
 }
@@ -1413,6 +1557,10 @@ function setStat(playerId, stat, value) {
   const old = p[stat] || 0;
   p[stat] = Math.max(0, value | 0);
   if (stat !== 'civ') {
+    const clearAt = reliefCfg().CLEAR_TAG_AT || 4;
+    if (p[stat] >= clearAt && p.selfSelectedLow && p.selfSelectedLow[stat]) {
+      p.selfSelectedLow[stat] = false;
+    }
     processStatChange(p, stat, old, p[stat]);
     checkDualMilestones(p);
   }
@@ -1442,6 +1590,20 @@ function updatePlayerCard(p) {
     row.querySelectorAll('.stat-mark').forEach(mark => {
       mark.classList.toggle('reached', v >= +mark.dataset.mark);
     });
+
+    if (stat === 'fortune' || stat === 'wisdom') {
+      const dot = row.querySelector('.pc-quota-dot');
+      if (dot) {
+        const quotaUsed = !!(p.reliefUsed && p.reliefUsed[stat]);
+        dot.className = `pc-quota-dot ${quotaUsed ? 'used' : 'avail'}`;
+        dot.title = t(quotaUsed ? 'relief.quota_used' : 'relief.quota_avail');
+      }
+      const selfLowEl = row.querySelector('.stat-self-low');
+      if (selfLowEl) {
+        const selfLow = !!(p.selfSelectedLow && p.selfSelectedLow[stat]);
+        selfLowEl.classList.toggle('hidden', !selfLow);
+      }
+    }
   });
 
   card.querySelector('.pc-status').textContent =
@@ -1632,6 +1794,7 @@ async function applySetup() {
   state._sprintNoticed = false;
   state._civGoalNoticed = false;
   state._allGradNoticed = false;
+  state.reliefSweepDone = false;
   if (!isNext) state.history = [];   // only a brand-new game clears history; 下一局 keeps it
   state.navigatorClaimed = emptyNavClaim();
   // Navigator: silent pre-claim if any player already starts above each threshold (player array order = priority)
@@ -1758,7 +1921,7 @@ function toggleSkipped(playerId) {
   }
   markSkipped(playerId);
 }
-function nextTurn() {
+async function nextTurn() {
   state.actedThisTurn = {};
   state.skippedThisTurn = {};
   resetSkipLeftoverPrompt();
@@ -1781,6 +1944,14 @@ function nextTurn() {
   }
   save();
   renderAll();
+
+  // 第一次氣象預報發布（或更早進入終局倒數）當刻，主動執行界線盤點
+  if (isLateReliefPhase() && !state.reliefSweepDone) {
+    state.reliefSweepDone = true;
+    save();
+    await sweepReliefOnBoundary();
+  }
+
   if (phase === 'ADJUST' && ev) openWeatherAdjustModal();
 }
 
@@ -2369,7 +2540,7 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
   closeCard();
-  for (const item of pending) await maybeAutoRelief(item.pid, item.old);
+  for (const item of pending) await maybeCheckReliefAfterForcedLoss(item.pid, item.old);
   await markCardActor(ids[0]);
 }
 
@@ -2670,7 +2841,7 @@ async function applyCardReward(playerIds, card) {
   toast(msg, 'grad');
   logEvent(msg, 'grad');
   closeCard();
-  for (const a of applied) await maybeAutoRelief(a.pid, a.old);
+  for (const a of applied) await maybeCheckReliefAfterForcedLoss(a.pid, a.old);
   await markCardActor(ids[0]);
 }
 
@@ -2837,7 +3008,7 @@ function updateWeatherAdjust() {
     const nowWeather = judgeWeather(newCiv, ev.targetRound - 2, state.civGoal);
     const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
 
-    let gapMsg = '';
+    let gapMsg;
     if (ev.upgraded) {
       gapMsg = t('weather.adjust_already_upgraded');
     } else if (ranks[nowWeather] > ranks[ev.lockedWeather]) {
@@ -2895,11 +3066,51 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
 
   const spent = civGain * rate;
   const charged = chargeWeatherAdjust(contributions, spent);
+
+  // v2.1: 自選低點防策略警告 — 若花費會讓分數降至 3 點以下（含 3），跳出確認提醒
+  const selfLowWarnings = [];
   charged.forEach(c => {
     const p = getPlayer(c.id);
     if (!p) return;
-    if (c.f) setStat(p.id, 'fortune', p.fortune - c.f);
-    if (c.w) setStat(p.id, 'wisdom', p.wisdom - c.w);
+    const statsWarned = [];
+    if (c.f && (p.fortune - c.f) <= 3) statsWarned.push(STAT_LABEL('fortune'));
+    if (c.w && (p.wisdom - c.w) <= 3) statsWarned.push(STAT_LABEL('wisdom'));
+    if (statsWarned.length) {
+      selfLowWarnings.push(`${p.name || t('common.player')} 的〔${statsWarned.join('、')}〕`);
+    }
+  });
+
+  if (selfLowWarnings.length > 0) {
+    const warnMsg = t('weather.adjust_self_low_warn', { stat: selfLowWarnings.join('、') });
+    const proceed = await confirmModal({
+      title: t('confirm.title'),
+      message: warnMsg,
+      confirmText: t('confirm.btn_ok'),
+      cancelText: t('confirm.btn_cancel'),
+      danger: true
+    });
+    if (!proceed) return;
+  }
+
+  charged.forEach(c => {
+    const p = getPlayer(c.id);
+    if (!p) return;
+    if (c.f) {
+      const nextF = p.fortune - c.f;
+      setStat(p.id, 'fortune', nextF);
+      if (nextF <= 3) {
+        if (!p.selfSelectedLow) p.selfSelectedLow = { fortune: false, wisdom: false };
+        p.selfSelectedLow.fortune = true;
+      }
+    }
+    if (c.w) {
+      const nextW = p.wisdom - c.w;
+      setStat(p.id, 'wisdom', nextW);
+      if (nextW <= 3) {
+        if (!p.selfSelectedLow) p.selfSelectedLow = { fortune: false, wisdom: false };
+        p.selfSelectedLow.wisdom = true;
+      }
+    }
   });
   addCollectiveCiv(civGain);
 
