@@ -155,7 +155,9 @@ function load() {
     }
     if (typeof state.reliefSweepDone !== 'boolean') state.reliefSweepDone = false;
     migratePlayersRelief(state.players);
-    if (state.timer.running) {
+    // 保留儲存的起算時間，重新整理或關閉後再開啟時仍接續計時。
+    // 只有舊資料缺少有效起算時間時，才從載入當下開始。
+    if (state.timer.running && !Number.isFinite(state.timer.lastStartedAt)) {
       state.timer.lastStartedAt = Date.now();
     }
     return state.players.length > 0;
