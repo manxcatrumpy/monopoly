@@ -65,7 +65,6 @@ function maxGameSeconds() {
   return gameMinutes() * 60;
 }
 const SPRINT_SECONDS = () => GAME_CONFIG.ENDGAME_MINUTES * 60;
-const SPRINT_MULTIPLIER = 2;
 const GRAD_THRESHOLD = 30;          // 福慧雙項皆 ≥ 30 即可畢業
 const CIV_PER_PLAYER = 10;          // 文明高度：白骰 × 黑骰 ＋ 玩家人數 × 此值
 const DIE_MIN = 1, DIE_MAX = 6;     // 實體白/黑骰點數範圍
@@ -105,9 +104,26 @@ const defaultState = () => ({
 
 let state = defaultState();
 
-function save() {
+let saveScheduled = false;
+function saveNow() {
+  saveScheduled = false;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
 }
+function save() {
+  if (saveScheduled) return;
+  saveScheduled = true;
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(saveNow);
+  } else {
+    Promise.resolve().then(saveNow);
+  }
+}
+window.addEventListener('pagehide', () => {
+  if (saveScheduled) saveNow();
+});
+window.addEventListener('beforeunload', () => {
+  if (saveScheduled) saveNow();
+});
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -228,12 +244,6 @@ function getPhase(turn) {
     if (turn === ev.targetRound) return { phase: 'REPORT', ev };
   }
   return { phase: 'NORMAL', ev: null };
-}
-
-function getActiveWeather() {
-  if (sprintActive()) return 'ENDGAME';
-  const { phase, ev } = getPhase(state.turnNum);
-  return phase === 'REPORT' ? ev.lockedWeather : null;
 }
 
 // ─────────── Dice ───────────
@@ -3058,7 +3068,7 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
     return;
   }
 
-  const { contributions, totalCost, civGain, rate } = readWeatherAdjustInputs();
+  const { contributions, civGain, rate } = readWeatherAdjustInputs();
   if (civGain <= 0) {
     toast(t('weather.adjust_none', { rate }));
     return;
