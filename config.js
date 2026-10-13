@@ -38,3 +38,13 @@ window.GAME_CONFIG = {
     SHELTER:   { gain: 1.5, loss: 0.5, labelKey: 'relief.shelter_label' }
   }
 };
+
+(function deepFreeze(obj) {
+  Object.keys(obj).forEach((prop) => {
+    if (typeof obj[prop] === 'object' && obj[prop] !== null) {
+      deepFreeze(obj[prop]);
+    }
+  });
+  return Object.freeze(obj);
+})(window.GAME_CONFIG);
+
