@@ -22,6 +22,7 @@ export default [
         APP_CACHE_SUFFIX: 'readonly',
         importScripts: 'readonly',
         GAME_CONFIG: 'readonly',
+        GameRules: 'readonly',
         html2canvas: 'readonly'
       }
     },
@@ -41,6 +42,10 @@ export default [
         ...globals.node
       }
     }
+  },
+  {
+    files: ['game-rules.js'],
+    languageOptions: { globals: { module: 'readonly' } }
   },
   {
     files: ['version.js'],

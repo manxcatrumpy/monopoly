@@ -29,6 +29,9 @@ python3 -m http.server 8080
 
 Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片功能會動，但 PWA 安裝 / 離線會失效。SW 採 network-first：有網就拿新檔，離線才用 cache。
 
+修改規則或遊戲流程後執行 `npm test`、`npm run lint` 與 `npm run build`。
+計分結算與畫面更新的分工見 [第一階段重構說明](docs/score-flow.md)。
+
 ## 部署到 GitHub Pages
 
 1. 在 GitHub 建立一個 repo（例如 `fuhui-dashboard`），把這個資料夾整個 push 上去：
@@ -57,7 +60,8 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `config.js` | 天氣時程、兌換率、倍率、救濟參數等規則旋鈕 |
 | `docs/social-welfare-relief.md` | 社會福利救濟可實作規格 |
 | `version.js` | 版號單一來源（畫面 + SW cache） |
-| `app.js` | 遊戲狀態、計分、天氣、抽卡、計時、Toast |
+| `game-rules.js` | 純規則：批次分數、里程、勝利與時間界線、倍率、救濟資格 |
+| `app.js` | 遊戲操作流程、狀態套用、畫面與通知；所有分數經同一批次入口結算 |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |
 | `manifest.webmanifest` | PWA 安裝 manifest |
