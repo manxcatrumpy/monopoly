@@ -23,6 +23,8 @@ export default [
         importScripts: 'readonly',
         GAME_CONFIG: 'readonly',
         GameRules: 'readonly',
+        GameState: 'readonly',
+        GameStorage: 'readonly',
         html2canvas: 'readonly'
       }
     },
@@ -44,7 +46,7 @@ export default [
     }
   },
   {
-    files: ['game-rules.js'],
+    files: ['game-rules.js', 'game-state.js', 'storage.js'],
     languageOptions: { globals: { module: 'readonly' } }
   },
   {

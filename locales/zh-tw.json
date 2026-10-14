@@ -1,4 +1,11 @@
 {
+  "storage": {
+    "read_failed": "無法讀取遊戲存檔，原始資料已保留。開新局或重置前會再次確認。",
+    "write_failed": "遊戲資料尚未保存。請勿關閉此頁；確認可用儲存空間後再試。",
+    "replace_title": "無法讀取的存檔",
+    "replace_message": "開新局會先備份目前無法讀取的存檔，再建立新遊戲。要繼續嗎？",
+    "history_incomplete": "這筆舊歷史未記錄完整的天氣、待抽卡或救濟盤點狀態；已使用獨立預設值。"
+  },
   "app": {
     "title": "福慧大富翁",
     "dashboard_title": "福慧大富翁 Dashboard",
