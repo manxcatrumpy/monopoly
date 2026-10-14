@@ -3,6 +3,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
+const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
 
 // 執行實際 app 流程；DOM adapter 只記錄顯示、焦點與事件，不替換救濟規則。
@@ -48,7 +49,7 @@ function createApp() {
     return node;
   }
   const context = vm.createContext({
-    GameRules, GameState, GameStorage,
+    GameRules, GameState, GameStorage, DeckModel,
     window: { addEventListener: noop }, document,
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     queueMicrotask, setTimeout: noop, clearTimeout: noop, setInterval: noop,

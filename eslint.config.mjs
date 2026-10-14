@@ -25,6 +25,7 @@ export default [
         GameRules: 'readonly',
         GameState: 'readonly',
         GameStorage: 'readonly',
+        DeckModel: 'readonly',
         html2canvas: 'readonly'
       }
     },
@@ -46,8 +47,8 @@ export default [
     }
   },
   {
-    files: ['game-rules.js', 'game-state.js', 'storage.js'],
-    languageOptions: { globals: { module: 'readonly' } }
+    files: ['config.js', 'game-rules.js', 'game-state.js', 'storage.js', 'deck-model.js'],
+    languageOptions: { globals: { module: 'readonly', require: 'readonly' } }
   },
   {
     files: ['version.js'],

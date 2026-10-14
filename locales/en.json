@@ -74,7 +74,7 @@
   },
   "banner": {
     "sprint_title": "Sprint of Impermanence & Grace",
-    "sprint_sub": "Last 15 mins — All card score changes ×2"
+    "sprint_sub": "Last {sprintMinutes} mins — All card score changes ×2"
   },
   "civ": {
     "progress_label": "Total Civ Points — Reach goal to win",
@@ -92,7 +92,7 @@
     "deck_title": "Deck Manager",
     "deck_hint": "Import custom JSON to overwrite default decks. Stored in localStorage.",
     "milestone_title": "Milestones",
-    "milestone_hint": "Single 55: draw a card, may declare graduation (both ≥ 55 to graduate)\nLeader: first to both 15 / 35 / 55 draws 1\nBreakthrough: anyone reaching both 25 / 45 draws 1",
+    "milestone_hint": "Single {graduation}: draw 1 card\nBoth {graduation}: graduate\nLeader: first to both {navigator}, draw 1 each\nBreakthrough: anyone reaching both {breakthrough}, draw 1 each",
     "pending_head": "Pending ",
     "pending_note": "Click 'Drawn' to clear",
     "log_empty": "No events",
@@ -152,7 +152,8 @@
     "btn_apply": "Apply Pasted JSON",
     "sec4_title": "Reset",
     "hint4": "Remove all custom data and restore default decks.",
-    "btn_reset": "Reset to Default"
+    "btn_reset": "Reset to Default",
+    "source_custom": "Custom"
   },
   "catalog": {
     "title": "Card Catalog",
@@ -178,10 +179,26 @@
     "side_sprint_remind": "Sprint Active: Side effect is NOT auto-doubled. Apply ×2 manually.",
     "lbl_instant_action": "Action",
     "lbl_insight": "Insight",
-    "dilemma_cond_civ": "Current Total Civ <strong>{total}</strong> (Threshold {threshold}) → Apply 'Civ {op} {threshold}' branch"
+    "dilemma_cond_civ": "Current Total Civ <strong>{total}</strong> (Threshold {threshold}) → Apply 'Civ {op} {threshold}' branch",
+    "each_prefix": "Each: ",
+    "collective_civ": "Collective Civ {delta}",
+    "no_score_change": "No score changes",
+    "manual_side": "Extra: {side} (apply manually)"
   },
   "history": {
-    "title": "History"
+    "round": "Game {round}",
+    "restore_title": "Restore game {round}",
+    "restore_action": "Restore this game",
+    "title": "History · Game {round}",
+    "goal": "Civ goal {goal}",
+    "scores": "Fortune {fortune} · Wisdom {wisdom} · Civ {civ}",
+    "total": "Total",
+    "duration": "Duration {duration}",
+    "meta": "Completed {when} · Duration {duration} · Civ goal {goal}",
+    "back": "← Back to list",
+    "empty_log": "No events in this game",
+    "log": "Game event log",
+    "collective_civ": "Collective Civ"
   },
   "confirm": {
     "title": "Confirm",
@@ -198,7 +215,7 @@
     "reset_game_msg": "Clear all scores, timers, and history? This cannot be undone.",
     "reset": "Reset",
     "import_deck_title": "Import Deck",
-    "import_deck_msg": "Import: {parts}\\nCurrent deck will be overwritten.",
+    "import_deck_msg": "Import: {parts}\nCurrent deck will be overwritten.",
     "import": "Import",
     "reset_deck_title": "Reset to Default Decks",
     "reset_deck_msg": "All custom cards will be cleared.",
@@ -264,19 +281,19 @@
     "s3_sub1_li2": "Goal set by player with highest initial stats.",
     "s3_sub1_li3": "Goal = White die × Black die + player count × 10.",
     "s3_sub2": "2. All Graduated",
-    "s3_sub2_li1": "Fortune & Wisdom both ≥ 55.",
+    "s3_sub2_li1": "Fortune and Wisdom both ≥ {graduation}: graduate.",
     "s3_sub2_li2": "Must keep rolling until game ends.",
     "s3_sub2_li3": "Can give points to others (Civ +1).",
-    "s3_sub2_li4": "Lose hat if drops below 55.",
+    "s3_sub2_li4": "Lose graduation if either stat drops below {graduation}; regain it after recovering.",
     "s3_sub3": "3. Time Up",
     "s3_sub3_li1": "End of current round when time expires.",
-    "s3_sub3_li2": "Last 15 minutes: Fortune/Wisdom gains and losses ×2; Civ unchanged; weather frozen.",
+    "s3_sub3_li2": "Last {sprintMinutes} minutes: Fortune/Wisdom gains and losses ×2; Civ unchanged; weather frozen.",
     "s4_title": "Victory",
     "s4_p1": "Highest total score wins.",
-    "s4_formula": "Total = Fortune + Wisdom + (Civ × 2)",
+    "s4_formula": "Total = Fortune + Wisdom + (Civ × {scoreWeight})",
     "s4_p2_strong": "Example: ",
-    "s4_p2": "Fortune 30, Wisdom 40, Civ 10 → 30 + 40 + (10 × 2) = ",
-    "s4_p2_bold": "90",
+    "s4_p2": "Fortune 30, Wisdom 40, Civ 10 → 30 + 40 + (10 × {scoreWeight}) = ",
+    "s4_p2_bold": "{exampleTotal}",
     "s4_p2_end": ".",
     "s5_title": "Chance Cards",
     "s5_p1": "Represent real-world luck.",
@@ -284,9 +301,9 @@
     "s5_li1": "Draw 1 card.",
     "s5_li2_strong": "Milestones: ",
     "s5_li2": "Draw cards when reaching specific scores.",
-    "s5_li2_sub1": "Leader: first player to both ≥ 15 / 35 / 55 draws 1 card each time.",
-    "s5_li2_sub2": "Breakthrough: any player reaching both ≥ 25 / 45 draws 1 card.",
-    "s5_li2_sub3": "Single 55: first Fortune or Wisdom to 55 draws 1 Chance card and may declare graduation (needs both ≥ 55). Single 25 / 35 / 45 do not draw.",
+    "s5_li2_sub1": "Leader: first player to both ≥ {navigator} draws 1 card at each threshold.",
+    "s5_li2_sub2": "Breakthrough: any player reaching both ≥ {breakthrough} draws 1 card at each threshold.",
+    "s5_li2_sub3": "Single {graduation}: first Fortune or Wisdom to reach {graduation} draws 1 card. Graduation requires both stats.",
     "s6_title": "Using Chance Cards",
     "s6_sub1": "Impermanence",
     "s6_sub1_li1": "Must reveal and execute immediately.",
@@ -296,11 +313,11 @@
     "s6_sub2_li2": "Max 2 in hand.",
     "s6_sub2_li3": "Declare when using.",
     "s7_title": "Score & Milestones",
-    "s7_p1": "Track Fortune, Wisdom, Civ, graduation, breakthroughs (both 25 / 45), and leaders (both 15 / 35 / 55).",
+    "s7_p1": "Track Fortune, Wisdom, Civ, graduation, breakthroughs (both {breakthrough}), and leaders (both {navigator}).",
     "s7_sub1": "Leaders",
     "s7_li1": "Both ≥ 15 🏆 Leader",
     "s7_li2": "Both ≥ 35 🏆 Leader",
-    "s7_li3": "Both ≥ 55 🏆 Leader",
+    "s7_li3": "Both ≥ {graduation} 🏆 Leader",
     "s7_p2": "Calculate winner at the end.",
     "s8_title": "Weather",
     "s8_p1": "Default 16-turn pace. Weather reports on turns 6 and 12, judged against expected Civ (goal × current turn / 16).",
@@ -316,13 +333,13 @@
     "s10_li3": "Graduates get extra Civ +1. Fortune/Wisdom auto-double during the sprint. Applying also marks them as acted this turn.",
     "s11_title": "Social welfare relief",
     "s11_p1": "When Fortune or Wisdom hits 0 from bad luck, the game does not end — relief kicks in. Once per player per game.",
-    "s11_li1": "Turns 1–3: always available. From turn 4: only if collective Civ is below 25% of the goal.",
-    "s11_li2": "Applying a card that drops a stat from a positive value to 0 shows a prompt; the host taps Start relief to restore it to 3.",
-    "s11_li3": "Add/Subtract and gifts do not auto-trigger; if eligible, a prompt asks the host to start relief. Weather exchange is a voluntary spend — hitting 0 does not offer relief.",
-    "s11_li4": "Deducting a stat that is already 0 does not auto-trigger.",
-    "s11_li5": "If both Fortune and Wisdom are 0 when relief runs, both restore to 3, still counting as one use.",
-    "s11_li6": "The trigger turn has no shelter. The next two turns: Fortune/Wisdom gains ×1.5, losses ×0.5 (same rounding as weather). Civ is never multiplied.",
-    "s11_li7": "Endgame overrides shelter rates (×2 / ×2); shelter state is kept. A weather-report turn during shelter uses shelter, not weather."
+    "s11_li1": "Early relief requires zero points. After the first forecast (normally turn {forecastTurn}), or an earlier endgame sprint, the relief line is ≤ {reliefLow}.",
+    "s11_li2": "Forced losses reaching the relief line prompt review. The first boundary also checks all eligible players.",
+    "s11_li3": "Fortune and Wisdom each have one independent relief quota per player.",
+    "s11_li4": "Voluntary weather spending marks low stats as ineligible for relief. Recovering to ≥ {clearAt} clears the mark.",
+    "s11_li5": "Each eligible stat is restored to {restoreTo}. If both qualify, each is restored and uses its own quota.",
+    "s11_li6": "New shelter starts next turn and lasts {shelterTurns} turns: gains ×{shelterGain}, losses ×{shelterLoss}. Round absolute losses half up; Civ is unchanged.",
+    "s11_li7": "Endgame overrides shelter rates. Shelter overrides weather. Further relief preserves current protection and extends its end."
   },
   "draw_mile": {
     "title": "Milestone Draws",
@@ -377,7 +394,8 @@
     "relief_log": "{name} social welfare relief: restored {items} to {restore}. Lucky shelter: turns {from}–{to}"
   },
   "common": {
-    "player": "Player"
+    "player": "Player",
+    "list_separator": ", "
   },
   "validate": {
     "need_object": "Must be JSON object",
@@ -427,7 +445,7 @@
     "adjust_sub_pending": "Exchange F/W for Civ. {short} more Civ needed for next weather rank.",
     "report_title": "Weather Active",
     "report_sub": "This turn applies '{weather}' multiplier!",
-    "modal_title": "Weather Adjust (3 F/W = 1 Civ)",
+    "modal_title": "Weather Adjust ({exchangeRate} F/W = 1 Civ)",
     "current_forecast": "Current Forecast: ",
     "total_cost": "Total invested: {cost} F/W",
     "civ_gain": "→ Civ gained: {civ}",
@@ -452,7 +470,8 @@
     "report_heading": "[{weather}]",
     "adj_spend": "spend",
     "adj_remain": "left {n}",
-    "adjust_self_low_warn": "This action will drop your [{stat}] to 3 or below. Self-selected spending is not eligible for social relief. Confirm?"
+    "adjust_self_low_warn": "This spending will leave {stat} at {reliefLow} points or less. Voluntary spending is not eligible for social relief. Continue?",
+    "player_low_stats": "{name}'s {stats}"
   },
   "relief": {
     "title": "【Social Relief】",
@@ -474,7 +493,20 @@
     "body_one": "{name}'s [{stat}] dropped to {score} pts.\nSocial relief activated, restored to {restore} pts.\n\nFor the next 2 turns, {name} is sheltered:\ngood things amplified, bad things halved.\n\nImpermanence brings a turn of fortune.",
     "body_both": "{name}'s Fortune and Wisdom hit bottom.\nSocial relief activated, both restored to {restore} pts.\n\nFor the next 2 turns, {name} is sheltered:\ngood things amplified, bad things halved.\n\nImpermanence brings a turn of fortune.",
     "body_multi": "{names} need support.\nSocial relief activated, each restored to {restore} pts.\n\nFor the next 2 turns, they are sheltered.",
-    "adjust_shelter": "Lucky shelter — Fortune/Wisdom gains ×1.5, losses ×0.5 (Civ ignored)",
+    "adjust_shelter": "Lucky shelter — Fortune/Wisdom gains ×{shelterGain}, losses ×{shelterLoss} (Civ ignored)",
     "adjust_weather": "This turn “{weather}” — gains ×{gain}, losses ×{loss} (Civ ignored)"
+  },
+  "deckValidation": {
+    "object": "Must be an object",
+    "text": "Must be a string; names and labels cannot be blank",
+    "points": "Points must be finite integers within ±2147483647",
+    "stat": "Only fortune, wisdom and civ are supported",
+    "boolean": "Must be true or false",
+    "options": "A choice card needs at least two options",
+    "conditional": "A conditional card needs a nonnegative civGte and two options",
+    "decks": "Provide actionDeck or boostDeck",
+    "empty": "Decks cannot be empty",
+    "array": "Must be an array",
+    "location": "{path}: {reason}"
   }
 }

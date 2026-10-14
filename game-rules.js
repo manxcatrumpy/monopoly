@@ -1,6 +1,34 @@
 // 純規則：不讀取 DOM、時間或儲存，也不改動傳入的遊戲資料。
 (function () {
+  const CONFIG = typeof module === 'object' && module.exports ? require('./config.js') : GAME_CONFIG;
   const STATS = ['fortune', 'wisdom', 'civ'];
+
+  function gameMinutes(count, config = CONFIG) {
+    return config.TIME.BASE_MINUTES + Math.max(0, count - config.TIME.BASE_PLAYERS) * config.TIME.EXTRA_PLAYER_MINUTES;
+  }
+  function expectedCiv(turn, goal, config = CONFIG) {
+    return goal * turn / config.EXPECTED_ROUNDS;
+  }
+  function judgeWeather(current, turn, goal, config = CONFIG) {
+    const expected = expectedCiv(turn, goal, config);
+    if (current >= expected * config.WEATHER.FAVORABLE_RATIO) return 'FAVORABLE';
+    if (current <= expected * config.WEATHER.DISASTER_RATIO) return 'DISASTER';
+    return 'NORMAL';
+  }
+  function weatherUpgradeTarget(weather, turn, goal, config = CONFIG) {
+    const expected = expectedCiv(turn, goal, config);
+    if (weather === 'DISASTER') return Math.floor(expected * config.WEATHER.DISASTER_RATIO) + 1;
+    if (weather === 'NORMAL') return Math.ceil(expected * config.WEATHER.FAVORABLE_RATIO);
+    return null;
+  }
+  function weatherPhase(turn, events) {
+    for (const ev of events) {
+      if (turn === ev.targetRound - 2) return { phase: 'FORECAST', ev };
+      if (turn === ev.targetRound - 1) return { phase: 'ADJUST', ev };
+      if (turn === ev.targetRound) return { phase: 'REPORT', ev };
+    }
+    return { phase: 'NORMAL', ev: null };
+  }
 
   function calculateScoreBatch(players, operations) {
     const changes = new Map();
@@ -15,16 +43,21 @@
       }
       for (const stat of STATS) {
         if (operation.values && operation.values[stat] !== undefined) {
+          if (!Number.isSafeInteger(operation.values[stat])) throw new Error('Invalid score value');
           change.after[stat] = operation.values[stat];
         }
-        if (operation.delta && operation.delta[stat]) {
+        if (operation.delta && operation.delta[stat] !== undefined) {
+          if (!Number.isSafeInteger(operation.delta[stat])) throw new Error('Invalid score delta');
           change.after[stat] += operation.delta[stat];
         }
       }
     }
     // 全部變更合併後才夾到零，避免一張卡的中間值影響結算。
     return Array.from(changes.values(), change => {
-      for (const stat of STATS) change.after[stat] = Math.max(0, change.after[stat] | 0);
+      for (const stat of STATS) {
+        if (!Number.isSafeInteger(change.after[stat])) throw new Error('Score exceeds safe integer range');
+        change.after[stat] = Math.max(0, change.after[stat]);
+      }
       change.changedStats = STATS.filter(stat => change.before[stat] !== change.after[stat]);
       return change;
     }).filter(change => change.changedStats.length > 0);
@@ -103,7 +136,8 @@
     );
   }
 
-  const rules = { calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats };
+  const rules = { calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats,
+    gameMinutes, expectedCiv, judgeWeather, weatherUpgradeTarget, weatherPhase };
   if (typeof module === 'object' && module.exports) module.exports = rules;
   else globalThis.GameRules = rules;
 })();

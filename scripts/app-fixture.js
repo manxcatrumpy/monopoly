@@ -3,6 +3,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
+const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
 
 // 流程測試使用最小 UI adapter；純規則測試直接載入 game-rules.js。
@@ -28,7 +29,7 @@ function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
     return node;
   }
   const context = vm.createContext({
-    GameRules, GameState, GameStorage,
+    GameRules, GameState, GameStorage, DeckModel,
     window: { addEventListener: noop },
     document: {
       querySelector: element, querySelectorAll: selector => element(selector).items || [],

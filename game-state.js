@@ -1,5 +1,7 @@
 // 存檔與歷史共用的資料模型。純資料轉換，不讀取 DOM 或 localStorage。
 (function () {
+  const CONFIG = typeof module === 'object' && module.exports ? require('./config.js') : GAME_CONFIG;
+  const decksModel = typeof module === 'object' && module.exports ? require('./deck-model.js') : DeckModel;
   const SCHEMA_VERSION = 2;
   const NOTICE_FLAGS = ['_timeUpNoticed', '_sprintNoticed', '_civGoalNoticed', '_allGradNoticed'];
   const WEATHER_TYPES = ['FAVORABLE', 'NORMAL', 'DISASTER'];
@@ -45,9 +47,9 @@
       roundNum: 1, turnNum: 1, civGoal: 30,
       timer: { accumulated: 0, lastStartedAt: null, running: false },
       players: [], log: [], pendingDraws: [],
-      navigatorClaimed: Object.fromEntries((options.navigatorThresholds || [10, 20, 30]).map(n => [n, null])),
+      navigatorClaimed: Object.fromEntries((options.navigatorThresholds || CONFIG.PROGRESSION.NAVIGATOR).map(n => [n, null])),
       actedThisTurn: {}, skippedThisTurn: {},
-      weatherEvents: (options.weatherSchedule || []).map(event => ({
+      weatherEvents: (options.weatherSchedule || CONFIG.WEATHER.SCHEDULE).map(event => ({
         id: event.id, targetRound: event.targetRound, lockedWeather: null,
         upgraded: false, civAtLock: null, oldWeather: null,
       })),
@@ -67,7 +69,7 @@
     const selected = record(p.selfSelectedLow, 'self-selected low');
     return {
       id, name: text(p.name), fortune, wisdom, civ: number(p.civ, 0),
-      graduated: boolean(p.graduated, fortune >= (options.graduationThreshold || 30) && wisdom >= (options.graduationThreshold || 30)),
+      graduated: boolean(p.graduated, fortune >= (options.graduationThreshold ?? CONFIG.PROGRESSION.GRADUATION) && wisdom >= (options.graduationThreshold ?? CONFIG.PROGRESSION.GRADUATION)),
       notified: flagMap(p.notified),
       reliefUsed: { fortune: boolean(relief.fortune), wisdom: boolean(relief.wisdom) },
       selfSelectedLow: { fortune: boolean(selected.fortune), wisdom: boolean(selected.wisdom) },
@@ -130,8 +132,8 @@
         if (raw[field] === undefined && !game.incompleteFields.includes(field)) game.incompleteFields.push(field);
       }
     }
-    const maxSeconds = (100 + Math.max(0, game.players.length - 4) * 5) * 60;
-    const sprintSeconds = (options.endgameMinutes || 15) * 60;
+    const maxSeconds = (CONFIG.TIME.BASE_MINUTES + Math.max(0, game.players.length - CONFIG.TIME.BASE_PLAYERS) * CONFIG.TIME.EXTRA_PLAYER_MINUTES) * 60;
+    const sprintSeconds = (options.endgameMinutes ?? CONFIG.ENDGAME_MINUTES) * 60;
     const firstForecast = Math.min(...game.weatherEvents.map(event => Math.max(1, event.targetRound - 2)));
     game.reliefSweepDone = boolean(raw.reliefSweepDone, historical &&
       (game.turnNum >= firstForecast || game.timer.accumulated >= maxSeconds - sprintSeconds));
@@ -147,17 +149,7 @@
 
   function settings(source) {
     const raw = record(source, 'settings');
-    const decks = record(raw.customDecks, 'custom decks');
-    if (present(decks.action)) {
-      for (const deck of Object.values(record(decks.action, 'action deck'))) {
-        record(deck, 'card category');
-        if (!Array.isArray(deck.cards)) throw new Error('Invalid cards');
-        if (deck.cards.some(card => !card || typeof card.name !== 'string')) throw new Error('Invalid card');
-      }
-    }
-    if (present(decks.boost) && !Array.isArray(decks.boost)) throw new Error('Invalid boost deck');
-    if (decks.boost?.some(card => !card || typeof card.name !== 'string')) throw new Error('Invalid boost card');
-    return { customDecks: { action: clone(decks.action ?? null), boost: clone(decks.boost ?? null) } };
+    return { customDecks: decksModel.normalizeCustomDecks(record(raw.customDecks, 'custom decks')) };
   }
 
   function createState(options = {}) {

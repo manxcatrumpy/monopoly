@@ -5,6 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
+const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
 
 const sources = ['config.js', 'version.js', 'app.js'].map(file =>
@@ -19,7 +20,7 @@ function createSession() {
 
   function openApp() {
     const context = vm.createContext({
-      GameRules, GameState, GameStorage,
+      GameRules, GameState, GameStorage, DeckModel,
       window: { addEventListener: noop },
       document: { querySelector: () => element, addEventListener: noop },
       localStorage: {

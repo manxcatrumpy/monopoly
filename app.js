@@ -17,40 +17,19 @@ function getBoostDeck() {
 }
 
 function buildActionPool() {
-  const pool = [];
-  Object.entries(getActionDeck()).forEach(([cat, data]) => {
-    data.cards.forEach(c => {
-      // 抉擇卡（帶 options）：不套用分類 reward，改帶抉擇欄位過去。
-      if (Array.isArray(c.options)) {
-        pool.push({
-          type: 'action', category: cat, name: c.name,
-          scene: c.scene, options: c.options,
-          both: !!c.both, conditional: c.conditional || null,
-        });
-        return;
-      }
-      pool.push({
-        type: 'action',
-        category: cat,
-        name: c.name,
-        desc: c.desc,
-        side: c.side || '',
-        reward: c.reward || data.reward,
-        rewardText: c.rewardText || data.rewardText,
-      });
-    });
-  });
-  return pool;
+  return DeckModel.buildActionPool(getActionDeck());
 }
 
 // ─────────── Boost deck (共好加速卡) ───────────
 // Each card stands alone (no categories). 「即時行動」 + 「福慧覺察」 sections.
 
 function buildBoostPool() {
-  return getBoostDeck().map(c => ({ type: 'boost', ...c }));
+  return DeckModel.buildBoostPool(getBoostDeck());
 }
 
 function rebuildDecks() {
+  DECKS.action.title = t('dm.action_label');
+  DECKS.boost.title = t('dm.boost_label');
   DECKS.action.pool = buildActionPool();
   DECKS.boost.pool = buildBoostPool();
 }
@@ -60,18 +39,18 @@ const LEGACY_STORAGE_KEY = 'fuhui-dashboard-state-v1';
 // 遊戲時間依人數而定：4人/100 分、5人/105 分、6人/110 分（每多一人 +5 分）。
 function gameMinutes() {
   const count = state.currentGame.players.length || setupTmp.count || 4;
-  return 100 + Math.max(0, count - 4) * 5;
+  return GameRules.gameMinutes(count, GAME_CONFIG);
 }
 function maxGameSeconds() {
   return gameMinutes() * 60;
 }
 const SPRINT_SECONDS = () => GAME_CONFIG.ENDGAME_MINUTES * 60;
-const GRAD_THRESHOLD = 30;          // 福慧雙項皆 ≥ 30 即可畢業
-const CIV_PER_PLAYER = 10;          // 文明高度：白骰 × 黑骰 ＋ 玩家人數 × 此值
+const GRAD_THRESHOLD = GAME_CONFIG.PROGRESSION.GRADUATION;          // 福慧雙項皆 ≥ 30 即可畢業
+const CIV_PER_PLAYER = GAME_CONFIG.SCORING.CIV_GOAL_PER_PLAYER;          // 文明高度：白骰 × 黑骰 ＋ 玩家人數 × 此值
 const DIE_MIN = 1, DIE_MAX = 6;     // 實體白/黑骰點數範圍
-const MILESTONES = [30];             // 單項里程：單項 30 (不再分四階)
-const NAV_THRESHOLDS = [10, 20, 30];   // 領航者際遇：場上首位福慧雙達者
-const SELF_THRESHOLDS = [12, 22];      // 自我突破際遇：任一玩家福慧雙達者
+const MILESTONES = [GRAD_THRESHOLD];             // 單項里程：單項 30 (不再分四階)
+const NAV_THRESHOLDS = GAME_CONFIG.PROGRESSION.NAVIGATOR;   // 領航者際遇：場上首位福慧雙達者
+const SELF_THRESHOLDS = GAME_CONFIG.PROGRESSION.SELF;      // 自我突破際遇：任一玩家福慧雙達者
 const STATS = ['fortune', 'wisdom', 'civ'];
 const STAT_LABEL = (stat) => t('players.' + stat);
 
@@ -187,27 +166,17 @@ function totalWisdom() {
   return state.currentGame.players.reduce((s, p) => s + (p.wisdom || 0), 0);
 }
 function comprehensiveScore(p) {
-  return (p.fortune || 0) + (p.wisdom || 0) + (p.civ || 0) * 2;
+  return (p.fortune || 0) + (p.wisdom || 0) + (p.civ || 0) * GAME_CONFIG.SCORING.CIV_WEIGHT;
 }
 // ─────────── Weather System ───────────
 function expectedCiv(turn, civGoal) {
-  return civGoal * turn / GAME_CONFIG.EXPECTED_ROUNDS;
+  return GameRules.expectedCiv(turn, civGoal, GAME_CONFIG);
 }
-
 function judgeWeather(civCurrent, turn, civGoal) {
-  const expected = expectedCiv(turn, civGoal);
-  if (civCurrent >= expected * 1.2) return 'FAVORABLE';
-  if (civCurrent <= expected * 0.8) return 'DISASTER';
-  return 'NORMAL';
+  return GameRules.judgeWeather(civCurrent, turn, civGoal, GAME_CONFIG);
 }
-
 function getPhase(turn) {
-  for (const ev of state.currentGame.weatherEvents) {
-    if (turn === ev.targetRound - 2) return { phase: 'FORECAST', ev };
-    if (turn === ev.targetRound - 1) return { phase: 'ADJUST', ev };
-    if (turn === ev.targetRound) return { phase: 'REPORT', ev };
-  }
-  return { phase: 'NORMAL', ev: null };
+  return GameRules.weatherPhase(turn, state.currentGame.weatherEvents);
 }
 
 // ─────────── Dice ───────────
@@ -566,13 +535,7 @@ function scoreMultiplier(playerId) {
 }
 
 function reliefCfg() {
-  return GAME_CONFIG.RELIEF || {
-    RESTORE_TO: 5,
-    THRESHOLD_EARLY: 0,
-    THRESHOLD_LATE: 3,
-    CLEAR_TAG_AT: 4,
-    SHELTER_TURNS: 2
-  };
+  return GAME_CONFIG.RELIEF;
 }
 
 function getFirstForecastTurn() {
@@ -591,8 +554,8 @@ function isLateReliefPhase() {
 function currentReliefThreshold() {
   const cfg = reliefCfg();
   return isLateReliefPhase()
-    ? (cfg.THRESHOLD_LATE !== undefined ? cfg.THRESHOLD_LATE : 3)
-    : (cfg.THRESHOLD_EARLY !== undefined ? cfg.THRESHOLD_EARLY : 0);
+    ? cfg.THRESHOLD_LATE
+    : cfg.THRESHOLD_EARLY;
 }
 
 function reliefEligible(p, stat) {
@@ -684,7 +647,7 @@ function enqueueReliefUi(fn) {
 
 function reliefAnnounceText({ name, items = [], scores = {}, restore, multiPlayers }) {
   const cfg = reliefCfg();
-  const rest = restore || cfg.RESTORE_TO || 5;
+  const rest = restore || cfg.RESTORE_TO;
   if (multiPlayers && multiPlayers.length > 0) {
     const names = multiPlayers.map(m => {
       const statsStr = m.items.map(s => STAT_LABEL(s)).join('、');
@@ -808,7 +771,7 @@ async function executeRelief(playerId, statsToRelieve = []) {
   const eligibleStats = qualifyingReliefStats(p, statsToRelieve);
   if (!eligibleStats.length) return false;
 
-  const restoreTo = cfg.RESTORE_TO || 5;
+  const restoreTo = cfg.RESTORE_TO;
   const name = p.name || t('common.player');
 
   const values = {};
@@ -820,7 +783,7 @@ async function executeRelief(playerId, statsToRelieve = []) {
 
   // 第二項救濟只延長庇護，保留當輪仍在生效的起點。
   if (!playerInShelter(p)) p.shelterFromTurn = state.currentGame.turnNum + 1;
-  const targetEnd = state.currentGame.turnNum + (cfg.SHELTER_TURNS || 2);
+  const targetEnd = state.currentGame.turnNum + (cfg.SHELTER_TURNS);
   p.shelterToTurn = typeof p.shelterToTurn === 'number' ? Math.max(p.shelterToTurn, targetEnd) : targetEnd;
   await settleScoreChanges([{ playerId, values }]);
   if (state.currentGame !== game) return false;
@@ -847,7 +810,7 @@ async function maybeCheckReliefAfterForcedLoss(playerId, oldStats) {
   if (!qualifying.length) return;
 
   const cfg = reliefCfg();
-  const restore = cfg.RESTORE_TO || 5;
+  const restore = cfg.RESTORE_TO;
   const ok = await showReliefModal(() => {
     if (getPlayer(playerId) !== p) return null;
     const items = qualifyingReliefStats(p, qualifying);
@@ -879,7 +842,7 @@ async function sweepReliefOnBoundary() {
   if (!candidates.length) return;
 
   const cfg = reliefCfg();
-  const restore = cfg.RESTORE_TO || 5;
+  const restore = cfg.RESTORE_TO;
   let activeCandidates = [];
   const ok = await showReliefModal(() => {
     if (state.currentGame !== game || game.players !== players) return null;
@@ -1004,7 +967,7 @@ function escapeHtml(s) {
 }
 
 // ─────────── 待處理抽卡佇列 ───────────
-// 需要主持人「去抽一張卡」的里程（領航者 / 自我突破 / 單項 55）在觸發時，
+// 需要主持人「去抽一張卡」的里程（領航者 / 自我突破 / 單項畢業門檻）在觸發時，
 // 除了 toast + log，還在面板上留一條待辦；主持人抽完卡點「已抽」才消失，避免漏抽。
 function addPendingDraw(text, playerId) {
   state.currentGame.pendingDraws.push({
@@ -1189,7 +1152,7 @@ function updateTopbar() {
   const timerEl = $('.timer-item .timer');
   const maxSec = maxGameSeconds();
   $('#timer-max').textContent = '/ ' + fmt(maxSec);
-  timerEl.classList.toggle('warn', sec >= maxSec - 20 * 60 && sec < maxSec);
+  timerEl.classList.toggle('warn', sec >= maxSec - GAME_CONFIG.TIME.WARNING_MINUTES * 60 && sec < maxSec);
   timerEl.classList.toggle('over', sec >= maxSec);
 
   // Final-15-minute sprint: surface it in the timer and a top banner.
@@ -1229,10 +1192,7 @@ function updateTopbar() {
           });
         } else {
           const ranks = { DISASTER: 0, NORMAL: 1, FAVORABLE: 2 };
-          const expected = expectedCiv(ev.targetRound - 2, state.currentGame.civGoal);
-          let targetCiv = 0;
-          if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
-          if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
+          const targetCiv = GameRules.weatherUpgradeTarget(ev.lockedWeather, ev.targetRound - 2, state.currentGame.civGoal, GAME_CONFIG);
           const short = ranks[ev.lockedWeather] < 2 ? Math.max(0, targetCiv - totalCiv()) : 0;
           sub.textContent = t('weather.adjust_sub_pending', { short });
         }
@@ -1534,8 +1494,8 @@ async function settleScoreChanges(operations, { selfSelected = false } = {}) {
     const p = getPlayer(change.playerId);
     Object.assign(p, change.after);
     for (const stat of change.changedStats.filter(stat => stat !== 'civ')) {
-      if (p[stat] >= (reliefCfg().CLEAR_TAG_AT || 4)) p.selfSelectedLow[stat] = false;
-      if (selfSelected && p[stat] < change.before[stat] && p[stat] <= 3) p.selfSelectedLow[stat] = true;
+      if (p[stat] >= reliefCfg().CLEAR_TAG_AT) p.selfSelectedLow[stat] = false;
+      if (selfSelected && p[stat] < change.before[stat] && p[stat] <= reliefCfg().THRESHOLD_LATE) p.selfSelectedLow[stat] = true;
     }
   }
   for (const change of changes) {
@@ -2066,9 +2026,9 @@ async function restoreRound(idx) {
   if (!entry) return;
   const currentGame = state.currentGame;
   const ok = await confirmModal({
-    title: `切回第 ${entry.roundNum} 局`,
+    title: t('history.restore_title', { round: entry.roundNum }),
     message: t('confirm.next_round_msg', {round: state.currentGame.roundNum}),
-    confirmText: '切回此局',
+    confirmText: t('history.restore_action'),
   });
   if (!ok || state.currentGame !== currentGame || state.history[idx] !== entry) return;
   const oldRound = currentGame.roundNum;
@@ -2118,29 +2078,29 @@ function renderHistoryList() {
     .map(({ entry, idx }) => {
       const dur = fmt(entry.timer && entry.timer.accumulated || 0);
       const when = entry.completedAt
-        ? new Date(entry.completedAt).toLocaleString('zh-TW', {
+        ? new Date(entry.completedAt).toLocaleString(window.i18n?.currentLang || 'zh-tw', {
             year: 'numeric', month: '2-digit', day: '2-digit',
             hour: '2-digit', minute: '2-digit', hour12: false,
           })
         : '—';
       const players = entry.players.map(p => `
         <div class="hi-player ${p.graduated ? 'graduated' : ''}">
-          <div class="hp-name">${escapeHtml(p.name || '玩家')}</div>
-          <div class="hp-scores">福 ${p.fortune} · 慧 ${p.wisdom} · 文明 ${p.civ}</div>
-          <div class="hp-total">綜合 <strong>${comprehensiveScore(p)}</strong></div>
+          <div class="hp-name">${escapeHtml(p.name || t('common.player'))}</div>
+          <div class="hp-scores">${escapeHtml(t('history.scores', { fortune: p.fortune, wisdom: p.wisdom, civ: p.civ }))}</div>
+          <div class="hp-total">${t('history.total')} <strong>${comprehensiveScore(p)}</strong></div>
         </div>
       `).join('');
       return `
         <li class="history-item">
           <div class="hi-head">
-            <div class="hi-title">第 ${entry.roundNum} 局 · 文明高度 ${entry.civGoal}</div>
-            <div class="hi-time">${when} · 時長 ${dur}</div>
+            <div class="hi-title">${t('history.round', { round: entry.roundNum })} · ${t('history.goal', { goal: entry.civGoal })}</div>
+            <div class="hi-time">${when} · ${t('history.duration', { duration: dur })}</div>
           </div>
           <div class="hi-players">${players}</div>
           ${entry.incompleteFields?.length ? `<p class="storage-warning">${escapeHtml(t('storage.history_incomplete'))}</p>` : ''}
           <div class="hi-actions">
-            <button class="btn btn-ghost" data-view="${idx}">查看</button>
-            <button class="btn btn-ghost" data-restore="${idx}">切回此局</button>
+            <button class="btn btn-ghost" data-view="${idx}">${t('ui.history_view')}</button>
+            <button class="btn btn-ghost" data-restore="${idx}">${t('ui.history_restore')}</button>
           </div>
         </li>
       `;
@@ -2165,7 +2125,7 @@ function viewRound(idx) {
 
   const dur = fmt((entry.timer && entry.timer.accumulated) || 0);
   const when = entry.completedAt
-    ? new Date(entry.completedAt).toLocaleString('zh-TW', {
+    ? new Date(entry.completedAt).toLocaleString(window.i18n?.currentLang || 'zh-tw', {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', hour12: false,
       })
@@ -2176,42 +2136,42 @@ function viewRound(idx) {
 
   const playerCards = players.map(p => `
     <div class="hd-player ${p.graduated ? 'graduated' : ''}">
-      <div class="hd-pname">${escapeHtml(p.name || '玩家')}</div>
+      <div class="hd-pname">${escapeHtml(p.name || t('common.player'))}</div>
       <div class="hd-pstats">
-        <span><span class="dot dot-fortune"></span>福報 <b>${p.fortune || 0}</b></span>
-        <span><span class="dot dot-wisdom"></span>智慧 <b>${p.wisdom || 0}</b></span>
-        <span><span class="dot dot-civ"></span>文明 <b>${p.civ || 0}</b></span>
+        <span><span class="dot dot-fortune"></span>${t('players.fortune')} <b>${p.fortune || 0}</b></span>
+        <span><span class="dot dot-wisdom"></span>${t('players.wisdom')} <b>${p.wisdom || 0}</b></span>
+        <span><span class="dot dot-civ"></span>${t('players.civ')} <b>${p.civ || 0}</b></span>
       </div>
-      <div class="hd-ptotal">綜合 <strong>${comprehensiveScore(p)}</strong></div>
+      <div class="hd-ptotal">${t('history.total')} <strong>${comprehensiveScore(p)}</strong></div>
     </div>`).join('');
 
   const logItems = (entry.log && entry.log.length)
     ? entry.log.map(e => `<li class="${e.kind || ''}">${escapeHtml(e.text)}<span class="ml-time">${fmt(e.t || 0)}</span></li>`).join('')
-    : '<li class="empty">（當局無事件紀錄）</li>';
+    : `<li class="empty">${t('history.empty_log')}</li>`;
 
   detail.innerHTML = `
     <div class="hd-head">
-      <button class="btn btn-ghost" id="history-back">← 返回列表</button>
+      <button class="btn btn-ghost" id="history-back">${t('history.back')}</button>
       <span class="hd-readonly">${t('ui.history_readonly')}</span>
     </div>
-    <div class="hd-title">第 ${entry.roundNum} 局</div>
+    <div class="hd-title">${t('history.round', { round: entry.roundNum })}</div>
     ${entry.incompleteFields?.length ? `<p class="storage-warning">${escapeHtml(t('storage.history_incomplete'))}</p>` : ''}
-    <div class="hd-meta">完成 ${when} · 時長 ${dur} · 文明高度 ${entry.civGoal}</div>
+    <div class="hd-meta">${t('history.meta', { when, duration: dur, goal: entry.civGoal })}</div>
     <div class="hd-summary">
-      <div class="hd-sum ${reached ? 'reached' : ''}"><span>集體文明</span><strong>${totalCiv} / ${entry.civGoal}</strong></div>
-      <div class="hd-sum"><span>集體福報</span><strong>${sum('fortune')}</strong></div>
-      <div class="hd-sum"><span>集體智慧</span><strong>${sum('wisdom')}</strong></div>
+      <div class="hd-sum ${reached ? 'reached' : ''}"><span>${t('history.collective_civ')}</span><strong>${totalCiv} / ${entry.civGoal}</strong></div>
+      <div class="hd-sum"><span>${t('meta.fortune_label')}</span><strong>${sum('fortune')}</strong></div>
+      <div class="hd-sum"><span>${t('meta.wisdom_label')}</span><strong>${sum('wisdom')}</strong></div>
     </div>
     <div class="hd-players">${playerCards}</div>
     <div class="hd-log">
-      <div class="hd-log-label">當局事件日誌</div>
+      <div class="hd-log-label">${t('history.log')}</div>
       <ul class="milestone-log hd-loglist">${logItems}</ul>
     </div>
   `;
 
   list.classList.add('hidden');
   detail.classList.remove('hidden');
-  $('#history-title').textContent = `歷史紀錄 · 第 ${entry.roundNum} 局`;
+  $('#history-title').textContent = t('history.title', { round: entry.roundNum });
   $('#history-back').addEventListener('click', backToHistoryList);
 }
 
@@ -2265,7 +2225,7 @@ function cardPlayersRefHtml() {
   if (!state.currentGame.players.length) return '';
   const items = state.currentGame.players.map(p => `
     <div class="cpr-item${p.graduated ? ' graduated' : ''}">
-      <span class="cpr-name">${escapeHtml(p.name || '玩家')}</span>
+      <span class="cpr-name">${escapeHtml(p.name || t('common.player'))}</span>
       <span class="cpr-stats"><b>福</b>${p.fortune || 0} <b>慧</b>${p.wisdom || 0} <b>文</b>${p.civ || 0}</span>
       <span class="cpr-tot">綜 ${comprehensiveScore(p)}</span>
     </div>`).join('');
@@ -2396,14 +2356,14 @@ function describeChoiceOption(card, opt) {
   const { each, civAll } = choiceEffects(opt);
   const parts = [];
   const eachTxt = describeReward(each);
-  if (eachTxt) parts.push((card.both ? '雙方各　' : '') + eachTxt);
-  if (civAll) parts.push(`全體文明 ${civAll > 0 ? '+' : ''}${civAll}`);
-  return parts.length ? parts.join('　·　') : '無點數變化';
+  if (eachTxt) parts.push((card.both ? t('card.each_prefix') : '') + eachTxt);
+  if (civAll) parts.push(t('card.collective_civ', { delta: (civAll > 0 ? '+' : '') + civAll }));
+  return parts.length ? parts.join('　·　') : t('card.no_score_change');
 }
 
 function renderChoiceCard(c) {
   const mult = scoreMultiplier();
-  const label = c.type === 'boost' ? (c.series || '共好加速卡') : (c.category || '行動指令牌');
+  const label = c.type === 'boost' ? (c.series || t('card.title_boost')) : (c.category || t('card.title_action'));
 
   // 條件卡：適用分支由當前集體文明自動鎖定。
   let forced = null, condHtml = '';
@@ -2423,7 +2383,7 @@ function renderChoiceCard(c) {
               data-opt="${i}" ${disabled ? 'disabled' : ''}>
         <span class="do-label">${escapeHtml(opt.label)}</span>
         <span class="do-effects">${escapeHtml(describeChoiceOption(c, opt))}</span>
-        ${opt.side ? `<span class="do-side">附加：${escapeHtml(opt.side)}（手動套用）</span>` : ''}
+        ${opt.side ? `<span class="do-side">${escapeHtml(t('card.manual_side', { side: opt.side }))}</span>` : ''}
         ${opt.insight ? `<span class="do-insight">${escapeHtml(opt.insight)}</span>` : ''}
       </button>`;
   }).join('');
@@ -2527,7 +2487,7 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   await settleScoreChanges(operations);
   if (state.currentGame !== game) return;
   const tag = table.mult.id !== null ? getWeatherLabel(table.mult.id) : '';
-  const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
+  const sideNote = opt.side ? '　※' + t('card.manual_side', { side: opt.side }) : '';
   const positive = describeReward(table.each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
   toast(msg, positive ? 'grad' : '');
@@ -2602,7 +2562,7 @@ function catalogChoiceCardHtml(c) {
     const eachTxt = describeReward(o.each || {});
     if (eachTxt) parts.push((c.both ? '雙方各　' : '') + eachTxt);
     if (o.civAll) parts.push(`全體文明 ${o.civAll > 0 ? '+' : ''}${o.civAll}`);
-    const fx = parts.length ? parts.join('　·　') : '無點數變化';
+    const fx = parts.length ? parts.join('　·　') : t('card.no_score_change');
     return `
       <div class="cc-opt">
         <p class="cc-line"><span class="cc-section-label">${escapeHtml(o.label)}</span>${escapeHtml(fx)}</p>
@@ -2634,7 +2594,7 @@ function closeDeckManager() {
 
 function deckSourceLabel(side) {
   const custom = state.settings.customDecks && state.settings.customDecks[side];
-  return custom ? '自訂' : '預設';
+  return t(custom ? 'dm.source_custom' : 'dm.source_default');
 }
 function deckCardCount(side) {
   if (side === 'action') {
@@ -2645,9 +2605,9 @@ function deckCardCount(side) {
 
 function renderDeckManager() {
   $('#dm-action-source').textContent = deckSourceLabel('action');
-  $('#dm-action-count').textContent  = deckCardCount('action') + ' 張';
+  $('#dm-action-count').textContent  = deckCardCount('action') + t('dm.count_suffix');
   $('#dm-boost-source').textContent  = deckSourceLabel('boost');
-  $('#dm-boost-count').textContent   = deckCardCount('boost') + ' 張';
+  $('#dm-boost-count').textContent   = deckCardCount('boost') + t('dm.count_suffix');
 }
 
 function exportDecks() {
@@ -2694,60 +2654,14 @@ function importPastedJSON() {
   }
 }
 
-function validateImport(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return t('validate.need_object');
-  }
-  if (data.actionDeck === undefined && data.boostDeck === undefined) {
-    return t('validate.need_decks');
-  }
-
-  if (data.actionDeck !== undefined) {
-    if (typeof data.actionDeck !== 'object' || Array.isArray(data.actionDeck) || data.actionDeck === null) {
-      return t('validate.action_deck_object');
-    }
-    for (const [cat, deck] of Object.entries(data.actionDeck)) {
-      if (!deck || typeof deck !== 'object') return t('validate.cat_object', {cat});
-      if (!deck.reward || typeof deck.reward !== 'object') return t('validate.cat_missing_reward', {cat});
-      if (typeof deck.rewardText !== 'string')             return t('validate.cat_missing_rewardText', {cat});
-      if (!Array.isArray(deck.cards))                      return t('validate.cat_cards_array', {cat});
-      for (const c of deck.cards) {
-        if (!c || typeof c.name !== 'string' || !c.name)   return t('validate.card_missing_name', {cat});
-        if (Array.isArray(c.options)) { const e = validateChoiceCard(c, cat); if (e) return e; continue; }
-        if (typeof c.desc !== 'string')                    return t('validate.card_missing_desc', {cat: cat, name: c.name});
-      }
-    }
-  }
-
-  if (data.boostDeck !== undefined) {
-    if (!Array.isArray(data.boostDeck)) return t('validate.boost_array');
-    for (const c of data.boostDeck) {
-      if (!c || typeof c.name !== 'string' || !c.name) return t('validate.boost_missing_name');
-      if (Array.isArray(c.options)) { const e = validateChoiceCard(c, t('dm.boost_label')); if (e) return e; continue; }
-      if (typeof c.action !== 'string')   return t('validate.boost_missing_action', {name: c.name});
-      if (typeof c.insight !== 'string')  return t('validate.boost_missing_insight', {name: c.name});
-      if (!c.reward || typeof c.reward !== 'object') return t('validate.boost_missing_reward', {name: c.name});
-      if (typeof c.rewardText !== 'string') return t('validate.boost_missing_rewardText', {name: c.name});
-    }
-  }
-  return null;
-}
-
-// 抉擇卡（帶 options）的匯入驗證。
-function validateChoiceCard(c, group) {
-  if (typeof c.scene !== 'string')                       return t('validate.choice_missing_scene', {group, name: c.name});
-  if (!Array.isArray(c.options) || !c.options.length)    return t('validate.choice_missing_options', {group, name: c.name});
-  for (const o of c.options) {
-    if (!o || typeof o.label !== 'string' || !o.label)   return t('validate.choice_opt_missing_label', {name: c.name});
-    if (o.each !== undefined && (typeof o.each !== 'object' || o.each === null)) return t('validate.choice_opt_each_object', {name: c.name});
-    if (o.civAll !== undefined && !Number.isFinite(o.civAll)) return t('validate.choice_opt_civAll_number', {name: c.name});
-  }
-  return null;
-}
-
 async function applyDecksImport(data) {
-  const err = validateImport(data);
-  if (err) { toast(t('messages.import_fail') + '：' + err); return; }
+  const checked = DeckModel.inspect(data);
+  if (!checked.ok) {
+    toast(t('messages.import_fail') + '：' + t('deckValidation.location', { path: checked.error.path, reason: t(checked.error.key) }));
+    return;
+  }
+  // 使用驗證後的獨立副本，等待確認期間呼叫者不能改動待匯入內容。
+  data = checked.data;
 
   const actionCount = data.actionDeck
     ? Object.values(data.actionDeck).reduce((s, d) => s + d.cards.length, 0)
@@ -2917,8 +2831,8 @@ function readWeatherAdjustInputs() {
     const wEl = row.querySelector('.adj-wisdom');
     const fRaw = parseInt(fEl.value, 10);
     const wRaw = parseInt(wEl.value, 10);
-    const f = Math.max(0, Math.min(Number.isFinite(fRaw) ? fRaw : 0, p.fortune | 0));
-    const w = Math.max(0, Math.min(Number.isFinite(wRaw) ? wRaw : 0, p.wisdom | 0));
+    const f = Math.max(0, Math.min(Number.isFinite(fRaw) ? fRaw : 0, p.fortune));
+    const w = Math.max(0, Math.min(Number.isFinite(wRaw) ? wRaw : 0, p.wisdom));
     if (String(f) !== fEl.value) fEl.value = f;
     if (String(w) !== wEl.value) wEl.value = w;
     contributions.push({ id, f, w, name: p.name || t('common.player') });
@@ -2956,7 +2870,7 @@ function openWeatherAdjustModal() {
           <input class="adjust-input adj-fortune" type="number" inputmode="numeric" min="0" max="${p.fortune}" value="0" aria-label="${escapeHtml(t('players.fortune'))}">
           <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
         </div>
-        <span class="adjust-preview" data-remain="fortune">${escapeHtml(t('ui.lbl_current_val', { val: p.fortune | 0 }))}</span>
+        <span class="adjust-preview" data-remain="fortune">${escapeHtml(t('ui.lbl_current_val', { val: p.fortune }))}</span>
       </div>
       <div class="adjust-row">
         <span class="adjust-label"><span class="dot dot-wisdom"></span>${escapeHtml(t('players.wisdom'))}</span>
@@ -2965,7 +2879,7 @@ function openWeatherAdjustModal() {
           <input class="adjust-input adj-wisdom" type="number" inputmode="numeric" min="0" max="${p.wisdom}" value="0" aria-label="${escapeHtml(t('players.wisdom'))}">
           <button type="button" class="adjust-step" data-step="1" aria-label="增加">＋</button>
         </div>
-        <span class="adjust-preview" data-remain="wisdom">${escapeHtml(t('ui.lbl_current_val', { val: p.wisdom | 0 }))}</span>
+        <span class="adjust-preview" data-remain="wisdom">${escapeHtml(t('ui.lbl_current_val', { val: p.wisdom }))}</span>
       </div>
     </div>
   `).join('');
@@ -2987,11 +2901,11 @@ function updateWeatherAdjust() {
     const fEl = row.querySelector('[data-remain="fortune"]');
     const wEl = row.querySelector('[data-remain="wisdom"]');
     if (fEl) {
-      const have = p.fortune | 0;
+      const have = p.fortune;
       fEl.textContent = c.f ? `${have} → ${have - c.f}　(−${c.f})` : t('ui.lbl_current_val', { val: have });
     }
     if (wEl) {
-      const have = p.wisdom | 0;
+      const have = p.wisdom;
       wEl.textContent = c.w ? `${have} → ${have - c.w}　(−${c.w})` : t('ui.lbl_current_val', { val: have });
     }
   });
@@ -3016,10 +2930,7 @@ function updateWeatherAdjust() {
         new: getWeatherLabel(nextRankName),
       });
     } else if (ranks[ev.lockedWeather] < 2) {
-      const expected = expectedCiv(ev.targetRound - 2, state.currentGame.civGoal);
-      let targetCiv = 0;
-      if (ev.lockedWeather === 'DISASTER') targetCiv = Math.ceil(expected * 0.8) + 1;
-      if (ev.lockedWeather === 'NORMAL') targetCiv = Math.ceil(expected * 1.2);
+      const targetCiv = GameRules.weatherUpgradeTarget(ev.lockedWeather, ev.targetRound - 2, state.currentGame.civGoal, GAME_CONFIG);
 
       const civShort = targetCiv - newCiv;
       gapMsg = t('weather.gap_msg', { civ: civShort, pts: civShort * rate - (totalCost % rate) });
@@ -3072,15 +2983,15 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
     const p = getPlayer(c.id);
     if (!p) return;
     const statsWarned = [];
-    if (c.f && (p.fortune - c.f) <= 3) statsWarned.push(STAT_LABEL('fortune'));
-    if (c.w && (p.wisdom - c.w) <= 3) statsWarned.push(STAT_LABEL('wisdom'));
+    if (c.f && (p.fortune - c.f) <= reliefCfg().THRESHOLD_LATE) statsWarned.push(STAT_LABEL('fortune'));
+    if (c.w && (p.wisdom - c.w) <= reliefCfg().THRESHOLD_LATE) statsWarned.push(STAT_LABEL('wisdom'));
     if (statsWarned.length) {
-      selfLowWarnings.push(`${p.name || t('common.player')} 的〔${statsWarned.join('、')}〕`);
+      selfLowWarnings.push(t('weather.player_low_stats', { name: p.name || t('common.player'), stats: statsWarned.join(t('common.list_separator')) }));
     }
   });
 
   if (selfLowWarnings.length > 0) {
-    const warnMsg = t('weather.adjust_self_low_warn', { stat: selfLowWarnings.join('、') });
+    const warnMsg = t('weather.adjust_self_low_warn', { stat: selfLowWarnings.join(t('common.list_separator')) });
     const proceed = await confirmModal({
       title: t('confirm.title'),
       message: warnMsg,

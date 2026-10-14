@@ -6,6 +6,7 @@ const ASSETS = [
   './styles.css',
   './components.css',
   './config.js',
+  './deck-model.js',
   './version.js',
   './game-rules.js',
   './game-state.js',
