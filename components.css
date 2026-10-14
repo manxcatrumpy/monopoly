@@ -7,6 +7,8 @@
 .modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 22px; }
 /* 確認視窗會由其他 modal 開啟，需顯示在來源視窗上方。 */
 #confirm-modal { z-index: 120; }
+/* 救濟可能與抽卡里程或計時中的其他視窗同時觸發。 */
+#relief-modal { z-index: 110; }
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;

@@ -637,6 +637,13 @@ function reliefEligible(p, stat) {
   return reliefEligible(p, 'fortune') || reliefEligible(p, 'wisdom');
 }
 
+function qualifyingReliefStats(p, stats = ['fortune', 'wisdom']) {
+  if (!p) return [];
+  const threshold = currentReliefThreshold();
+  return stats.filter(stat => (stat === 'fortune' || stat === 'wisdom') &&
+    (p[stat] ?? 0) <= threshold && reliefEligible(p, stat));
+}
+
 function playerInShelter(p) {
   if (!p) return false;
   const from = p.shelterFromTurn;
@@ -730,7 +737,11 @@ function reliefAnnounceText({ name, items = [], scores = {}, restore, multiPlaye
 }
 
 function showReliefModal(opts) {
-  return enqueueReliefUi(() => showReliefPromptNow(opts));
+  return enqueueReliefUi(() => {
+    // 排隊期間分數可能已改變；在真正開啟時才準備最新的救濟對象。
+    const current = typeof opts === 'function' ? opts() : opts;
+    return current ? showReliefPromptNow(current) : false;
+  });
 }
 
 function showReliefPromptNow(opts) {
@@ -788,6 +799,9 @@ function showReliefPromptNow(opts) {
     const onLater = () => done(false);
     const onBackdrop = () => onLater();
     const onKey = (e) => {
+      // 通用確認視窗的圖層更高，不能一次按鍵同時確認兩個視窗。
+      const confirm = $('#confirm-modal');
+      if (e.defaultPrevented || (confirm && !confirm.classList.contains('hidden'))) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         onLater();
@@ -804,7 +818,8 @@ function showReliefPromptNow(opts) {
     if (backdrop) backdrop.addEventListener('click', onBackdrop);
     document.addEventListener('keydown', onKey);
     modal.classList.remove('hidden');
-    if (ackCb) ackCb.focus();
+    const confirm = $('#confirm-modal');
+    if (ackCb && (!confirm || confirm.classList.contains('hidden'))) ackCb.focus();
   });
 }
 
@@ -812,7 +827,7 @@ async function executeRelief(playerId, statsToRelieve = []) {
   const p = getPlayer(playerId);
   if (!p) return false;
   const cfg = reliefCfg();
-  const eligibleStats = statsToRelieve.filter(stat => (stat === 'fortune' || stat === 'wisdom') && reliefEligible(p, stat));
+  const eligibleStats = qualifyingReliefStats(p, statsToRelieve);
   if (!eligibleStats.length) return false;
 
   const restoreTo = cfg.RESTORE_TO || 5;
@@ -824,7 +839,8 @@ async function executeRelief(playerId, statsToRelieve = []) {
     setStat(playerId, stat, restoreTo);
   });
 
-  p.shelterFromTurn = state.turnNum + 1;
+  // 第二項救濟只延長庇護，保留當輪仍在生效的起點。
+  if (!playerInShelter(p)) p.shelterFromTurn = state.turnNum + 1;
   const targetEnd = state.turnNum + (cfg.SHELTER_TURNS || 2);
   p.shelterToTurn = typeof p.shelterToTurn === 'number' ? Math.max(p.shelterToTurn, targetEnd) : targetEnd;
 
@@ -848,48 +864,41 @@ async function maybeCheckReliefAfterForcedLoss(playerId, oldStats) {
   if (!p || !oldStats) return;
   const threshold = currentReliefThreshold();
   const qualifying = [];
-  const scores = {};
   ['fortune', 'wisdom'].forEach(stat => {
     const oldVal = oldStats[stat] ?? 0;
     const newVal = p[stat] ?? 0;
     if (newVal < oldVal && newVal <= threshold && reliefEligible(p, stat)) {
       qualifying.push(stat);
-      scores[stat] = newVal;
     }
   });
   if (!qualifying.length) return;
 
   const cfg = reliefCfg();
   const restore = cfg.RESTORE_TO || 5;
-  const name = p.name || t('common.player');
-
-  const ok = await showReliefModal({
-    name,
-    items: qualifying,
-    scores,
-    restore
+  const ok = await showReliefModal(() => {
+    if (getPlayer(playerId) !== p) return null;
+    const items = qualifyingReliefStats(p, qualifying);
+    if (!items.length) return null;
+    return {
+      name: p.name || t('common.player'),
+      items,
+      scores: Object.fromEntries(items.map(stat => [stat, p[stat] ?? 0])),
+      restore,
+    };
   });
 
-  if (ok) {
+  if (ok && getPlayer(playerId) === p) {
     await executeRelief(playerId, qualifying);
   }
 }
 
 async function sweepReliefOnBoundary() {
-  const threshold = currentReliefThreshold();
+  const players = state.players;
   const candidates = [];
-  state.players.forEach(p => {
-    const pQual = [];
-    const pScores = {};
-    ['fortune', 'wisdom'].forEach(stat => {
-      const val = p[stat] || 0;
-      if (val <= threshold && reliefEligible(p, stat)) {
-        pQual.push(stat);
-        pScores[stat] = val;
-      }
-    });
+  players.forEach(p => {
+    const pQual = qualifyingReliefStats(p);
     if (pQual.length > 0) {
-      candidates.push({ player: p, items: pQual, scores: pScores });
+      candidates.push({ player: p, items: pQual });
     }
   });
 
@@ -897,23 +906,32 @@ async function sweepReliefOnBoundary() {
 
   const cfg = reliefCfg();
   const restore = cfg.RESTORE_TO || 5;
-  const multiList = candidates.map(c => ({
-    name: c.player.name || t('common.player'),
-    items: c.items,
-    scores: c.scores
-  }));
-
-  const ok = await showReliefModal({
-    multiPlayers: multiList.length > 1 ? multiList : null,
-    name: multiList[0].name,
-    items: multiList[0].items,
-    scores: multiList[0].scores,
-    restore
+  let activeCandidates = [];
+  const ok = await showReliefModal(() => {
+    if (state.players !== players) return null;
+    activeCandidates = candidates.map(c => ({
+      player: c.player,
+      items: qualifyingReliefStats(c.player, c.items),
+    })).filter(c => getPlayer(c.player.id) === c.player && c.items.length);
+    if (!activeCandidates.length) return null;
+    const multiList = activeCandidates.map(c => ({
+      name: c.player.name || t('common.player'),
+      items: c.items,
+      scores: Object.fromEntries(c.items.map(stat => [stat, c.player[stat] ?? 0])),
+    }));
+    return {
+      multiPlayers: multiList.length > 1 ? multiList : null,
+      name: multiList[0].name,
+      items: multiList[0].items,
+      scores: multiList[0].scores,
+      restore,
+    };
   });
 
   if (ok) {
-    for (const c of candidates) {
-      await executeRelief(c.player.id, c.items);
+    for (const c of activeCandidates) {
+      if (state.players !== players) return;
+      if (getPlayer(c.player.id) === c.player) await executeRelief(c.player.id, c.items);
     }
   }
 }
@@ -973,6 +991,8 @@ function confirmModal({ title = t('confirm.title'), message = '', confirmText = 
       cancelBtn.removeEventListener('click', onCancel);
       backdrop.removeEventListener('click', onCancel);
       document.removeEventListener('keydown', onKey);
+      const relief = $('#relief-modal');
+      if (relief && !relief.classList.contains('hidden')) $('#relief-ack-cb')?.focus();
       resolve(result);
     };
     const onOk = () => done(true);
@@ -2064,6 +2084,7 @@ function snapshotRound() {
     navigatorClaimed: state.navigatorClaimed,
     actedThisTurn: state.actedThisTurn,
     skippedThisTurn: state.skippedThisTurn,
+    reliefSweepDone: state.reliefSweepDone,
   }));
 }
 
@@ -2096,6 +2117,10 @@ async function restoreRound(idx) {
   state.actedThisTurn = Object.assign({}, entry.actedThisTurn || {});
   state.skippedThisTurn = Object.assign({}, entry.skippedThisTurn || {});
   migratePlayersRelief(state.players);
+  // 舊歷史未保存盤點旗標；已越過界線的局避免重播，界線前仍可正常盤點。
+  state.reliefSweepDone = typeof entry.reliefSweepDone === 'boolean'
+    ? entry.reliefSweepDone
+    : isLateReliefPhase();
 
   // The vacated slot now holds the round we just left — a swap, so the round
   // count is unchanged and no round disappears.
