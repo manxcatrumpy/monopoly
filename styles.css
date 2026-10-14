@@ -95,6 +95,15 @@ body {
 
 button { font-family: inherit; }
 
+.storage-warning {
+  margin: 12px 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--danger);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--danger-deep);
+}
+
 /* Visible keyboard focus on every interactive element (buttons previously had
    none). Only shows for keyboard/AT focus, not mouse clicks. */
 :focus-visible { outline: 2px solid var(--wisdom); outline-offset: 2px; }

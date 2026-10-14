@@ -4,6 +4,8 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const GameRules = require('../game-rules.js');
+const GameState = require('../game-state.js');
+const GameStorage = require('../storage.js');
 
 const sources = ['config.js', 'version.js', 'app.js'].map(file =>
   fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
@@ -13,11 +15,11 @@ function createSession() {
   const clock = { now: 1700000000000 };
   const storage = new Map();
   const noop = () => {};
-  const element = { addEventListener: noop, querySelector: () => element };
+  const element = { addEventListener: noop, querySelector: () => element, classList: { toggle: noop } };
 
   function openApp() {
     const context = vm.createContext({
-      GameRules,
+      GameRules, GameState, GameStorage,
       window: { addEventListener: noop },
       document: { querySelector: () => element, addEventListener: noop },
       localStorage: {
@@ -40,7 +42,7 @@ function createSession() {
   }
 
   let run = openApp();
-  run('state.players.push(makePlayer({ fortune: 5, wisdom: 5 })); saveNow();');
+  run('state.currentGame.players.push(makePlayer({ fortune: 5, wisdom: 5 })); saveNow();');
   return {
     run: code => run(code),
     advance: seconds => { clock.now += seconds * 1000; },
@@ -85,7 +87,7 @@ test('paused timer stays paused across reload and resumes from saved elapsed tim
   app.advance(60);
   app.reload();
   assert.equal(app.run('elapsedSeconds()'), 21);
-  assert.equal(app.run('state.timer.running'), false);
+  assert.equal(app.run('state.currentGame.timer.running'), false);
   app.run('startTimer()');
   app.advance(9);
   app.reload();
@@ -102,7 +104,7 @@ test('running timer includes time spent away from the page', () => {
 
 test('legacy running timer with a missing start time preserves accumulated time', () => {
   const app = createSession();
-  app.run('state.timer = { accumulated: 30, running: true, lastStartedAt: null }; saveNow();');
+  app.run('state.currentGame.timer = { accumulated: 30, running: true, lastStartedAt: null }; saveNow();');
   app.reload();
   assert.equal(app.run('elapsedSeconds()'), 30);
   app.advance(9);

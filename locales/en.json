@@ -1,4 +1,11 @@
 {
+  "storage": {
+    "read_failed": "The saved game could not be read. Its original data has been kept. Starting or resetting a game will require confirmation.",
+    "write_failed": "The game has not been saved. Keep this page open, check available storage, then try again.",
+    "replace_title": "Unreadable saved game",
+    "replace_message": "Starting a new game will back up the unreadable save before replacing it. Continue?",
+    "history_incomplete": "This old history entry did not record complete weather, pending draws, or relief sweep status. Independent defaults are being used."
+  },
   "app": {
     "title": "Monopoly of Fortune and Wisdom",
     "dashboard_title": "Monopoly Dashboard",

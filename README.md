@@ -31,6 +31,7 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 
 修改規則或遊戲流程後執行 `npm test`、`npm run lint` 與 `npm run build`。
 計分結算與畫面更新的分工見 [第一階段重構說明](docs/score-flow.md)。
+存檔格式、舊資料遷移及歷史局切換見 [第二階段重構說明](docs/game-storage.md)。
 
 ## 部署到 GitHub Pages
 
@@ -61,6 +62,8 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `docs/social-welfare-relief.md` | 社會福利救濟可實作規格 |
 | `version.js` | 版號單一來源（畫面 + SW cache） |
 | `game-rules.js` | 純規則：批次分數、里程、勝利與時間界線、倍率、救濟資格 |
+| `game-state.js` | 存檔與歷史共用模型：建立、驗證、遷移、完整快照與局交換 |
+| `storage.js` | localStorage adapter：舊存檔備份、格式隔離與儲存失敗處理 |
 | `app.js` | 遊戲操作流程、狀態套用、畫面與通知；所有分數經同一批次入口結算 |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |
