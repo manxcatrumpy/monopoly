@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const GameRules = require('../game-rules.js');
 
 const sources = ['config.js', 'version.js', 'app.js'].map(file =>
   fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
@@ -16,6 +17,7 @@ function createSession() {
 
   function openApp() {
     const context = vm.createContext({
+      GameRules,
       window: { addEventListener: noop },
       document: { querySelector: () => element, addEventListener: noop },
       localStorage: {

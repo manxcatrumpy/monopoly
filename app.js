@@ -207,15 +207,15 @@ function totalCiv() {
   return state.players.reduce((s, p) => s + (p.civ || 0), 0);
 }
 // 把文明加到集體高度：均分給每位玩家，餘數由前往後補，避免全灌在 players[0]。
-function addCollectiveCiv(amount) {
+function collectiveCivChanges(amount) {
   const n = state.players.length;
-  if (!amount || !n) return;
+  if (!amount || !n) return [];
   let rem = amount % n;
   const each = (amount - rem) / n;
-  state.players.forEach(p => {
+  return state.players.map(p => {
     const add = each + (rem > 0 ? 1 : 0);
     if (rem > 0) rem--;
-    if (add) setStat(p.id, 'civ', (p.civ || 0) + add);
+    return { playerId: p.id, delta: { civ: add } };
   });
 }
 function totalFortune() {
@@ -556,15 +556,21 @@ function startTimer() {
   state.timer.running = true;
   state.timer.lastStartedAt = Date.now();
   save();
+  processGameEvents();
   updateTopbar();
 }
-function pauseTimer() {
+function pauseTimerState() {
   if (!state.timer.running) return;
   const now = Date.now();
   state.timer.accumulated = (state.timer.accumulated || 0) +
     Math.floor((now - state.timer.lastStartedAt) / 1000);
   state.timer.lastStartedAt = null;
   state.timer.running = false;
+}
+function pauseTimer() {
+  if (!state.timer.running) return;
+  pauseTimerState();
+  processGameEvents();
   save();
   updateTopbar();
 }
@@ -812,21 +818,25 @@ async function executeRelief(playerId, statsToRelieve = []) {
   const p = getPlayer(playerId);
   if (!p) return false;
   const cfg = reliefCfg();
-  const eligibleStats = statsToRelieve.filter(stat => (stat === 'fortune' || stat === 'wisdom') && reliefEligible(p, stat));
+  const eligibleStats = statsToRelieve.filter(stat =>
+    (stat === 'fortune' || stat === 'wisdom') && reliefEligible(p, stat) && p[stat] <= currentReliefThreshold()
+  );
   if (!eligibleStats.length) return false;
 
   const restoreTo = cfg.RESTORE_TO || 5;
   const name = p.name || t('common.player');
 
+  const values = {};
   eligibleStats.forEach(stat => {
     if (!p.reliefUsed) p.reliefUsed = { fortune: false, wisdom: false };
     p.reliefUsed[stat] = true;
-    setStat(playerId, stat, restoreTo);
+    values[stat] = restoreTo;
   });
 
-  p.shelterFromTurn = state.turnNum + 1;
+  if (!playerInShelter(p)) p.shelterFromTurn = state.turnNum + 1;
   const targetEnd = state.turnNum + (cfg.SHELTER_TURNS || 2);
   p.shelterToTurn = typeof p.shelterToTurn === 'number' ? Math.max(p.shelterToTurn, targetEnd) : targetEnd;
+  await settleScoreChanges([{ playerId, values }]);
 
   const itemsLabel = eligibleStats.length === 2 ? t('relief.items_both') : STAT_LABEL(eligibleStats[0]);
   const msg = t('messages.relief_log', {
@@ -838,8 +848,6 @@ async function executeRelief(playerId, statsToRelieve = []) {
   });
   logEvent(msg, 'grad');
   save();
-  updatePlayerCard(p);
-  updateTopbar();
   return true;
 }
 
@@ -847,16 +855,9 @@ async function maybeCheckReliefAfterForcedLoss(playerId, oldStats) {
   const p = getPlayer(playerId);
   if (!p || !oldStats) return;
   const threshold = currentReliefThreshold();
-  const qualifying = [];
+  const qualifying = GameRules.qualifyingReliefStats(p, oldStats, threshold);
   const scores = {};
-  ['fortune', 'wisdom'].forEach(stat => {
-    const oldVal = oldStats[stat] ?? 0;
-    const newVal = p[stat] ?? 0;
-    if (newVal < oldVal && newVal <= threshold && reliefEligible(p, stat)) {
-      qualifying.push(stat);
-      scores[stat] = newVal;
-    }
-  });
+  qualifying.forEach(stat => { scores[stat] = p[stat]; });
   if (!qualifying.length) return;
 
   const cfg = reliefCfg();
@@ -919,11 +920,7 @@ async function sweepReliefOnBoundary() {
 }
 
 function applyMult(val, stat, multObj) {
-  if (!val) return 0;
-  if (stat === 'civ' || stat === 'civAll') return val; // 文明不吃倍率
-  return val >= 0
-    ? Math.round(val * multObj.gain)
-    : -Math.round(Math.abs(val) * multObj.loss);
+  return GameRules.applyMultiplier(val, stat, multObj);
 }
 
 function scaleReward(base = {}, mult = { gain: 1, loss: 1 }) {
@@ -989,9 +986,13 @@ function confirmModal({ title = t('confirm.title'), message = '', confirmText = 
     okBtn.focus();
   });
 }
-function logEvent(text, kind = '') {
+function recordLog(text, kind = '') {
   state.log.unshift({ text, kind, t: elapsedSeconds() });
   if (state.log.length > 40) state.log.pop();
+}
+function logEvent(text, kind = '') {
+  recordLog(text, kind);
+  save();
   renderLog();
 }
 function renderLog() {
@@ -1017,8 +1018,6 @@ function addPendingDraw(text, playerId) {
     id: 'pd_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
     text, playerId, t: elapsedSeconds(),
   });
-  renderPendingDraws();
-  openDrawModal();   // 強制彈出、要主持人點掉才收起
 }
 function resolvePendingDraw(id) {
   state.pendingDraws = state.pendingDraws.filter(d => d.id !== id);
@@ -1064,81 +1063,86 @@ function renderPendingDraws() {
 // ─────────── Milestones & Graduation ───────────
 function key(stat, m) { return stat[0] + m; } // e.g. f25, w50
 
-function processStatChange(player, stat, oldVal, newVal) {
-  if (stat === 'civ') return;
-  
-  // 單項達標：福或慧任一項先到畢業門檻，抽 1 張機會卡 (每位玩家只會觸發一次)
-  const m = GRAD_THRESHOLD;
-  const k = 'single_' + m;
-  if (oldVal < m && newVal >= m && !player.notified[k]) {
-    player.notified[k] = true;
-    const msg = t('messages.grad_draw', {
-      name: player.name || t('common.player'),
-      stat: STAT_LABEL(stat),
-      val: m,
-    });
-    toast(msg, 'grad');
-    logEvent(msg, 'grad');
-    addPendingDraw(msg, player.id);
-    flashCard(player.id);
+// 規則回傳事件；通知與日誌集中在這裡呈現，不再逐項計分時觸發。
+function presentGameEvents(events) {
+  const drawCount = state.pendingDraws.length;
+  for (const event of events) {
+    const player = event.playerId ? getPlayer(event.playerId) : null;
+    const name = player ? (player.name || t('common.player')) : '';
+    let message, logMessage, kind = 'grad', draw = false, flash = 'grad';
+    switch (event.type) {
+      case 'single':
+        message = t('messages.grad_draw', { name, stat: STAT_LABEL(event.stat), val: event.threshold });
+        draw = true;
+        flash = 'pulse';
+        break;
+      case 'navigator':
+        message = t('messages.leader_encounter', { name, val: event.threshold });
+        draw = true;
+        break;
+      case 'breakthrough':
+        message = t('messages.breakthrough_encounter', { name, val: event.threshold });
+        kind = 'milestone';
+        draw = true;
+        flash = 'pulse';
+        break;
+      case 'graduated':
+        message = t('messages.graduated_msg', { name });
+        break;
+      case 'downgraded':
+        message = t('messages.downgrade_msg', { name, threshold: event.threshold });
+        kind = '';
+        flash = null;
+        break;
+      case 'civGoal':
+        message = t('messages.civ_goal_reached', { goal: event.goal });
+        logMessage = t('messages.civ_goal_reached_log', { goal: event.goal });
+        break;
+      case 'allGraduated':
+        message = t('messages.all_graduated');
+        logMessage = t('messages.all_graduated_log');
+        break;
+      case 'sprint':
+        message = t('messages.sprint_started');
+        logMessage = t('messages.sprint_started_log');
+        break;
+      case 'timeUp':
+        message = t('messages.time_up', { min: event.minutes });
+        logMessage = t('messages.time_up_log');
+        break;
+      default: continue;
+    }
+    toast(message, kind === 'milestone' ? '' : kind);
+    recordLog(logMessage || message, kind);
+    if (draw) addPendingDraw(message, event.playerId);
+    if (player && flash) flashCard(player.id, flash);
   }
-  checkGraduation(player);
+  if (events.length) {
+    save();
+    renderLog();
+  }
+  if (state.pendingDraws.length !== drawCount) {
+    renderPendingDraws();
+    openDrawModal();
+  }
 }
 
-// Dual-stat milestones (福 AND 慧 both ≥ N)
-function checkDualMilestones(player) {
-  const both = Math.min(player.fortune || 0, player.wisdom || 0);
+// 由操作流程與計時 tick 呼叫；renderAll / updateTopbar 只讀取狀態。
+async function processGameEvents() {
+  const result = GameRules.evaluateGameStatus(state, {
+    elapsed: elapsedSeconds(), maxSeconds: maxGameSeconds(), sprintSeconds: SPRINT_SECONDS(),
+  });
+  const flagsChanged = Object.entries(result.flags).some(([key, value]) => state[key] !== value);
+  Object.assign(state, result.flags);
+  if (result.stopTimer) pauseTimerState();
+  if (flagsChanged || result.stopTimer) save();
+  presentGameEvents(result.events);
 
-  // 領航者際遇 — first player in the round to satisfy each threshold claims it
-  for (const n of NAV_THRESHOLDS) {
-    if (both >= n && state.navigatorClaimed[n] == null) {
-      state.navigatorClaimed[n] = player.id;
-      const msg = t('messages.leader_encounter', {
-        name: player.name || t('common.player'),
-        val: n,
-      });
-      toast(msg, 'grad');
-      logEvent(msg, 'grad');
-      addPendingDraw(msg, player.id);
-      flashCard(player.id, 'grad');
-    }
-  }
-
-  // 自我突破際遇 — every player who crosses; can re-fire after dropping below
-  for (const n of SELF_THRESHOLDS) {
-    const k = 'self' + n;
-    if (both >= n && !player.notified[k]) {
-      player.notified[k] = true;
-      const msg = t('messages.breakthrough_encounter', {
-        name: player.name || t('common.player'),
-        val: n,
-      });
-      toast(msg);
-      logEvent(msg, 'milestone');
-      addPendingDraw(msg, player.id);
-      flashCard(player.id);
-    } else if (both < n && player.notified[k]) {
-      player.notified[k] = false;
-    }
-  }
-}
-
-function checkGraduation(player) {
-  const meets = player.fortune >= GRAD_THRESHOLD && player.wisdom >= GRAD_THRESHOLD;
-  if (meets && !player.graduated) {
-    player.graduated = true;
-    const msg = t('messages.graduated_msg', { name: player.name || t('common.player') });
-    toast(msg, 'grad');
-    logEvent(msg, 'grad');
-    flashCard(player.id, 'grad');
-  } else if (!meets && player.graduated) {
-    player.graduated = false;
-    const msg = t('messages.downgrade_msg', {
-      name: player.name || t('common.player'),
-      threshold: GRAD_THRESHOLD,
-    });
-    toast(msg);
-    logEvent(msg);
+  if (state.players.length && isLateReliefPhase() && !state.reliefSweepDone) {
+    // 先記錄盤點，再等待主持人確認，避免下一個 tick 重複開啟。
+    state.reliefSweepDone = true;
+    save();
+    await sweepReliefOnBoundary();
   }
 }
 
@@ -1177,33 +1181,13 @@ function updateTopbar() {
   const pct = Math.min(100, (total / Math.max(1, state.civGoal)) * 100);
   $('#civ-bar-fill').style.width = pct + '%';
 
-  // 集體文明達標＝勝利：進度條轉金、跳通知並記 log。旗標在回落時清除，
-  // 所以主持人改錯數字後再次達標仍會重新慶祝。
-  const goalReached = total >= state.civGoal;
+  const goalReached = started && total >= state.civGoal;
   $('.civ-bar').classList.toggle('reached', goalReached);
   const civLabel = $('.civ-progress-label');
   civLabel.classList.toggle('reached', goalReached);
   civLabel.textContent = goalReached
     ? t('civ.progress_reached', { total, goal: state.civGoal })
     : t('civ.progress_label');
-  if (goalReached && !state._civGoalNoticed) {
-    state._civGoalNoticed = true;
-    toast(t('messages.civ_goal_reached', {goal: state.civGoal}), 'grad');
-    logEvent(t('messages.civ_goal_reached_log', {goal: state.civGoal}), 'grad');
-  } else if (!goalReached && state._civGoalNoticed) {
-    state._civGoalNoticed = false;
-  }
-
-  // 條件二：全員畢業 — 所有玩家皆畢業即達成「全員圓滿」、可進行結算。
-  const allGraduated = state.players.length > 0 && state.players.every(p => p.graduated);
-  if (allGraduated && !state._allGradNoticed) {
-    state._allGradNoticed = true;
-    toast(t('messages.all_graduated'), 'grad');
-    logEvent(t('messages.all_graduated_log'), 'grad');
-  } else if (!allGraduated && state._allGradNoticed) {
-    state._allGradNoticed = false;
-  }
-
   $('#fortune-total').textContent = totalFortune();
   $('#wisdom-total').textContent = totalWisdom();
 
@@ -1261,7 +1245,6 @@ function updateTopbar() {
         }
         
         btnAdjust.classList.remove('hidden');
-        btnAdjust.onclick = (e) => { e.stopPropagation(); openWeatherAdjustModal(); };
       } else if (phase === 'REPORT' && ev && ev.lockedWeather) {
         weatherBanner.classList.remove('hidden');
         weatherBanner.classList.add(`weather-${ev.lockedWeather.toLowerCase()}`);
@@ -1277,23 +1260,6 @@ function updateTopbar() {
   const btn = $('#btn-toggle-timer');
   btn.textContent = state.timer.running ? t('ui.btn_pause_timer') : t('ui.btn_start_timer');
 
-  if (sprint && !state._sprintNoticed) {
-    state._sprintNoticed = true;
-    toast(t('messages.sprint_started'), 'grad');
-    logEvent(t('messages.sprint_started_log'), 'grad');
-    if (!state.reliefSweepDone) {
-      state.reliefSweepDone = true;
-      save();
-      sweepReliefOnBoundary();
-    }
-  }
-
-  if (sec >= maxSec && !state._timeUpNoticed) {
-    state._timeUpNoticed = true;
-    pauseTimer();
-    toast(t('messages.time_up', {min: gameMinutes()}), 'grad');
-    logEvent(t('messages.time_up_log'), 'grad');
-  }
 }
 
 // ─────────── Render: Player cards ───────────
@@ -1498,9 +1464,8 @@ async function applyAdjust() {
   const alreadyResolved = isResolved(pid);
   const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
-  const base = {}; STATS.forEach(stat => { base[stat] = p[stat] || 0; });
-  const old = { fortune: base.fortune, wisdom: base.wisdom };
-  STATS.forEach(stat => { if (scaled[stat]) setStat(pid, stat, base[stat] + scaled[stat]); });
+  const old = snapshotFw(p);
+  await settleScoreChanges([{ playerId: pid, delta: scaled }]);
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
@@ -1525,8 +1490,7 @@ async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
   const mult = scoreMultiplier(playerId);
   const r = scaleReward(originReward(p, stop), mult);
-  const bp = {}; STATS.forEach(s => { bp[s] = p[s] || 0; });
-  STATS.forEach(stat => { if (r[stat]) setStat(playerId, stat, bp[stat] + r[stat]); });
+  await settleScoreChanges([{ playerId, delta: r }]);
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = stop
     ? t('messages.origin_stop_msg', {name: p.name || t('common.player'), reward: describeReward(r), tag: tag})
@@ -1564,21 +1528,37 @@ function pickOrigin(stop) {
   closeOriginModal();      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   if (id != null) scoreOrigin(id, stop);
 }
-function setStat(playerId, stat, value) {
-  const p = getPlayer(playerId); if (!p) return;
-  const old = p[stat] || 0;
-  p[stat] = Math.max(0, value | 0);
-  if (stat !== 'civ') {
-    const clearAt = reliefCfg().CLEAR_TAG_AT || 4;
-    if (p[stat] >= clearAt && p.selfSelectedLow && p.selfSelectedLow[stat]) {
-      p.selfSelectedLow[stat] = false;
+async function settleScoreChanges(operations, { selfSelected = false } = {}) {
+  const changes = GameRules.calculateScoreBatch(state.players, operations);
+  const events = [];
+  // 全場所有分數先寫入，再檢查里程與集體勝利。
+  for (const change of changes) {
+    const p = getPlayer(change.playerId);
+    Object.assign(p, change.after);
+    for (const stat of change.changedStats.filter(stat => stat !== 'civ')) {
+      if (p[stat] >= (reliefCfg().CLEAR_TAG_AT || 4)) p.selfSelectedLow[stat] = false;
+      if (selfSelected && p[stat] < change.before[stat] && p[stat] <= 3) p.selfSelectedLow[stat] = true;
     }
-    processStatChange(p, stat, old, p[stat]);
-    checkDualMilestones(p);
+  }
+  for (const change of changes) {
+    const p = getPlayer(change.playerId);
+    if (change.changedStats.some(stat => stat !== 'civ')) {
+      const progress = GameRules.evaluatePlayerProgress(p, change.before, state.navigatorClaimed, {
+        graduation: GRAD_THRESHOLD, navigator: NAV_THRESHOLDS, self: SELF_THRESHOLDS,
+      });
+      p.notified = progress.notified;
+      p.graduated = progress.graduated;
+      state.navigatorClaimed = progress.navigatorClaimed;
+      events.push(...progress.events);
+    }
   }
   save();
-  updatePlayerCard(p);
+  changes.forEach(change => updatePlayerCard(getPlayer(change.playerId)));
+  presentGameEvents(events);
+  const boundary = processGameEvents();
   updateTopbar();
+  await boundary;
+  return changes;
 }
 
 function updatePlayerCard(p) {
@@ -1635,6 +1615,7 @@ function removePlayer(id) {
     return;
   }
   renderPlayers();
+  processGameEvents();
   updateTopbar();
 }
 
@@ -1824,6 +1805,7 @@ async function applySetup() {
     : t('messages.round_restored_log', {round: state.roundNum, goal: state.civGoal}), 'grad');
   save();
   closeSetup();
+  processGameEvents();
   renderAll();
   if (isNext) toast(t('messages.round_started', {round: state.roundNum}));
 }
@@ -1836,8 +1818,8 @@ function flagMap(key) {
 }
 function actedSet() { return flagMap('actedThisTurn'); }
 function skippedSet() { return flagMap('skippedThisTurn'); }
-function hasActed(id) { return !!actedSet()[id]; }
-function hasSkipped(id) { return !!skippedSet()[id]; }
+function hasActed(id) { return !!state.actedThisTurn?.[id]; }
+function hasSkipped(id) { return !!state.skippedThisTurn?.[id]; }
 function isResolved(id) { return hasActed(id) || hasSkipped(id); }
 function actedCount() { return state.players.filter(p => hasActed(p.id)).length; }
 function skippedCount() { return state.players.filter(p => hasSkipped(p.id)).length; }
@@ -1954,21 +1936,19 @@ async function nextTurn() {
   } else {
     toast(t('messages.enter_turn', { n: state.turnNum }));
   }
+  const boundary = processGameEvents();
   save();
   renderAll();
-
-  // 第一次氣象預報發布（或更早進入終局倒數）當刻，主動執行界線盤點
-  if (isLateReliefPhase() && !state.reliefSweepDone) {
-    state.reliefSweepDone = true;
-    save();
-    await sweepReliefOnBoundary();
-  }
-
+  await boundary;
   if (phase === 'ADJUST' && ev) openWeatherAdjustModal();
 }
 
 // ─────────── Topbar / sidebar bindings ───────────
 function bindEvents() {
+  $('#btn-weather-adjust').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openWeatherAdjustModal();
+  });
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   $('#btn-history').addEventListener('click', openHistory);
@@ -2047,6 +2027,7 @@ function bindEvents() {
     if (!ok) return;
     state = defaultState();
     save();
+    processGameEvents();
     renderAll();
     openSetup();
   });
@@ -2106,6 +2087,7 @@ async function restoreRound(idx) {
   state._civGoalNoticed = totalCiv() >= state.civGoal;
   state._allGradNoticed = state.players.length > 0 && state.players.every(p => p.graduated);
   save();
+  processGameEvents();
   renderAll();
   closeHistory();
   toast(t('messages.round_restored', {round: state.roundNum, oldRound: leaving.roundNum}), 'grad');
@@ -2522,7 +2504,7 @@ function renderChoiceCard(c) {
 }
 
 // 套用抉擇：`each`（含個人文明 each.civ）給每位收受者；`civAll` 套用到場上所有玩家的文明。
-// 負分安全（setStat 夾 0）。
+// 全部變更合併後夾到零。
 async function applyChoiceCard(playerIds, card, optIdx) {
   const opt = (card.options || [])[optIdx];
   if (!opt) return;
@@ -2530,28 +2512,30 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   const table = choiceEffects(opt);
   const names = [];
   const pending = [];
+  const operations = [];
   ids.forEach(pid => {
     const p = getPlayer(pid);
     if (!p) return;
     const old = snapshotFw(p);
     const { each } = choiceEffects(opt, pid);
-    STATS.forEach(stat => { if (each[stat]) setStat(pid, stat, (p[stat] || 0) + each[stat]); });
+    operations.push({ playerId: pid, delta: each });
     names.push(p.name || t('common.player'));
     pending.push({ pid, old });
   });
   if (!names.length) return;
   const civAll = table.civAll;
   if (civAll) {
-    state.players.forEach(p => setStat(p.id, 'civ', (p.civ || 0) + civAll));   // 集體文明＝場上所有玩家
+    state.players.forEach(p => operations.push({ playerId: p.id, delta: { civ: civAll } }));
   }
   const fx = describeChoiceOption(card, opt);
+  closeCard();
+  await settleScoreChanges(operations);
   const tag = table.mult.id !== null ? getWeatherLabel(table.mult.id) : '';
   const sideNote = opt.side ? `　※附加：${opt.side}（請手動套用）` : '';
   const positive = describeReward(table.each).indexOf('-') === -1 && civAll >= 0;
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
-  closeCard();
   for (const item of pending) await maybeCheckReliefAfterForcedLoss(item.pid, item.old);
   await markCardActor(ids[0]);
 }
@@ -2828,12 +2812,11 @@ async function applyCardReward(playerIds, card) {
     const old = snapshotFw(p);
     const mult = scoreMultiplier(pid);
     const r = scaleReward(card.reward || {}, mult);
-    if (r.fortune) setStat(pid, 'fortune', (p.fortune || 0) + r.fortune);
-    if (r.wisdom)  setStat(pid, 'wisdom',  (p.wisdom  || 0) + r.wisdom);
-    if (r.civ)     setStat(pid, 'civ',     (p.civ     || 0) + r.civ);
     applied.push({ p, r, mult, old, pid });
   });
   if (!applied.length) return;
+  closeCard();
+  await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })));
   const names = applied.map(a => a.p.name || t('common.player'));
   const first = applied[0];
   const sameReward = applied.every(a => describeReward(a.r) === describeReward(first.r) && a.mult.id === first.mult.id);
@@ -2852,7 +2835,6 @@ async function applyCardReward(playerIds, card) {
   const msg = t('messages.card_completed', {names: names.join('、'), card: card.name, reward: rewardText, tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  closeCard();
   for (const a of applied) await maybeCheckReliefAfterForcedLoss(a.pid, a.old);
   await markCardActor(ids[0]);
 }
@@ -2869,7 +2851,10 @@ function renderAll() {
 // ─────────── Timer loop ───────────
 function startTimerLoop() {
   setInterval(() => {
-    if (state.timer.running) updateTopbar();
+    if (state.timer.running) {
+      processGameEvents();
+      updateTopbar();
+    }
   }, 1000);
 }
 
@@ -2902,6 +2887,7 @@ function init() {
   renderVersion();
   initHighlightFeature();
   bindEvents();
+  processGameEvents();
   renderAll();
   startTimerLoop();
   registerSW();
@@ -3104,27 +3090,10 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
     if (!proceed) return;
   }
 
-  charged.forEach(c => {
-    const p = getPlayer(c.id);
-    if (!p) return;
-    if (c.f) {
-      const nextF = p.fortune - c.f;
-      setStat(p.id, 'fortune', nextF);
-      if (nextF <= 3) {
-        if (!p.selfSelectedLow) p.selfSelectedLow = { fortune: false, wisdom: false };
-        p.selfSelectedLow.fortune = true;
-      }
-    }
-    if (c.w) {
-      const nextW = p.wisdom - c.w;
-      setStat(p.id, 'wisdom', nextW);
-      if (nextW <= 3) {
-        if (!p.selfSelectedLow) p.selfSelectedLow = { fortune: false, wisdom: false };
-        p.selfSelectedLow.wisdom = true;
-      }
-    }
-  });
-  addCollectiveCiv(civGain);
+  await settleScoreChanges([
+    ...charged.map(c => ({ playerId: c.id, delta: { fortune: -c.f, wisdom: -c.w } })),
+    ...collectiveCivChanges(civGain),
+  ], { selfSelected: true });
 
   const names = charged.filter(c => c.f || c.w).map(c => c.name).join('、');
   logEvent(t('weather.adjust_spent_log', { names, cost: spent, civ: civGain }), 'milestone');
