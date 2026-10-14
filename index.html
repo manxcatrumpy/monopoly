@@ -89,6 +89,8 @@
     </div>
   </header>
 
+  <div id="storage-warning" class="storage-warning hidden" role="alert" hidden></div>
+
   <div id="weather-banner" class="weather-banner hidden" role="status" aria-live="polite">
     <div class="weather-banner-copy">
       <div id="weather-banner-title" class="weather-banner-title">氣象預報</div>
@@ -792,10 +794,14 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="./i18n.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="./config.js"></script>
+  <script src="./deck-model.js"></script>
+  <script src="./i18n.js"></script>
   <script src="./version.js"></script>
+  <script src="./game-rules.js"></script>
+  <script src="./game-state.js"></script>
+  <script src="./storage.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

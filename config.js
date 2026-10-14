@@ -1,7 +1,10 @@
 // 福慧大富翁 — 全域平衡與遊戲設定
 // 在這裡修改數值可直接調整遊戲節奏與難度，無需更改核心邏輯。
 
-window.GAME_CONFIG = {
+const gameConfig = {
+  PROGRESSION: { GRADUATION: 30, NAVIGATOR: [10, 20, 30], SELF: [12, 22] },
+  SCORING: { CIV_GOAL_PER_PLAYER: 10, CIV_WEIGHT: 2 },
+  TIME: { BASE_PLAYERS: 4, BASE_MINUTES: 100, EXTRA_PLAYER_MINUTES: 5, WARNING_MINUTES: 20 },
   // 總局數 (預設 16 局)
   EXPECTED_ROUNDS: 16,
 
@@ -14,7 +17,9 @@ window.GAME_CONFIG = {
       { id: 'W2', targetRound: 12 }
     ],
     // 氣候調節的兌換率：幾點福慧可換 1 點文明
-    EXCHANGE_RATE_COST: 3
+    EXCHANGE_RATE_COST: 3,
+    DISASTER_RATIO: 0.8,
+    FAVORABLE_RATIO: 1.2
   },
 
   // 終局倒數分鐘數 (預設最後 15 分鐘)
@@ -46,5 +51,8 @@ window.GAME_CONFIG = {
     }
   });
   return Object.freeze(obj);
-})(window.GAME_CONFIG);
+})(gameConfig);
+
+if (typeof module === 'object' && module.exports) module.exports = gameConfig;
+else window.GAME_CONFIG = gameConfig;
 

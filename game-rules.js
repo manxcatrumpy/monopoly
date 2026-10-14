@@ -1,0 +1,143 @@
+// 純規則：不讀取 DOM、時間或儲存，也不改動傳入的遊戲資料。
+(function () {
+  const CONFIG = typeof module === 'object' && module.exports ? require('./config.js') : GAME_CONFIG;
+  const STATS = ['fortune', 'wisdom', 'civ'];
+
+  function gameMinutes(count, config = CONFIG) {
+    return config.TIME.BASE_MINUTES + Math.max(0, count - config.TIME.BASE_PLAYERS) * config.TIME.EXTRA_PLAYER_MINUTES;
+  }
+  function expectedCiv(turn, goal, config = CONFIG) {
+    return goal * turn / config.EXPECTED_ROUNDS;
+  }
+  function judgeWeather(current, turn, goal, config = CONFIG) {
+    const expected = expectedCiv(turn, goal, config);
+    if (current >= expected * config.WEATHER.FAVORABLE_RATIO) return 'FAVORABLE';
+    if (current <= expected * config.WEATHER.DISASTER_RATIO) return 'DISASTER';
+    return 'NORMAL';
+  }
+  function weatherUpgradeTarget(weather, turn, goal, config = CONFIG) {
+    const expected = expectedCiv(turn, goal, config);
+    if (weather === 'DISASTER') return Math.floor(expected * config.WEATHER.DISASTER_RATIO) + 1;
+    if (weather === 'NORMAL') return Math.ceil(expected * config.WEATHER.FAVORABLE_RATIO);
+    return null;
+  }
+  function weatherPhase(turn, events) {
+    for (const ev of events) {
+      if (turn === ev.targetRound - 2) return { phase: 'FORECAST', ev };
+      if (turn === ev.targetRound - 1) return { phase: 'ADJUST', ev };
+      if (turn === ev.targetRound) return { phase: 'REPORT', ev };
+    }
+    return { phase: 'NORMAL', ev: null };
+  }
+
+  function calculateScoreBatch(players, operations) {
+    const changes = new Map();
+    for (const operation of operations) {
+      const player = players.find(p => p.id === operation.playerId);
+      if (!player) continue;
+      let change = changes.get(player.id);
+      if (!change) {
+        const before = Object.fromEntries(STATS.map(stat => [stat, player[stat] || 0]));
+        change = { playerId: player.id, before, after: { ...before } };
+        changes.set(player.id, change);
+      }
+      for (const stat of STATS) {
+        if (operation.values && operation.values[stat] !== undefined) {
+          if (!Number.isSafeInteger(operation.values[stat])) throw new Error('Invalid score value');
+          change.after[stat] = operation.values[stat];
+        }
+        if (operation.delta && operation.delta[stat] !== undefined) {
+          if (!Number.isSafeInteger(operation.delta[stat])) throw new Error('Invalid score delta');
+          change.after[stat] += operation.delta[stat];
+        }
+      }
+    }
+    // 全部變更合併後才夾到零，避免一張卡的中間值影響結算。
+    return Array.from(changes.values(), change => {
+      for (const stat of STATS) {
+        if (!Number.isSafeInteger(change.after[stat])) throw new Error('Score exceeds safe integer range');
+        change.after[stat] = Math.max(0, change.after[stat]);
+      }
+      change.changedStats = STATS.filter(stat => change.before[stat] !== change.after[stat]);
+      return change;
+    }).filter(change => change.changedStats.length > 0);
+  }
+
+  function evaluatePlayerProgress(player, before, navigatorClaimed, rules) {
+    const notified = { ...player.notified };
+    const claims = { ...navigatorClaimed };
+    const events = [];
+    const threshold = rules.graduation;
+    const singleKey = 'single_' + threshold;
+    for (const stat of ['fortune', 'wisdom']) {
+      if (before[stat] < threshold && player[stat] >= threshold && !notified[singleKey]) {
+        notified[singleKey] = true;
+        events.push({ type: 'single', playerId: player.id, stat, threshold });
+      }
+    }
+    const graduated = player.fortune >= threshold && player.wisdom >= threshold;
+    if (graduated !== !!player.graduated) {
+      events.push({ type: graduated ? 'graduated' : 'downgraded', playerId: player.id, threshold });
+    }
+    const both = Math.min(player.fortune || 0, player.wisdom || 0);
+    for (const n of rules.navigator) {
+      if (both >= n && claims[n] == null) {
+        claims[n] = player.id;
+        events.push({ type: 'navigator', playerId: player.id, threshold: n });
+      }
+    }
+    for (const n of rules.self) {
+      const key = 'self' + n;
+      if (both >= n && !notified[key]) {
+        notified[key] = true;
+        events.push({ type: 'breakthrough', playerId: player.id, threshold: n });
+      } else if (both < n && notified[key]) {
+        notified[key] = false;
+      }
+    }
+    return { notified, graduated, navigatorClaimed: claims, events };
+  }
+
+  function evaluateGameStatus(game, { elapsed, maxSeconds, sprintSeconds }) {
+    const started = game.players.length > 0;
+    const goalReached = started && game.players.reduce((sum, p) => sum + (p.civ || 0), 0) >= game.civGoal;
+    const allGraduated = started && game.players.every(p => p.graduated);
+    const sprint = started && elapsed >= maxSeconds - sprintSeconds;
+    const timeUp = started && elapsed >= maxSeconds;
+    const events = [];
+    if (goalReached && !game._civGoalNoticed) events.push({ type: 'civGoal', goal: game.civGoal });
+    if (allGraduated && !game._allGradNoticed) events.push({ type: 'allGraduated' });
+    if (sprint && !game._sprintNoticed) events.push({ type: 'sprint' });
+    if (timeUp && !game._timeUpNoticed) events.push({ type: 'timeUp', minutes: maxSeconds / 60 });
+    return {
+      flags: {
+        _civGoalNoticed: goalReached,
+        _allGradNoticed: allGraduated,
+        _sprintNoticed: !!game._sprintNoticed || sprint,
+        _timeUpNoticed: !!game._timeUpNoticed || timeUp,
+      },
+      stopTimer: timeUp && game.timer.running,
+      events,
+    };
+  }
+
+  function applyMultiplier(value, stat, multiplier) {
+    if (!value) return 0;
+    if (stat === 'civ' || stat === 'civAll') return value;
+    return value >= 0
+      ? Math.round(value * multiplier.gain)
+      : -Math.round(Math.abs(value) * multiplier.loss);
+  }
+
+  function qualifyingReliefStats(player, before, threshold) {
+    return ['fortune', 'wisdom'].filter(stat =>
+      player[stat] < before[stat] && player[stat] <= threshold &&
+      !player.reliefUsed?.[stat] && !player.selfSelectedLow?.[stat]
+    );
+  }
+
+  const rules = { calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats,
+    gameMinutes, expectedCiv, judgeWeather, weatherUpgradeTarget, weatherPhase };
+  if (typeof module === 'object' && module.exports) module.exports = rules;
+  else globalThis.GameRules = rules;
+})();
