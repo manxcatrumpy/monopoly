@@ -4,17 +4,24 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ───────────── Modal ───────────── */
-.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 22px; }
+.modal { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 22px; }
+/* 確認視窗會由其他 modal 開啟，需顯示在來源視窗上方。 */
+#confirm-modal { z-index: var(--z-confirm); }
+/* 救濟可能與抽卡里程或計時中的其他視窗同時觸發。 */
+#relief-modal { z-index: var(--z-relief); }
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;
-  background: rgba(45,56,42,0.40);
+  background: rgba(16, 24, 16, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .modal-panel {
   position: relative;
   width: min(720px, 100%);
   max-height: calc(100vh - 44px);
   background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   display: flex; flex-direction: column;
   box-shadow: var(--shadow-lg);
@@ -94,18 +101,60 @@
 
 /* Confirm dialog — compact centered panel */
 .confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
-.relief-panel { width: min(460px, 100%); padding: 32px 30px 24px; gap: 16px; }
+.relief-panel {
+  width: min(480px, 100%);
+  padding: 32px 30px 24px;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
 .relief-panel .confirm-title {
   text-align: center;
   font-size: 20px;
   letter-spacing: 0.14em;
   line-height: 1.4;
+  color: var(--ink);
 }
 .relief-panel .confirm-message {
   font-size: 15px;
   line-height: 1.9;
   color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  box-shadow: inset 0 1px 3px rgba(90, 104, 84, 0.05);
 }
+.relief-ack-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px 0 2px;
+  padding: 10px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.relief-ack-wrap:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.relief-ack-wrap input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+.relief-ack-wrap.hidden { display: none !important; }
 .relief-panel .confirm-actions { justify-content: center; }
 #relief-later.hidden { display: none; }
 .confirm-title { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
@@ -479,7 +528,7 @@
   position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
   padding: 14px 26px; background: rgba(57,65,58,0.96); color: #FCFBF6;
   border-radius: var(--r-pill); font-size: 13px; font-weight: 500;
-  letter-spacing: 0.04em; z-index: 200;
+  letter-spacing: 0.04em; z-index: var(--z-toast);
   animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   max-width: 90vw; text-align: center; box-shadow: var(--shadow-lg);
 }
@@ -597,7 +646,7 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
     position: fixed;
     right: 18px;
     bottom: calc(18px + env(safe-area-inset-bottom));
-    z-index: 60; /* above the sticky topbar (50), beneath modals (100) */
+    z-index: var(--z-quick-draw); /* above the sticky topbar (50), beneath modals (100) */
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -613,7 +662,6 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
 }
 .quick-draw.hidden { display: none; }
 
-/* 精彩時刻 金句卡 Modal 樣式 */
 /* 精彩時刻 金句卡 Modal 樣式 */
 .highlight-panel {
   max-width: 720px;
@@ -888,3 +936,167 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
   width: 18px;
   height: 18px;
 }
+
+/* ───────────── 遊戲操作元件 ───────────── */
+/* 起始點加分 modal：兩個選項按鈕 */
+.origin-hint { margin: 0 0 14px; font-size: 12.5px; line-height: 1.6; color: var(--ink-mute); }
+.origin-choices { display: flex; flex-direction: column; gap: 10px; }
+.origin-choice-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  width: 100%; cursor: pointer; text-align: left;
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.origin-choice-btn:hover { background: var(--fortune-tint); border-color: var(--fortune-soft); transform: translateY(-1px); }
+.origin-choice-btn.stop:hover { background: var(--wisdom-tint); border-color: var(--wisdom-soft); }
+.origin-choice-btn .oc-title { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.origin-choice-btn .oc-desc { font-size: 13px; color: var(--fortune-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.origin-choice-btn.stop .oc-desc { color: var(--wisdom-ink); }
+
+/* 加減分 modal */
+.modal-panel.adjust-panel { width: min(420px, 100%); }
+.adjust-sub { margin: 0 0 12px; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.adjust-sprint {
+  margin: 0 0 14px; padding: 8px 12px;
+  background: var(--fortune-tint); border-left: 3px solid var(--fortune); border-radius: 8px;
+  font-size: 12px; font-weight: 700; color: var(--fortune-ink); letter-spacing: 0.02em;
+}
+.adjust-sprint.hidden { display: none; }
+.adjust-rows { display: flex; flex-direction: column; gap: 14px; }
+.adjust-row { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 12px; }
+.adjust-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 14px; }
+.adjust-label .dot { width: 9px; height: 9px; border-radius: 50%; }
+.adjust-ctrl { display: inline-flex; align-items: center; gap: 8px; justify-self: end; }
+.adjust-step {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  border-radius: 50%; cursor: pointer; font-size: 20px; color: var(--ink-dim);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.adjust-step:hover { background: var(--surface-2); }
+.adjust-input {
+  width: 64px; height: 40px; text-align: center;
+  border: 1px solid var(--line-strong); border-radius: 10px;
+  font-size: 18px; font-weight: 700; color: var(--ink);
+  font-variant-numeric: tabular-nums; background: var(--surface);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.adjust-input::-webkit-outer-spin-button,
+.adjust-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.adjust-preview {
+  grid-column: 1 / -1; justify-self: end;
+  font-size: 12px; color: var(--ink-mute); font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+}
+.adjust-as-turn {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin: 18px 0 0; padding: 12px 14px;
+  background: var(--civ-tint); border: 1px solid var(--civ-soft); border-radius: var(--r-md);
+  cursor: pointer; min-height: 44px;
+}
+.adjust-as-turn[hidden] { display: none; }
+.adjust-as-turn input {
+  width: 22px; height: 22px; margin: 2px 0 0; flex-shrink: 0;
+  accent-color: var(--civ);
+}
+.adjust-as-turn strong {
+  display: block; font-size: 14px; color: var(--ink); letter-spacing: 0.06em;
+}
+.adjust-as-turn-hint {
+  display: block; margin-top: 4px;
+  font-size: 12px; color: var(--ink-mute); line-height: 1.45; font-weight: 400;
+}
+.pc-origin-choice {
+  flex: 1;
+  background: linear-gradient(165deg, #A7CF9E, var(--primary));
+  border: 1px solid transparent; color: #243024; cursor: pointer;
+  padding: 10px 8px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; min-height: 44px;
+  box-shadow: 0 3px 10px rgba(123,174,115,0.26);
+  transition: transform 0.12s ease, filter 0.15s ease;
+}
+.pc-origin-choice.stop { background: linear-gradient(165deg, #EBCB78, var(--fortune)); box-shadow: 0 3px 10px rgba(216,169,78,0.28); }
+.pc-origin-choice:hover { filter: brightness(1.03); transform: translateY(-1px); }
+/* 抽卡里程 modal 內的待抽清單 */
+.draw-panel { width: min(440px, 100%); }
+.draw-list { list-style: none; padding: 0; margin: 2px 0; display: flex; flex-direction: column; gap: 10px; }
+.draw-list li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--fortune-tint);
+  border: 1px solid var(--fortune-soft);
+  border-left: 3px solid var(--fortune);
+  border-radius: 10px;
+}
+.draw-list .dl-text { flex: 1; font-size: 13px; line-height: 1.5; color: var(--fortune-ink); font-weight: 600; }
+.draw-list .dl-done { flex-shrink: 0; min-height: 36px; padding: 8px 18px; }
+
+/* ─────────── 抉擇卡（文明反思／文明扣分） ─────────── */
+/* 抉擇卡沿用原卡「置中的星星／分類／卡名／情境」；只有下方內文區塊靠左 */
+.card-display.dilemma .dilemma-cond,
+.card-display.dilemma .dilemma-note { text-align: left; }
+.dilemma-cond {
+  margin: 10px 0 0; font-size: 13.5px; color: var(--ink);
+  background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px;
+}
+.dilemma-options { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.dilemma-opt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  border: 2px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2); padding: 12px 14px;
+  font: inherit; color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.dilemma-opt:not(.disabled):hover { border-color: var(--fortune); }
+.dilemma-opt.selected {
+  border-color: var(--fortune);
+  background: var(--fortune-tint);
+  box-shadow: 0 0 0 3px var(--fortune-soft);
+}
+.dilemma-opt.disabled { opacity: 0.45; cursor: not-allowed; }
+.do-label { display: block; font-weight: 700; font-size: 14.5px; letter-spacing: 0.02em; }
+.do-effects { display: block; margin-top: 5px; font-size: 13.5px; font-weight: 600; color: var(--fortune-ink); }
+.do-side { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-dim); }
+.do-insight { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.7; color: var(--ink-mute); }
+.dilemma-note { margin: 12px 0 0; font-size: 12px; color: var(--ink-mute); }
+
+/* 目錄裡的抉擇卡 */
+.cc-opt { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.cc-insight { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--ink-mute); }
+.cc-both {
+  font-size: 11px; font-weight: 600; vertical-align: 2px;
+  color: var(--fortune-ink);
+  border: 1px solid currentColor; border-radius: var(--r-pill); padding: 1px 7px;
+}
+
+/* 氣候調節 modal */
+.weather-adj-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  margin-bottom: 10px;
+}
+.weather-adj-name {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.modal-panel.weather-adjust-panel { width: min(440px, 100%); }
+.weather-adjust-summary {
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+}
+.weather-adjust-forecast { font-size: 14px; color: var(--ink-dim); margin-bottom: 6px; }
+.weather-adjust-cost { font-size: 18px; font-weight: 700; color: var(--ink); }
+#weather-adjust-total-cost { color: var(--danger-deep); }
+.weather-adjust-gain { margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--civ); }
+.weather-adjust-gap { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }

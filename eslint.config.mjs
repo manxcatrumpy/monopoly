@@ -2,6 +2,9 @@ import globals from 'globals';
 import pluginJs from '@eslint/js';
 
 export default [
+  {
+    ignores: ['dist/**']
+  },
   pluginJs.configs.recommended,
   {
     languageOptions: {
@@ -17,7 +20,13 @@ export default [
         APP_SEMVER: 'readonly',
         APP_BUILD: 'readonly',
         APP_CACHE_SUFFIX: 'readonly',
-        importScripts: 'readonly'
+        importScripts: 'readonly',
+        GAME_CONFIG: 'readonly',
+        GameRules: 'readonly',
+        GameState: 'readonly',
+        GameStorage: 'readonly',
+        DeckModel: 'readonly',
+        html2canvas: 'readonly'
       }
     },
     rules: {
@@ -28,6 +37,18 @@ export default [
       'no-empty': ['error', { 'allowEmptyCatch': true }],
       'no-irregular-whitespace': ['error', { 'skipTemplates': true, 'skipStrings': true, 'skipComments': true }]
     }
+  },
+  {
+    files: ['scripts/**'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
+    }
+  },
+  {
+    files: ['config.js', 'game-rules.js', 'game-state.js', 'storage.js', 'deck-model.js'],
+    languageOptions: { globals: { module: 'readonly', require: 'readonly' } }
   },
   {
     files: ['version.js'],
