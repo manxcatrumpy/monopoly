@@ -5,51 +5,16 @@ const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
 const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
+const ModalManager = require('../modal-manager.js');
+const { createDOM } = require('./dom-fixture.js');
 
 // 執行實際 app 流程；DOM adapter 只記錄顯示、焦點與事件，不替換救濟規則。
 function createApp() {
-  const elements = new Map();
+  const { document, element, key } = createDOM();
   const storage = new Map();
   const noop = () => {};
-  const document = {
-    activeElement: null,
-    querySelector: element,
-    querySelectorAll: selector => element(selector).items || [],
-    getElementById: id => element('#' + id),
-    addEventListener: (type, fn) => element('document').addEventListener(type, fn),
-    removeEventListener: (type, fn) => element('document').removeEventListener(type, fn),
-  };
-  function element(selector) {
-    if (elements.has(selector)) return elements.get(selector);
-    const classes = new Set(selector.endsWith('-modal') ? ['hidden'] : []);
-    const events = new Map();
-    const node = {
-      value: '', checked: false, disabled: false, dataset: {},
-      style: { setProperty: noop },
-      classList: {
-        add: cls => classes.add(cls), remove: cls => classes.delete(cls),
-        contains: cls => classes.has(cls),
-        toggle(cls, on = !classes.has(cls)) { on ? classes.add(cls) : classes.delete(cls); },
-      },
-      addEventListener(type, fn) {
-        if (!events.has(type)) events.set(type, new Set());
-        events.get(type).add(fn);
-      },
-      removeEventListener(type, fn) { events.get(type)?.delete(fn); },
-      dispatch(type, event = {}) {
-        if (type === 'click' && this.disabled) return;
-        for (const fn of [...events.get(type) || []]) fn(event);
-      },
-      focus() { document.activeElement = node; },
-      setAttribute: noop,
-      querySelector: child => element(selector + ' ' + child),
-      querySelectorAll: child => element(selector + ' ' + child).items || [],
-    };
-    elements.set(selector, node);
-    return node;
-  }
   const context = vm.createContext({
-    GameRules, GameState, GameStorage, DeckModel,
+    GameRules, GameState, GameStorage, DeckModel, ModalManager,
     window: { addEventListener: noop }, document,
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     queueMicrotask, setTimeout: noop, clearTimeout: noop, setInterval: noop,
@@ -82,10 +47,7 @@ function createApp() {
       element('#relief-ack-cb').dispatch('change');
       element('#relief-ok').dispatch('click');
     },
-    key(key) {
-      const event = { key, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
-      element('document').dispatch('keydown', event);
-    },
+    key,
   };
 }
 

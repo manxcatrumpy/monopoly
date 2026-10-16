@@ -4,11 +4,8 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ───────────── Modal ───────────── */
-.modal { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 22px; }
-/* 確認視窗會由其他 modal 開啟，需顯示在來源視窗上方。 */
-#confirm-modal { z-index: var(--z-confirm); }
-/* 救濟可能與抽卡里程或計時中的其他視窗同時觸發。 */
-#relief-modal { z-index: var(--z-relief); }
+.modal { position: fixed; inset: 0; z-index: calc(var(--z-modal) + var(--modal-order, 0)); display: grid; place-items: center; padding: 22px; }
+/* 順序由 modal-manager 統一排序，一般視窗 < 救濟 < 確認。 */
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;

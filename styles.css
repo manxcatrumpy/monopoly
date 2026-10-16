@@ -7,7 +7,7 @@
 :root {
   /* 全頁圖層順序：導覽 < 一般彈窗 < 救濟 < 確認 < 通知。 */
   --z-topbar: 50; --z-quick-draw: 60;
-  --z-modal: 100; --z-relief: 110; --z-confirm: 120; --z-toast: 200;
+  --z-modal: 100; --z-toast: 200;
   /* Paper / surfaces */
   --paper:        #EFF2E9;   /* page wash base */
   --paper-2:      #E6EADD;   /* inset / progress track */

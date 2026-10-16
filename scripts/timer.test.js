@@ -7,6 +7,7 @@ const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
 const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
+const ModalManager = require('../modal-manager.js');
 
 const sources = ['config.js', 'version.js', 'app.js'].map(file =>
   fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
@@ -20,7 +21,7 @@ function createSession() {
 
   function openApp() {
     const context = vm.createContext({
-      GameRules, GameState, GameStorage, DeckModel,
+      GameRules, GameState, GameStorage, DeckModel, ModalManager,
       window: { addEventListener: noop },
       document: { querySelector: () => element, addEventListener: noop },
       localStorage: {

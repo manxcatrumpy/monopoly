@@ -31,8 +31,9 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 
 修改規則或遊戲流程後執行 `npm test`、`npm run lint` 與 `npm run build`。
 計分結算與畫面更新的分工見 [第一階段重構說明](docs/score-flow.md)。
-規則設定、牌組驗證與語系／樣式邊界見 [第三階段重構說明](docs/rules-decks.md)。
 存檔格式、舊資料遷移及歷史局切換見 [第二階段重構說明](docs/game-storage.md)。
+規則設定、牌組驗證與語系／樣式邊界見 [第三階段重構說明](docs/rules-decks.md)。
+彈窗堆疊、焦點、鍵盤、切局取消及瀏覽器測試方式見 [第四階段重構說明](docs/modal-management.md)。
 
 ## 部署到 GitHub Pages
 
@@ -66,6 +67,7 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `game-rules.js` | 純規則：批次分數、里程、勝利與時間界線、天氣門檻、倍率、救濟資格 |
 | `game-state.js` | 存檔與歷史共用模型：建立、驗證、遷移、完整快照與局交換 |
 | `storage.js` | localStorage adapter：舊存檔備份、格式隔離與儲存失敗處理 |
+| `modal-manager.js` | 13 個彈窗的堆疊、焦點、鍵盤、確認佇列與切局取消 |
 | `app.js` | 遊戲操作流程、狀態套用、畫面與通知；所有分數經同一批次入口結算 |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |

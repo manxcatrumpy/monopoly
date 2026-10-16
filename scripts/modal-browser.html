@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>彈窗瀏覽器回歸測試</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../components.css">
+  <style>
+    body { padding: 24px; }
+    #results { white-space: pre-wrap; line-height: 1.8; }
+    .test-panel { padding: 24px; display: flex; gap: 12px; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <main><h1>彈窗瀏覽器回歸測試</h1><button id="opener">開啟來源</button></main>
+  <pre id="results" role="status" aria-live="polite">測試中…</pre>
+  <div id="standard-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="standard-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel test-panel"><h2 id="standard-title">一般彈窗</h2><input id="first" aria-label="第一個欄位"><button id="last">最後一個控制</button><button disabled>停用控制</button></div>
+  </div>
+  <div id="relief-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="relief-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel test-panel"><h2 id="relief-title">救濟彈窗</h2><input id="relief-input" aria-label="救濟確認" type="checkbox"></div>
+  </div>
+  <div id="confirm-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel test-panel"><h2 id="confirm-title">確認</h2><button id="cancel">取消</button><button id="ok">確定</button></div>
+  </div>
+  <!-- 故意在確認視窗之後放一般彈窗，重現原本 DOM 順序造成的遮蔽。 -->
+  <div id="draw-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="draw-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel test-panel"><h2 id="draw-title">抽卡提醒</h2><button id="draw-later">稍後再抽</button></div>
+  </div>
+  <script src="../modal-manager.js"></script>
+  <script src="./modal-browser.js"></script>
+</body>
+</html>

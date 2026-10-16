@@ -194,7 +194,7 @@ test('pending relief from another game cannot mutate the newly activated game', 
 test('active relief dialogs are cancelled when the current game changes', async () => {
   const app = game();
   app.run(`
-    var prompt=showReliefPromptNow({name:'Fixture',items:['wisdom'],scores:{wisdom:0}});
+    var prompt=originalReliefModal({name:'Fixture',items:['wisdom'],scores:{wisdom:0}});
     clearGameUi();
     state.currentGame=GameState.createGame(stateModelOptions());
   `);
@@ -208,10 +208,10 @@ test('queued relief dialogs cannot open after another game is activated', async 
     var secondPrompt=originalReliefModal({name:'Second',items:['wisdom'],scores:{wisdom:0}});
   `);
   await app.run('Promise.resolve()');
-  assert.equal(app.run('cancelReliefPrompt !== null'),true);
+  assert.equal(app.run("modals.isOpen('relief-modal')"),true);
   app.run('clearGameUi(); state.currentGame=GameState.createGame(stateModelOptions());');
   assert.equal(await app.run('Promise.all([firstPrompt,secondPrompt]).then(values=>values.every(value=>value===false))'),true);
-  assert.equal(app.run('cancelReliefPrompt === null'),true);
+  assert.equal(app.run("!modals.isOpen('relief-modal')"),true);
 });
 
 test('a deferred round-switch confirmation cannot swap a different current game', async () => {

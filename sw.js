@@ -11,6 +11,7 @@ const ASSETS = [
   './game-rules.js',
   './game-state.js',
   './storage.js',
+  './modal-manager.js',
   './app.js',
   './i18n.js',
   './locales/zh-tw.json',

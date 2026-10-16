@@ -74,6 +74,25 @@ function stateModelOptions() {
 }
 const defaultState = () => GameState.createState(stateModelOptions());
 let state = defaultState();
+
+const modals = ModalManager.create({ document, getScope: () => state.currentGame });
+const modalOptions = {
+  'setup-modal': { initialFocus: '.setup-player-row input' },
+  'deck-manager-modal': { initialFocus: '#dm-close' },
+  'catalog-modal': { initialFocus: '#catalog-close' },
+  'card-modal': { initialFocus: '#card-recipient' },
+  'history-modal': { initialFocus: '#history-close' },
+  'confirm-modal': { priority: 2, initialFocus: '#confirm-ok', closeOnBackdrop: true },
+  'relief-modal': { priority: 1, initialFocus: '#relief-ack-cb', closeOnBackdrop: true },
+  'origin-modal': { initialFocus: '#origin-pass-btn', closeOnBackdrop: true, onClose: () => { originTargetId = null; } },
+  'adjust-modal': { initialFocus: '#adjust-rows input', closeOnBackdrop: true, onClose: () => { adjustTargetId = null; } },
+  'guide-modal': { initialFocus: '#guide-close', closeOnBackdrop: true },
+  'draw-modal': { initialFocus: '#draw-later' },
+  'highlight-modal': { initialFocus: '#highlight-quote-input', closeOnBackdrop: true },
+  'weather-adjust-modal': { initialFocus: '.adj-fortune', closeOnBackdrop: true },
+};
+for (const [id, options] of Object.entries(modalOptions)) modals.register(id, options);
+
 const persistence = GameStorage.create({ storage: localStorage, key: STORAGE_KEY, legacyKey: LEGACY_STORAGE_KEY, model: GameState, options: stateModelOptions });
 let storageWarningKey = null;
 function showStorageWarning(key) {
@@ -636,15 +655,6 @@ function syncShelterUI(card, p) {
   }
 }
 
-let reliefModalQueue = Promise.resolve();
-let cancelReliefPrompt = null;
-
-function enqueueReliefUi(fn) {
-  const queued = reliefModalQueue.then(fn, fn);
-  reliefModalQueue = queued.catch(() => {});
-  return queued;
-}
-
 function reliefAnnounceText({ name, items = [], scores = {}, restore, multiPlayers }) {
   const cfg = reliefCfg();
   const rest = restore || cfg.RESTORE_TO;
@@ -670,96 +680,28 @@ function reliefAnnounceText({ name, items = [], scores = {}, restore, multiPlaye
 
 function showReliefModal(opts) {
   const game = state.currentGame;
-  return enqueueReliefUi(() => {
-    if (game !== state.currentGame) return false;
-    // 排隊期間分數可能已改變；在真正開啟時才準備最新的救濟對象。
-    const current = typeof opts === 'function' ? opts() : opts;
-    return current ? showReliefPromptNow(current) : false;
-  });
-}
-
-function showReliefPromptNow(opts) {
-  return new Promise((resolve) => {
-    const modal = $('#relief-modal');
-    const okBtn = $('#relief-ok');
-    const laterBtn = $('#relief-later');
-    const ackWrap = $('#relief-ack-wrap');
-    const ackCb = $('#relief-ack-cb');
-    const backdrop = modal ? $('.modal-backdrop', modal) : null;
-    if (!modal || !okBtn) { resolve(false); return; }
-
-    const title = $('#relief-title');
-    const message = $('#relief-message');
-
-    if (title) title.textContent = opts.title || t('relief.title');
-    if (message) {
-      message.textContent = opts.message || reliefAnnounceText(opts);
-    }
-
-    if (ackWrap) ackWrap.classList.remove('hidden');
-    if (ackCb) ackCb.checked = false;
-
-    okBtn.textContent = opts.okText || t('relief.offer_start');
-    okBtn.disabled = true;
-
-    if (laterBtn) {
-      laterBtn.textContent = opts.laterText || t('relief.offer_later');
-      laterBtn.classList.remove('hidden');
-    }
-
-    const onAckChange = () => {
-      if (ackCb) okBtn.disabled = !ackCb.checked;
-    };
-    if (ackCb) ackCb.addEventListener('change', onAckChange);
-
-    const cleanup = () => {
-      modal.classList.add('hidden');
-      okBtn.removeEventListener('click', onOk);
-      if (laterBtn) laterBtn.removeEventListener('click', onLater);
-      if (backdrop) backdrop.removeEventListener('click', onBackdrop);
-      if (ackCb) ackCb.removeEventListener('change', onAckChange);
-      document.removeEventListener('keydown', onKey);
-    };
-
-    let finished = false;
-    const cancel = () => done(false);
-    const done = (value) => {
-      if (finished) return;
-      finished = true;
-      if (cancelReliefPrompt === cancel) cancelReliefPrompt = null;
-      cleanup();
-      resolve(value);
-    };
-
-    const onOk = () => {
-      if (okBtn.disabled) return;
-      done(true);
-    };
-    const onLater = () => done(false);
-    const onBackdrop = () => onLater();
-    const onKey = (e) => {
-      // 通用確認視窗的圖層更高，不能一次按鍵同時確認兩個視窗。
-      const confirm = $('#confirm-modal');
-      if (e.defaultPrevented || (confirm && !confirm.classList.contains('hidden'))) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onLater();
-      } else if (e.key === 'Enter') {
-        if (!okBtn.disabled) {
-          e.preventDefault();
-          onOk();
-        }
-      }
-    };
-
-    okBtn.addEventListener('click', onOk);
-    if (laterBtn) laterBtn.addEventListener('click', onLater);
-    if (backdrop) backdrop.addEventListener('click', onBackdrop);
-    document.addEventListener('keydown', onKey);
-    cancelReliefPrompt = cancel;
-    modal.classList.remove('hidden');
-    const confirm = $('#confirm-modal');
-    if (ackCb && (!confirm || confirm.classList.contains('hidden'))) ackCb.focus();
+  return modals.prompt('relief-modal', {
+    scope: game,
+    prepare() {
+      if (game !== state.currentGame) return false;
+      const current = typeof opts === 'function' ? opts() : opts;
+      if (!current) return false;
+      $('#relief-title').textContent = current.title || t('relief.title');
+      $('#relief-message').textContent = current.message || reliefAnnounceText(current);
+      $('#relief-ack-wrap').classList.remove('hidden');
+      $('#relief-ack-cb').checked = false;
+      $('#relief-ok').textContent = current.okText || t('relief.offer_start');
+      $('#relief-ok').disabled = true;
+      $('#relief-later').textContent = current.laterText || t('relief.offer_later');
+      $('#relief-later').classList.remove('hidden');
+      return true;
+    },
+    onEnter(accept) { if (!$('#relief-ok').disabled) accept(); },
+    onOpen({ listen, close }) {
+      listen($('#relief-ack-cb'), 'change', () => { $('#relief-ok').disabled = !$('#relief-ack-cb').checked; });
+      listen($('#relief-ok'), 'click', () => { if (!$('#relief-ok').disabled) close(true); });
+      listen($('#relief-later'), 'click', () => close(false));
+    },
   });
 }
 
@@ -904,42 +846,22 @@ function toast(msg, kind = '') {
 
 // In-app confirm dialog (replaces native confirm()). Returns a Promise<boolean>.
 function confirmModal({ title = t('confirm.title'), message = '', confirmText = t('confirm.btn_ok'), cancelText = t('confirm.btn_cancel'), danger = false } = {}) {
-  return new Promise((resolve) => {
-    const modal = $('#confirm-modal');
-    const okBtn = $('#confirm-ok');
-    const cancelBtn = $('#confirm-cancel');
-    const backdrop = $('.modal-backdrop', modal);
-    if (!modal) { resolve(window.confirm(message || title)); return; } // graceful fallback
-
-    $('#confirm-title').textContent = title;
-    $('#confirm-message').textContent = message;
-    okBtn.textContent = confirmText;
-    cancelBtn.textContent = cancelText;
-    okBtn.classList.toggle('btn-danger', !!danger);
-    okBtn.classList.toggle('btn-primary', !danger);
-
-    const done = (result) => {
-      modal.classList.add('hidden');
-      okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancel);
-      backdrop.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
-      const relief = $('#relief-modal');
-      if (relief && !relief.classList.contains('hidden')) $('#relief-ack-cb')?.focus();
-      resolve(result);
-    };
-    const onOk = () => done(true);
-    const onCancel = () => done(false);
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-      else if (e.key === 'Enter') { e.preventDefault(); onOk(); }
-    };
-    okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancel);
-    backdrop.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
-    modal.classList.remove('hidden');
-    okBtn.focus();
+  if (!$('#confirm-modal')) return Promise.resolve(window.confirm(message || title));
+  return modals.prompt('confirm-modal', {
+    prepare() {
+      $('#confirm-title').textContent = title;
+      $('#confirm-message').textContent = message;
+      $('#confirm-ok').textContent = confirmText;
+      $('#confirm-cancel').textContent = cancelText;
+      $('#confirm-ok').classList.toggle('btn-danger', !!danger);
+      $('#confirm-ok').classList.toggle('btn-primary', !danger);
+      return true;
+    },
+    onEnter: accept => accept(),
+    onOpen({ listen, close }) {
+      listen($('#confirm-ok'), 'click', () => close(true));
+      listen($('#confirm-cancel'), 'click', () => close(false));
+    },
   });
 }
 function recordLog(text, kind = '') {
@@ -987,7 +909,7 @@ function renderDrawModal() {
   const listEl = $('#draw-list');
   if (!modal || !listEl) return;
   const list = state.currentGame.pendingDraws || [];
-  if (!list.length) { modal.classList.add('hidden'); return; }
+  if (!list.length) { modals.close('draw-modal'); return; }
   listEl.innerHTML = list.map(d =>
     `<li><span class="dl-text">${escapeHtml(d.text)}</span>` +
     `<button class="btn btn-primary dl-done" data-pd-id="${d.id}" type="button">已抽</button></li>`
@@ -998,7 +920,7 @@ function renderDrawModal() {
 function openDrawModal() {
   if (!(state.currentGame.pendingDraws || []).length) return;
   renderDrawModal();
-  $('#draw-modal').classList.remove('hidden');
+  modals.open('draw-modal');
 }
 function renderPendingDraws() {
   const ul = $('#pending-draws');
@@ -1400,10 +1322,10 @@ function openAdjustModal(id) {
   syncMultiplierBanner($('#adjust-sprint'), id, 'adjust.sprint');
   syncAdjustAsTurn(id);
   renderAdjustPreview();
-  $('#adjust-modal').classList.remove('hidden');
+  modals.open('adjust-modal');
 }
 function closeAdjustModal() {
-  $('#adjust-modal').classList.add('hidden');
+  modals.close('adjust-modal');
   adjustTargetId = null;
 }
 async function applyAdjust() {
@@ -1475,10 +1397,10 @@ function openOriginModal(id) {
   syncMultiplierBanner($('#origin-sprint'), id, 'origin.sprint');
   $('#origin-pass-desc').textContent = describeReward(scaleReward(originReward(p, false), mult));
   $('#origin-stop-desc').textContent = describeReward(scaleReward(originReward(p, true), mult));
-  $('#origin-modal').classList.remove('hidden');
+  modals.open('origin-modal');
 }
 function closeOriginModal() {
-  $('#origin-modal').classList.add('hidden');
+  modals.close('origin-modal');
   originTargetId = null;
 }
 function pickOrigin(stop) {
@@ -1629,9 +1551,9 @@ function openSetup(opts = {}) {
   renderSetup();
   if (!d10Built) buildD10();
   resetDiceStage();
-  $('#setup-modal').classList.remove('hidden');
+  modals.open('setup-modal');
 }
-function closeSetup() { $('#setup-modal').classList.add('hidden'); }
+function closeSetup() { modals.close('setup-modal'); }
 
 function setSetupCount(n) {
   setupTmp.count = n;
@@ -1949,14 +1871,12 @@ function bindEvents() {
   // 起始點加分 modal
   $('#origin-close').addEventListener('click', closeOriginModal);
   $('#origin-cancel').addEventListener('click', closeOriginModal);
-  $('.modal-backdrop', $('#origin-modal')).addEventListener('click', closeOriginModal);
   $('#origin-pass-btn').addEventListener('click', () => pickOrigin(false));
   $('#origin-stop-btn').addEventListener('click', () => pickOrigin(true));
 
   // 加減分 modal
   $('#adjust-close').addEventListener('click', closeAdjustModal);
   $('#adjust-cancel').addEventListener('click', closeAdjustModal);
-  $('.modal-backdrop', $('#adjust-modal')).addEventListener('click', closeAdjustModal);
   $('#adjust-apply').addEventListener('click', applyAdjust);
   $('#adjust-rows').addEventListener('click', (e) => {
     const b = e.target.closest('.adjust-step'); if (!b) return;
@@ -1969,17 +1889,16 @@ function bindEvents() {
   });
 
   // 遊戲說明 modal
-  $('#btn-guide').addEventListener('click', () => $('#guide-modal').classList.remove('hidden'));
-  $('#guide-close').addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
-  $('.modal-backdrop', $('#guide-modal')).addEventListener('click', () => $('#guide-modal').classList.add('hidden'));
+  $('#btn-guide').addEventListener('click', () => modals.open('guide-modal'));
+  $('#guide-close').addEventListener('click', () => modals.close('guide-modal'));
 
   // 抽卡里程 modal：稍後再抽（保留面板待辦）/ 全部已抽（清空）
-  $('#draw-later').addEventListener('click', () => $('#draw-modal').classList.add('hidden'));
+  $('#draw-later').addEventListener('click', () => modals.close('draw-modal'));
   $('#draw-all-done').addEventListener('click', () => {
     state.currentGame.pendingDraws = [];
     save();
     renderPendingDraws();
-    $('#draw-modal').classList.add('hidden');
+    modals.close('draw-modal');
   });
 
   $$('.player-count-pick .chip').forEach(b =>
@@ -2005,16 +1924,13 @@ function snapshotRound() {
 
 // UI 草稿與待確認回呼只屬於當前局，不進入存檔或歷史。
 function clearGameUi() {
-  if (cancelReliefPrompt) cancelReliefPrompt();
+  modals.cancelScope(state.currentGame);
   closeCard();
   currentCard = null;
   currentDeckKey = null;
   currentChoiceOpt = null;
   closeAdjustModal();
   closeOriginModal();
-  for (const id of ['draw-modal', 'weather-adjust-modal', 'highlight-modal']) {
-    $('#' + id)?.classList.add('hidden');
-  }
   resetSkipLeftoverPrompt();
 }
 
@@ -2060,10 +1976,10 @@ function refreshHistoryButton() {
 function openHistory() {
   renderHistoryList();
   backToHistoryList(); // always open on the list, not a stale detail view
-  $('#history-modal').classList.remove('hidden');
+  modals.open('history-modal');
 }
 function closeHistory() {
-  $('#history-modal').classList.add('hidden');
+  modals.close('history-modal');
 }
 
 function renderHistoryList() {
@@ -2200,10 +2116,10 @@ function openCardDraw(deckKey) {
   currentChoiceOpt = null;
   $('#card-title').textContent = deckKey === 'action' ? t('card.title_action') : t('card.title_boost');
   renderCard();
-  $('#card-modal').classList.remove('hidden');
+  modals.open('card-modal');
 }
 function closeCard() {
-  $('#card-modal').classList.add('hidden');
+  modals.close('card-modal');
 }
 
 function drawFromDeck(deckKey) {
@@ -2509,10 +2425,10 @@ function openCatalog(deckKey = 'action') {
     b.textContent = `${DECKS[k].title} · ${n}`;
   });
   renderCatalog(deckKey);
-  $('#catalog-modal').classList.remove('hidden');
+  modals.open('catalog-modal');
 }
 function closeCatalog() {
-  $('#catalog-modal').classList.add('hidden');
+  modals.close('catalog-modal');
 }
 
 function renderCatalog(deckKey) {
@@ -2586,10 +2502,10 @@ function catalogChoiceCardHtml(c) {
 function openDeckManager() {
   renderDeckManager();
   const p = $('#dm-paste'); if (p) p.value = '';
-  $('#deck-manager-modal').classList.remove('hidden');
+  modals.open('deck-manager-modal');
 }
 function closeDeckManager() {
-  $('#deck-manager-modal').classList.add('hidden');
+  modals.close('deck-manager-modal');
 }
 
 function deckSourceLabel(side) {
@@ -2855,8 +2771,7 @@ function chargeWeatherAdjust(contributions, spent) {
 function openWeatherAdjustModal() {
   const { phase, ev } = getPhase(state.currentGame.turnNum);
   if (phase !== 'ADJUST' || !ev) return;
-  const modal = $('#weather-adjust-modal');
-  if (!modal.classList.contains('hidden')) return;
+  if (modals.isOpen('weather-adjust-modal')) return;
   $('#weather-adjust-current-label').textContent = getWeatherLabel(ev.lockedWeather);
 
   const container = $('#weather-adjust-players');
@@ -2885,7 +2800,7 @@ function openWeatherAdjustModal() {
   `).join('');
 
   updateWeatherAdjust();
-  modal.classList.remove('hidden');
+  modals.open('weather-adjust-modal');
 }
 
 function updateWeatherAdjust() {
@@ -2941,13 +2856,12 @@ function updateWeatherAdjust() {
   }
 }
 
-$('#weather-adjust-close')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-close')?.addEventListener('click', () => modals.close('weather-adjust-modal'));
 $('#weather-banner')?.addEventListener('click', (e) => {
   if (e.target.closest('#btn-weather-adjust')) return;
   if (getPhase(state.currentGame.turnNum).phase === 'ADJUST') openWeatherAdjustModal();
 });
-$('#weather-adjust-cancel')?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
-$('.modal-backdrop', $('#weather-adjust-modal'))?.addEventListener('click', () => $('#weather-adjust-modal').classList.add('hidden'));
+$('#weather-adjust-cancel')?.addEventListener('click', () => modals.close('weather-adjust-modal'));
 $('#weather-adjust-players')?.addEventListener('click', (e) => {
   const b = e.target.closest('.adjust-step'); if (!b) return;
   const inp = b.closest('.adjust-row').querySelector('.adjust-input');
@@ -2964,7 +2878,7 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
   const game = state.currentGame;
   const { phase, ev } = getPhase(state.currentGame.turnNum);
   if (phase !== 'ADJUST' || !ev) {
-    $('#weather-adjust-modal').classList.add('hidden');
+    modals.close('weather-adjust-modal');
     return;
   }
 
@@ -3029,7 +2943,7 @@ $('#weather-adjust-submit')?.addEventListener('click', async () => {
     logEvent(msg);
   }
 
-  $('#weather-adjust-modal').classList.add('hidden');
+  modals.close('weather-adjust-modal');
   save();
   renderAll();
 });
@@ -3043,7 +2957,6 @@ function initHighlightFeature() {
   const btnClose = $('#highlight-close');
   const btnCancel = $('#highlight-cancel');
   const btnDownload = $('#highlight-download');
-  const backdrop = $('.modal-backdrop', highlightModal);
 
   const inputQuote = $('#highlight-quote-input');
   const inputAuthor = $('#highlight-author-input');
@@ -3058,11 +2971,11 @@ function initHighlightFeature() {
     inputQuote.value = '';
     inputAuthor.value = '';
     updatePreview();
-    highlightModal.classList.remove('hidden');
+    modals.open('highlight-modal');
   }
 
   function closeHighlight() {
-    highlightModal.classList.add('hidden');
+    modals.close('highlight-modal');
   }
 
   function updatePreview() {
@@ -3107,7 +3020,6 @@ function initHighlightFeature() {
   if (btnOpen) btnOpen.addEventListener('click', openHighlight);
   if (btnClose) btnClose.addEventListener('click', closeHighlight);
   if (btnCancel) btnCancel.addEventListener('click', closeHighlight);
-  if (backdrop) backdrop.addEventListener('click', closeHighlight);
   
   if (inputQuote) inputQuote.addEventListener('input', updatePreview);
   if (inputAuthor) inputAuthor.addEventListener('input', updatePreview);
