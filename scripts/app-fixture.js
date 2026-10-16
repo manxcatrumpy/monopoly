@@ -7,6 +7,7 @@ const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
 const ModalManager = require('../modal-manager.js');
 const { createDOM } = require('./dom-fixture.js');
+const { uiFiles } = require('./ui-sources.js');
 
 // 流程測試使用最小 UI adapter；純規則測試直接載入 game-rules.js。
 function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
@@ -25,11 +26,12 @@ function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
     queueMicrotask,
     t: (key, params = {}) => key + ':' + JSON.stringify(params),
   });
-  for (const file of ['config.js', 'version.js', 'app.js']) {
+  for (const file of ['config.js', 'version.js', ...uiFiles, 'app.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
     if (file === 'config.js') context.GAME_CONFIG = context.window.GAME_CONFIG;
   }
   const run = code => vm.runInContext(code, context);
+  run('weatherUI.bind();');
   // Count presentation calls while retaining the actual event presenter and rules.
   run(`
     var uiCalls = { players: [], topbar: 0, draws: 0, log: 0 };

@@ -5,6 +5,7 @@ const path = require('node:path');
 const ModalManager = require('../modal-manager');
 const { createDOM } = require('./dom-fixture');
 const { createApp } = require('./relief-fixture');
+const { uiFiles } = require('./ui-sources');
 
 function fixture() {
   const dom = createDOM();
@@ -227,9 +228,10 @@ test('every page modal is registered and shown/hidden only by the manager', () =
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const ui = [app, ...uiFiles.map(file => fs.readFileSync(path.join(root, file), 'utf8'))].join('\n');
   const ids = Array.from(html.matchAll(/id="([\w-]+-modal)" class="modal hidden"/g), match => match[1]);
   assert.equal(ids.length, 13);
   for (const id of ids) assert.ok(app.includes("'" + id + "':"), id);
-  assert.doesNotMatch(app, /addEventListener\('keydown'/);
-  assert.doesNotMatch(app, /\$\('#[\w-]+-modal'\)\.classList\.(add|remove)\('hidden'\)/);
+  assert.doesNotMatch(ui, /addEventListener\('keydown'/);
+  assert.doesNotMatch(ui, /\$\('#[\w-]+-modal'\)\.classList\.(add|remove)\('hidden'\)/);
 });

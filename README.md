@@ -38,6 +38,7 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 存檔格式、舊資料遷移及歷史局切換見 [第二階段重構說明](docs/game-storage.md)。
 規則設定、牌組驗證與語系／樣式邊界見 [第三階段重構說明](docs/rules-decks.md)。
 彈窗堆疊、焦點、鍵盤、切局取消及瀏覽器測試方式見 [第四階段重構說明](docs/modal-management.md)。
+功能 UI 模組、資料讀取與操作回呼的分工見 [第六階段重構說明](docs/feature-ui.md)。
 
 ## 部署到 GitHub Pages
 
@@ -73,7 +74,8 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `storage.js` | localStorage adapter：舊存檔備份、格式隔離與儲存失敗處理 |
 | `modal-manager.js` | 13 個彈窗的堆疊、焦點、鍵盤、確認佇列與切局取消 |
 | `tests/e2e/` / `playwright.config.cjs` | Chromium 與 WebKit iPad 情境的瀏覽器回歸測試 |
-| `app.js` | 遊戲操作流程、狀態套用、畫面與通知；所有分數經同一批次入口結算 |
+| `app.js` | 遊戲流程、狀態套用、存檔與 UI 模組組裝；所有分數經同一批次入口結算 |
+| `ui-*.js` | 玩家、開局與骰子、卡牌、歷史、天氣、通知及金句的畫面與事件 |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |
 | `manifest.webmanifest` | PWA 安裝 manifest |

@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const DeckModel = require('../deck-model');
 const config = require('../config');
 const root = path.join(__dirname, '..');
+const { uiFiles } = require('./ui-sources.js');
 const locale = file => JSON.parse(fs.readFileSync(path.join(root, 'locales', file)));
 const response = data => ({ ok: true, json: async () => data });
 function runtime({ fetch, failStorage = false, saved = 'zh-tw', rules = config } = {}) {
@@ -36,7 +37,7 @@ for (const lang of ['zh-tw', 'zh-cn', 'en']) {
     assert.ok(hint.includes(config.PROGRESSION.NAVIGATOR.join(' / ')));
     assert.ok(hint.includes(config.PROGRESSION.SELF.join(' / ')));
     assert.doesNotMatch(hint, /\{|55|25 \/ 45/);
-    const code = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const code = ['app.js', ...uiFiles].map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     const keys = new Set([...code.matchAll(/\bt\('([\w.]+)'/g), ...html.matchAll(/data-i18n(?:-placeholder)?="([\w.]+)"/g)].map(match => match[1]));
     for (const key of keys) {

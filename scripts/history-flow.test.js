@@ -36,7 +36,7 @@ test('restore swaps complete games without leaking weather, draws, flags or reli
     state.currentGame.pendingDraws=[{id:'pd_second',text:'Second pending',playerId:'p5',t:3}];
     state.currentGame.timer={accumulated:30,lastStartedAt:Date.now(),running:true};
     state.settings.customDecks.boost=[];
-    adjustTargetId='p5'; originTargetId='p5'; currentCard={name:'Old draft'}; currentChoiceOpt=1;
+    adjustTargetId='p5'; originTargetId='p5'; cardDraft.currentCard={name:'Old draft'}; cardDraft.currentChoiceOpt=1;
   `);
   app.advance(21);
   await app.run('restoreRound(0)');
@@ -46,7 +46,7 @@ test('restore swaps complete games without leaking weather, draws, flags or reli
   assert.equal(app.read('state.history[0].pendingDraws[0].text'),'Second pending');
   assert.deepEqual(app.read('state.history[0].timer'),{accumulated:51,lastStartedAt:null,running:false});
   assert.deepEqual(app.read('state.settings.customDecks.boost'),[]);
-  assert.deepEqual(app.read('[adjustTargetId,originTargetId,currentCard,currentChoiceOpt]'),[null,null,null,null]);
+  assert.deepEqual(app.read('[adjustTargetId,originTargetId,cardDraft.currentCard,cardDraft.currentChoiceOpt]'),[null,null,null,null]);
   assert.equal(app.read('reliefPrompts.length'),0);
   const saved = JSON.parse(app.storage.get(KEY));
   assert.deepEqual(saved.currentGame,expected);
@@ -119,7 +119,7 @@ test('history viewing leaves game state untouched', () => {
   const app = game();
   app.run('state.history=[snapshotRound()];');
   const before = app.read('state');
-  app.run('viewRound(0); renderHistoryList();');
+  app.run('historyUI.viewRound(0); historyUI.renderHistoryList();');
   assert.deepEqual(app.read('state'),before);
 });
 

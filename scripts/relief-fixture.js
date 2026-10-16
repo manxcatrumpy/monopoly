@@ -7,6 +7,7 @@ const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
 const ModalManager = require('../modal-manager.js');
 const { createDOM } = require('./dom-fixture.js');
+const { uiFiles } = require('./ui-sources.js');
 
 // 執行實際 app 流程；DOM adapter 只記錄顯示、焦點與事件，不替換救濟規則。
 function createApp() {
@@ -20,11 +21,12 @@ function createApp() {
     queueMicrotask, setTimeout: noop, clearTimeout: noop, setInterval: noop,
     t: (key, params = {}) => key + ':' + JSON.stringify(params),
   });
-  for (const file of ['config.js', 'version.js', 'app.js']) {
+  for (const file of ['config.js', 'version.js', ...uiFiles, 'app.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
     if (file === 'config.js') context.GAME_CONFIG = context.window.GAME_CONFIG;
   }
   const run = code => vm.runInContext(code, context);
+  run('weatherUI.bind();');
   run(`
     updatePlayerCard = () => {};
     renderPlayers = () => {};
