@@ -3,7 +3,7 @@ import pluginJs from '@eslint/js';
 
 export default [
   {
-    ignores: ['dist/**', 'playwright-report/**', 'test-results/**']
+    ignores: ['dist/**', 'playwright-report/**', 'test-results/**', 'vendor/**']
   },
   pluginJs.configs.recommended,
   {
@@ -27,6 +27,9 @@ export default [
         GameStorage: 'readonly',
         DeckModel: 'readonly',
         ModalManager: 'readonly',
+        PwaClient: 'readonly',
+        PwaUI: 'readonly',
+        PWA_RELEASE: 'readonly',
         FeedbackUI: 'readonly',
         PlayersUI: 'readonly',
         SetupUI: 'readonly',
@@ -55,11 +58,11 @@ export default [
     }
   },
   {
-    files: ['config.js', 'game-rules.js', 'game-state.js', 'storage.js', 'deck-model.js', 'modal-manager.js', 'ui-*.js'],
+    files: ['config.js', 'game-rules.js', 'game-state.js', 'storage.js', 'deck-model.js', 'modal-manager.js', 'pwa-client.js', 'ui-*.js'],
     languageOptions: { globals: { module: 'readonly', require: 'readonly' } }
   },
   {
-    files: ['version.js'],
+    files: ['version.js', 'pwa-manifest.js'],
     rules: { 'no-unused-vars': 'off' }
   },
   {
@@ -69,7 +72,7 @@ export default [
       globals: Object.fromEntries([
         '$', '$$', 't', 'document', 'window', 'localStorage', 'GAME_CONFIG',
         'GameRules', 'GameState', 'GameStorage', 'DeckModel', 'ModalManager',
-        'FeedbackUI', 'PlayersUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI'
+        'FeedbackUI', 'PlayersUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI', 'PwaClient', 'PwaUI'
       ].map(name => [name, 'off']))
     }
   }

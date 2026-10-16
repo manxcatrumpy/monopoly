@@ -55,5 +55,5 @@ ESLint 對 `ui-*.js` 關閉 app 自訂全域及隱含的 `document`／`window`�
 
 保留第五階段的十個端到端案例，再補五個功能 UI 案例：實際骰子動畫與開局、
 一般雙人卡、條件抉擇卡、金句預覽，以及玩家改名／移除。
-Chromium 與 WebKit iPad 模擬各執行十五個案例；實機 Safari 與金句圖片匯出
-仍屬人工驗收範圍。
+第七階段另加入 `ui-pwa.js` 與十個 PWA 案例，並自動驗證離線金句圖片匯出；
+目前 Chromium 與 WebKit iPad 模擬各執行二十五個案例，實機 Safari 仍需人工驗收。

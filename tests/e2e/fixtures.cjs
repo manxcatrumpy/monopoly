@@ -20,8 +20,6 @@ const test = base.extend({
   page: async ({ page }, use, testInfo) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    // 金句圖片匯出不在本階段測試範圍，隔離唯一外部 CDN，其他本機資產照常載入。
-    await page.route('https://cdn.jsdelivr.net/**', route => route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
     await use(page);
     if (errors.length) await testInfo.attach('page-errors', { body: errors.join('\n'), contentType: 'text/plain' });
     expect(errors, '瀏覽器不應有未捕捉例外').toEqual([]);

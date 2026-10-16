@@ -508,5 +508,17 @@
     "empty": "Decks cannot be empty",
     "array": "Must be an array",
     "location": "{path}: {reason}"
+  },
+  "pwa": {
+    "available": "An update is ready. Your game will be saved first, and the timer will keep counting.",
+    "applying": "Applying update…",
+    "blocked": "Other game windows are open. Close them before updating.",
+    "busy": "Finish or close the current dialog before updating.",
+    "save-failed": "Your game could not be saved. Check available storage and try again.",
+    "failed": "Offline support is not ready. You can keep playing while connected.",
+    "update-failed": "The update could not finish. You can keep using this version.",
+    "apply": "Update and reload",
+    "later": "Later",
+    "retry": "Retry"
   }
 }

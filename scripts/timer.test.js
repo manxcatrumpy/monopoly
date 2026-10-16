@@ -10,7 +10,7 @@ const GameStorage = require('../storage.js');
 const ModalManager = require('../modal-manager.js');
 const { uiFiles } = require('./ui-sources.js');
 
-const sources = ['config.js', 'version.js', ...uiFiles, 'app.js'].map(file =>
+const sources = ['config.js', 'version.js', 'pwa-client.js', ...uiFiles, 'app.js'].map(file =>
   fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
 );
 

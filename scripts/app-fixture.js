@@ -26,7 +26,7 @@ function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
     queueMicrotask,
     t: (key, params = {}) => key + ':' + JSON.stringify(params),
   });
-  for (const file of ['config.js', 'version.js', ...uiFiles, 'app.js']) {
+  for (const file of ['config.js', 'version.js', 'pwa-client.js', ...uiFiles, 'app.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
     if (file === 'config.js') context.GAME_CONFIG = context.window.GAME_CONFIG;
   }

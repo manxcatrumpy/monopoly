@@ -1330,9 +1330,8 @@ function startTimerLoop() {
 
 // ─────────── Service worker ───────────
 function registerSW() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
+  pwaUI.bind();
+  return pwaClient.start();
 }
 
 // ─────────── App version ───────────
@@ -1363,6 +1362,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('languageChanged', () => {
   showStorageWarning(storageWarningKey);
+  pwaUI.render(pwaClient.status());
   rebuildDecks();
   renderAll();
 });
@@ -1619,4 +1619,14 @@ const highlightUI = HighlightUI.create({
   getRenderer: () => window.html2canvas,
   toast: (...args) => toast(...args),
   document
+});
+
+const pwaUI = PwaUI.create({ $, t: (...args) => t(...args),
+  apply: () => pwaClient.apply(), defer: () => pwaClient.defer(), retry: () => pwaClient.check() });
+const pwaClient = PwaClient.create({
+  serviceWorker: typeof navigator === 'object' ? navigator.serviceWorker : null,
+  release: typeof PWA_RELEASE === 'object' ? PWA_RELEASE : null,
+  events: window, canReload: () => modals.stack().length === 0,
+  beforeReload: () => saveNow(), onStatus: status => pwaUI.render(status),
+  reload: () => window.location.reload(), setTimeout, clearTimeout,
 });
