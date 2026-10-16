@@ -51,3 +51,6 @@ Node 的 DOM adapter 不驗證瀏覽器實際排版、命中位置或原生鍵�
 `elementFromPoint()` 檢查確認按鈕是否被遮住。測試頁不列入 PWA 快取。
 測試頁的鍵盤事件為程式派發；人工驗收仍需在主頁操作實體鍵盤，
 確認 Tab／Shift+Tab、Escape、聚焦取消後按 Enter，以及天氣／救濟／抽卡重疊。
+
+[第五階段](browser-regression.md) 已將此測試頁納入自動執行，並增加直接操作主頁的
+原生鍵盤與點擊案例，涵蓋 Chromium 及 WebKit iPad 情境。實機 Safari 驗收仍保留。

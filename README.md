@@ -30,6 +30,10 @@ python3 -m http.server 8080
 Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片功能會動，但 PWA 安裝 / 離線會失效。SW 採 network-first：有網就拿新檔，離線才用 cache。
 
 修改規則或遊戲流程後執行 `npm test`、`npm run lint` 與 `npm run build`。
+第五階段加入瀏覽器端到端驗證：首次執行 `npm ci`、
+`npx playwright install chromium webkit`，之後執行 `npm run test:all`。
+測試會自動建置並啟動獨立伺服器；操作方式、涵蓋範圍與報告見
+[第五階段測試說明](docs/browser-regression.md)。
 計分結算與畫面更新的分工見 [第一階段重構說明](docs/score-flow.md)。
 存檔格式、舊資料遷移及歷史局切換見 [第二階段重構說明](docs/game-storage.md)。
 規則設定、牌組驗證與語系／樣式邊界見 [第三階段重構說明](docs/rules-decks.md)。
@@ -68,6 +72,7 @@ Service Worker 需要透過 http(s) 才能註冊。直接 `file://` 打開卡片
 | `game-state.js` | 存檔與歷史共用模型：建立、驗證、遷移、完整快照與局交換 |
 | `storage.js` | localStorage adapter：舊存檔備份、格式隔離與儲存失敗處理 |
 | `modal-manager.js` | 13 個彈窗的堆疊、焦點、鍵盤、確認佇列與切局取消 |
+| `tests/e2e/` / `playwright.config.cjs` | Chromium 與 WebKit iPad 情境的瀏覽器回歸測試 |
 | `app.js` | 遊戲操作流程、狀態套用、畫面與通知；所有分數經同一批次入口結算 |
 | `i18n.js` + `locales/` | 繁／簡／英文案與卡牌內容 |
 | `sw.js` | Service Worker（network-first） |

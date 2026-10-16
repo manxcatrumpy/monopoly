@@ -6,6 +6,9 @@
   "scripts": {
     "build": "mkdir -p dist && cp -r *.html *.js *.css *.webmanifest icons locales dist/ && node scripts/test-bump.js",
     "test": "node --test scripts/*.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm test && npm run lint && npm run test:e2e",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -23,6 +26,7 @@
   "homepage": "https://github.com/manxcatrumpy/monopoly#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.64.1",
     "eslint": "^10.8.0",
     "globals": "^17.9.0"
   }

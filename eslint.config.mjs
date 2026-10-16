@@ -3,7 +3,7 @@ import pluginJs from '@eslint/js';
 
 export default [
   {
-    ignores: ['dist/**']
+    ignores: ['dist/**', 'playwright-report/**', 'test-results/**']
   },
   pluginJs.configs.recommended,
   {
@@ -40,7 +40,7 @@ export default [
     }
   },
   {
-    files: ['scripts/**'],
+    files: ['scripts/**', 'tests/**', 'playwright.config.cjs'],
     languageOptions: {
       globals: {
         ...globals.node

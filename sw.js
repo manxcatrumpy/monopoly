@@ -54,6 +54,9 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(req))
+      // 未快取資源離線時明確回報失敗，不把 undefined 交給 respondWith。
+      .catch(async () => (await caches.match(req)) || new Response('Offline', {
+        status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/plain' },
+      }))
   );
 });
