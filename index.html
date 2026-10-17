@@ -90,6 +90,14 @@
   </header>
 
   <div id="storage-warning" class="storage-warning hidden" role="alert" hidden></div>
+  <div id="pwa-notice" class="pwa-notice" role="status" aria-live="polite" hidden>
+    <span id="pwa-message"></span>
+    <div class="pwa-actions">
+      <button id="pwa-apply" class="btn btn-primary" type="button" data-i18n="pwa.apply">更新並重新整理</button>
+      <button id="pwa-later" class="btn btn-ghost" type="button" data-i18n="pwa.later">稍後</button>
+      <button id="pwa-retry" class="btn" type="button" data-i18n="pwa.retry" hidden>重試</button>
+    </div>
+  </div>
 
   <div id="weather-banner" class="weather-banner hidden" role="status" aria-live="polite">
     <div class="weather-banner-copy">
@@ -794,7 +802,9 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="./vendor/html2canvas.min.js"></script>
+  <script src="./pwa-manifest.js"></script>
+  <script src="./pwa-client.js"></script>
   <script src="./config.js"></script>
   <script src="./deck-model.js"></script>
   <script src="./i18n.js"></script>
@@ -802,6 +812,15 @@
   <script src="./game-rules.js"></script>
   <script src="./game-state.js"></script>
   <script src="./storage.js"></script>
+  <script src="./modal-manager.js"></script>
+  <script src="./ui-feedback.js"></script>
+  <script src="./ui-players.js"></script>
+  <script src="./ui-setup.js"></script>
+  <script src="./ui-history.js"></script>
+  <script src="./ui-cards.js"></script>
+  <script src="./ui-weather.js"></script>
+  <script src="./ui-highlight.js"></script>
+  <script src="./ui-pwa.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

@@ -36,7 +36,7 @@ test('restore swaps complete games without leaking weather, draws, flags or reli
     state.currentGame.pendingDraws=[{id:'pd_second',text:'Second pending',playerId:'p5',t:3}];
     state.currentGame.timer={accumulated:30,lastStartedAt:Date.now(),running:true};
     state.settings.customDecks.boost=[];
-    adjustTargetId='p5'; originTargetId='p5'; currentCard={name:'Old draft'}; currentChoiceOpt=1;
+    adjustTargetId='p5'; originTargetId='p5'; cardDraft.currentCard={name:'Old draft'}; cardDraft.currentChoiceOpt=1;
   `);
   app.advance(21);
   await app.run('restoreRound(0)');
@@ -46,7 +46,7 @@ test('restore swaps complete games without leaking weather, draws, flags or reli
   assert.equal(app.read('state.history[0].pendingDraws[0].text'),'Second pending');
   assert.deepEqual(app.read('state.history[0].timer'),{accumulated:51,lastStartedAt:null,running:false});
   assert.deepEqual(app.read('state.settings.customDecks.boost'),[]);
-  assert.deepEqual(app.read('[adjustTargetId,originTargetId,currentCard,currentChoiceOpt]'),[null,null,null,null]);
+  assert.deepEqual(app.read('[adjustTargetId,originTargetId,cardDraft.currentCard,cardDraft.currentChoiceOpt]'),[null,null,null,null]);
   assert.equal(app.read('reliefPrompts.length'),0);
   const saved = JSON.parse(app.storage.get(KEY));
   assert.deepEqual(saved.currentGame,expected);
@@ -119,7 +119,7 @@ test('history viewing leaves game state untouched', () => {
   const app = game();
   app.run('state.history=[snapshotRound()];');
   const before = app.read('state');
-  app.run('viewRound(0); renderHistoryList();');
+  app.run('historyUI.viewRound(0); historyUI.renderHistoryList();');
   assert.deepEqual(app.read('state'),before);
 });
 
@@ -194,7 +194,7 @@ test('pending relief from another game cannot mutate the newly activated game', 
 test('active relief dialogs are cancelled when the current game changes', async () => {
   const app = game();
   app.run(`
-    var prompt=showReliefPromptNow({name:'Fixture',items:['wisdom'],scores:{wisdom:0}});
+    var prompt=originalReliefModal({name:'Fixture',items:['wisdom'],scores:{wisdom:0}});
     clearGameUi();
     state.currentGame=GameState.createGame(stateModelOptions());
   `);
@@ -208,10 +208,10 @@ test('queued relief dialogs cannot open after another game is activated', async 
     var secondPrompt=originalReliefModal({name:'Second',items:['wisdom'],scores:{wisdom:0}});
   `);
   await app.run('Promise.resolve()');
-  assert.equal(app.run('cancelReliefPrompt !== null'),true);
+  assert.equal(app.run("modals.isOpen('relief-modal')"),true);
   app.run('clearGameUi(); state.currentGame=GameState.createGame(stateModelOptions());');
   assert.equal(await app.run('Promise.all([firstPrompt,secondPrompt]).then(values=>values.every(value=>value===false))'),true);
-  assert.equal(app.run('cancelReliefPrompt === null'),true);
+  assert.equal(app.run("!modals.isOpen('relief-modal')"),true);
 });
 
 test('a deferred round-switch confirmation cannot swap a different current game', async () => {

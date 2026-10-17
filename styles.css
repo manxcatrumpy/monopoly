@@ -7,7 +7,7 @@
 :root {
   /* 全頁圖層順序：導覽 < 一般彈窗 < 救濟 < 確認 < 通知。 */
   --z-topbar: 50; --z-quick-draw: 60;
-  --z-modal: 100; --z-relief: 110; --z-confirm: 120; --z-toast: 200;
+  --z-modal: 100; --z-toast: 200;
   /* Paper / surfaces */
   --paper:        #EFF2E9;   /* page wash base */
   --paper-2:      #E6EADD;   /* inset / progress track */
@@ -66,7 +66,7 @@
   --glow-gold: 0 0 0 4px rgba(216,169,78,0.16), 0 8px 28px rgba(216,169,78,0.28);
 
   /* Stat row column template: label | bar | readout */
-  --stat-cols: 56px 1fr 64px;
+  --stat-cols: 72px minmax(0, 1fr) 64px;
 }
 
 * { box-sizing: border-box; }
@@ -97,6 +97,10 @@ body {
 }
 
 button { font-family: inherit; }
+
+.pwa-notice { margin: 12px 20px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.pwa-notice[hidden] { display: none; }
+.pwa-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .storage-warning {
   margin: 12px 20px;
@@ -204,6 +208,7 @@ button { font-family: inherit; }
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--ink);
+  white-space: nowrap;
 }
 .meta-value strong { font-variant-numeric: tabular-nums; font-weight: 700; }
 .meta-sep { color: var(--ink-mute); margin: 0 5px; font-weight: 300; }
@@ -366,10 +371,10 @@ button { font-family: inherit; }
   margin: 0 auto;
 }
 /* Two-row topbar: brand + actions on top, the meta strip on its own full row.
-   Kicks in while there's still comfortable room (the meta needs ~1200px to share
+   Kicks in while there's still comfortable room (the meta needs ~1600px to share
    a row with brand+actions), so the strip never sits at the wrap boundary where
    the timer jittered between rows. */
-@media (max-width: 1280px) {
+@media (max-width: 1600px) {
   .topbar {
     grid-template-columns: 1fr auto;
     grid-template-areas: "brand actions" "meta meta";
@@ -377,9 +382,10 @@ button { font-family: inherit; }
   }
   .brand   { grid-area: brand; }
   .actions { grid-area: actions; }
-  .meta    { grid-area: meta; justify-content: space-between; flex-wrap: wrap; }
-  .meta-item { min-width: 96px; padding: 2px 16px; }
+  .meta    { grid-area: meta; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .meta-item { min-width: 0; padding: 2px 8px; }
   .meta-value { font-size: 19px; }
+  .meta-cap { display: block; margin: 2px 0 0; text-align: center; }
 }
 
 @media (max-width: 1024px) {
@@ -559,6 +565,7 @@ button { font-family: inherit; }
   font-size: 13px; color: var(--ink-dim); font-weight: 600;
   display: flex; align-items: center; gap: 8px;
   letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 .pc-quota-dot {
   width: 7px;
@@ -566,6 +573,7 @@ button { font-family: inherit; }
   border-radius: 50%;
   display: inline-block;
   margin-left: auto;
+  flex-shrink: 0;
   transition: background 0.2s, box-shadow 0.2s;
 }
 .pc-quota-dot.avail {
@@ -588,6 +596,7 @@ button { font-family: inherit; }
 .stat-self-low.hidden { display: none !important; }
 .stat-row .stat-label::before {
   content: ""; width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
 }
 .stat-row.stat-fortune .stat-label::before { background: var(--fortune); box-shadow: 0 0 0 3px var(--fortune-tint); }
 .stat-row.stat-wisdom  .stat-label::before { background: var(--wisdom);  box-shadow: 0 0 0 3px var(--wisdom-tint); }
