@@ -105,6 +105,9 @@ test.describe('救濟與抽卡重疊', () => {
 });
 
 test('開下一局保存完整歷史，切回後不留下新局 UI 草稿', async ({ page }) => {
+  // Linux WebKit 的原生點擊穩定性檢查會累計數秒；此完整流程在 CI trace 中
+  // 到確認按鈕已耗時 29.8 秒。只延長本案例，保留全部 actionability 與資料驗證。
+  test.setTimeout(60_000);
   await openGame(page);
   await adjust(page, { fortune: 2, civ: 3 });
   const original = (await readSave(page)).currentGame;

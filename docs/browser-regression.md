@@ -90,6 +90,13 @@ Node 補上快取命中／未命中回歸，兩套瀏覽器都驗證離線重載
 
 ## 報告與 CI
 
+一般案例維持 30 秒。歷史切局的完整流程使用 60 秒：
+[CI 執行 #1](https://github.com/manxcatrumpy/monopoly/actions/runs/39032723555)
+的 trace 顯示 Linux WebKit 多次正常點擊各需約 2～5 秒等待穩定，
+走到確認按鈕時已累計 29.8 秒，尚未完成點擊檢查就耗盡整案額度。
+只延長此案例的總時間，保留原生點擊、焦點、完整存檔與重載斷言；
+其他案例、單項斷言及 CI 重試設定均不變。
+
 失敗時保存截圖與 trace 至 `test-results/`，HTML 報告在 `playwright-report/`；
 天氣確認另保存 `weather-confirm.png` 便於檢視重疊畫面。
 這些產物均忽略於 Git，測試程式也不會複製到 `dist/` 或列入 PWA 快取。
