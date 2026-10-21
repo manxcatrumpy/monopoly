@@ -91,8 +91,6 @@
       if (both >= n && !notified[key]) {
         notified[key] = true;
         events.push({ type: 'breakthrough', playerId: player.id, threshold: n });
-      } else if (both < n && notified[key]) {
-        notified[key] = false;
       }
     }
     return { notified, graduated, navigatorClaimed: claims, events };
@@ -136,7 +134,68 @@
     );
   }
 
-  const rules = { calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats,
+  function canTrade(game, playerId) {
+    return !!game.exchange?.opened && game.players.some(p => p.id === playerId) &&
+      !game.actedThisTurn?.[playerId] && !game.skippedThisTurn?.[playerId] && !game.exchange.movementThisTurn[playerId];
+  }
+
+  function planExchangePurchase(game, playerId, cart) {
+    if (!canTrade(game, playerId)) throw new Error('exchange.unavailable');
+    const quantities = ['navigation', 'shield', 'investment'].map(key => cart[key] ?? 0);
+    if (quantities.some(n => !Number.isSafeInteger(n) || n < 0) || !quantities.some(n => n > 0)) throw new Error('exchange.invalid_quantity');
+    const [navigation, shield, investment] = quantities;
+    const cfg = CONFIG.EXCHANGE;
+    const cost = { fortune: shield * cfg.SHIELD_COST + investment * cfg.INVESTMENT_COST, wisdom: navigation * cfg.NAVIGATION_COST };
+    const p = game.players.find(p => p.id === playerId);
+    if (![cost.fortune, cost.wisdom, p.navigationTokens + navigation, p.shieldTokens + shield, p.investmentTokens + investment].every(Number.isSafeInteger)) throw new Error('exchange.invalid_quantity');
+    if (cost.fortune > p.fortune || cost.wisdom > p.wisdom) throw new Error('exchange.insufficient');
+    const operations = [{ playerId, delta: { fortune: -cost.fortune, wisdom: -cost.wisdom } }];
+    // Buying only charges points and adds inventory; no service is activated here.
+    try { calculateScoreBatch(game.players, operations); }
+    catch (error) { throw new Error('exchange.invalid_quantity', { cause: error }); }
+    return { navigation, shield, investment, cost, operations };
+  }
+
+  function planInvestmentActivation(game, playerId, targetId, quantity) {
+    if (!canTrade(game, playerId)) throw new Error('exchange.unavailable');
+    if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('exchange.invalid_use_quantity');
+    const p = game.players.find(p => p.id === playerId);
+    if (quantity > p.investmentTokens) throw new Error('exchange.insufficient_stock');
+    if (targetId === playerId || !game.players.some(p => p.id === targetId)) throw new Error('exchange.invalid_target');
+    if (!Number.isSafeInteger(game.exchange.nextInvestmentId + 1)) throw new Error('exchange.invalid_use_quantity');
+    const operations = [{ playerId: targetId, delta: { wisdom: quantity } }];
+    try { calculateScoreBatch(game.players, operations); }
+    catch (error) { throw new Error('exchange.invalid_use_quantity', { cause: error }); }
+    return { operations };
+  }
+
+  // A qualifying receipt pays once per investment and observation round, even if later losses erase it.
+  function evaluateInvestmentGrowth(game, changes) {
+    const grown = new Set(changes.filter(c => ['fortune', 'wisdom'].some(stat => c.after[stat] > c.before[stat])).map(c => c.playerId));
+    const operations = [], events = [];
+    const investments = game.exchange.investments.map(item => {
+      if (item.closed || !grown.has(item.targetId) || game.turnNum <= item.startTurn || game.turnNum > item.startTurn + 2 || item.rewardedTurns.includes(game.turnNum)) return item;
+      operations.push({ playerId: item.investorId, delta: { civ: item.quantity } });
+      events.push({ investorId: item.investorId, targetId: item.targetId, quantity: item.quantity, turn: game.turnNum });
+      return { ...item, rewardedTurns: [...item.rewardedTurns, game.turnNum] };
+    });
+    return { investments, operations, events };
+  }
+
+  function closeInvestments(game, completedTurn) {
+    const operations = [], events = [];
+    const investments = game.exchange.investments.map(item => {
+      if (item.closed || completedTurn < item.startTurn + 2) return item;
+      const refund = item.rewardedTurns.length === 0 ? item.quantity * CONFIG.EXCHANGE.REFUND : 0;
+      if (refund) operations.push({ playerId: item.investorId, delta: { fortune: refund } });
+      events.push({ investorId: item.investorId, targetId: item.targetId, refund });
+      return { ...item, closed: true };
+    });
+    return { investments, operations, events };
+  }
+
+  const rules = { canTrade, planExchangePurchase, planInvestmentActivation, evaluateInvestmentGrowth, closeInvestments,
+    calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats,
     gameMinutes, expectedCiv, judgeWeather, weatherUpgradeTarget, weatherPhase };
   if (typeof module === 'object' && module.exports) module.exports = rules;
   else globalThis.GameRules = rules;

@@ -18,6 +18,9 @@
       forecastTurn: Math.min(...config.WEATHER.SCHEDULE.map(ev => ev.targetRound - 2)),
       sprintMinutes: config.ENDGAME_MINUTES,
       exchangeRate: config.WEATHER.EXCHANGE_RATE_COST,
+      exchangeThreshold: config.EXCHANGE.OPEN_THRESHOLD,
+      navigationCost: config.EXCHANGE.NAVIGATION_COST, shieldCost: config.EXCHANGE.SHIELD_COST,
+      investmentCost: config.EXCHANGE.INVESTMENT_COST, investmentRefund: config.EXCHANGE.REFUND,
     };
   }
   window.i18n = {
@@ -27,10 +30,11 @@
       const revision = ++loadRevision;
       const requested = normalizeLanguage(lang);
       const attempts = requested === 'zh-tw' ? [requested] : [requested, 'zh-tw'];
+      const assetURL = path => typeof PWA_RELEASE === 'object' && PWA_RELEASE?.id ? path + '?rev=' + PWA_RELEASE.id : path;
       for (const candidate of attempts) {
         try {
           const [uiRes, cardsRes] = await Promise.all([
-            fetch(`./locales/${candidate}.json`), fetch(`./locales/cards-${candidate}.json`),
+            fetch(assetURL(`./locales/${candidate}.json`)), fetch(assetURL(`./locales/cards-${candidate}.json`)),
           ]);
           if (!uiRes.ok || !cardsRes.ok) throw new Error('Language request failed');
           const [translations, cards] = await Promise.all([uiRes.json(), cardsRes.json()]);

@@ -26,6 +26,7 @@
   function card(value, path, kind, base) {
     record(value, path);
     text(value.name, path + '.name', true);
+    if (value.damageSource !== undefined && !['normal', 'fate', 'impermanence'].includes(value.damageSource)) fail('text', path + '.damageSource');
     for (const field of ['desc', 'side', 'scene', 'series', 'action', 'insight', 'rewardText']) {
       if (value[field] !== undefined) text(value[field], path + '.' + field);
     }

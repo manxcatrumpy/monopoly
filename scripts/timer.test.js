@@ -7,8 +7,10 @@ const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
 const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
+const ModalManager = require('../modal-manager.js');
+const { uiFiles } = require('./ui-sources.js');
 
-const sources = ['config.js', 'version.js', 'app.js'].map(file =>
+const sources = ['config.js', 'version.js', 'pwa-client.js', ...uiFiles, 'app.js'].map(file =>
   fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
 );
 
@@ -20,7 +22,7 @@ function createSession() {
 
   function openApp() {
     const context = vm.createContext({
-      GameRules, GameState, GameStorage, DeckModel,
+      GameRules, GameState, GameStorage, DeckModel, ModalManager,
       window: { addEventListener: noop },
       document: { querySelector: () => element, addEventListener: noop },
       localStorage: {
@@ -32,11 +34,11 @@ function createSession() {
       },
       // Persist synchronously so each new context models a completed page reload.
       queueMicrotask: fn => fn(),
+      setTimeout: noop, clearTimeout: noop,
     });
     vm.runInContext(sources[0], context);
     context.GAME_CONFIG = context.window.GAME_CONFIG;
-    vm.runInContext(sources[1], context);
-    vm.runInContext(sources[2], context);
+    for (const source of sources.slice(1)) vm.runInContext(source, context);
     // Timer tests exercise storage and elapsed time without rendering the UI.
     vm.runInContext('updateTopbar = () => {};', context);
     return code => vm.runInContext(code, context);
