@@ -1,7 +1,7 @@
 // 交易所表單只管理 UI 草稿；庫存、扣點與投資結算交給 app。
 (function () {
   'use strict';
-  function create({ $, t, escapeHtml, modals, getGame, canTrade, config, purchase, activateInvestment, useNavigation, beginDice }) {
+  function create({ $, t, escapeHtml, modals, getGame, canTrade, config, purchase, activateInvestment, useNavigation }) {
     let selectedId = null, bound = false, busy = false;
     const esc = value => escapeHtml(String(value));
     function cart() {
@@ -38,9 +38,8 @@
       $('#exchange-activate-quantity').max = String(p?.investmentTokens || 0);
       $('#exchange-unavailable').hidden = available;
       $('#exchange-use-navigation').disabled = !available || busy || !p.navigationTokens;
-      $('#exchange-begin-dice').disabled = !available || busy;
       const movement = game.exchange.movementThisTurn[selectedId];
-      $('#exchange-movement').textContent = movement ? (movement.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : t('exchange.moved_dice')) : '';
+      $('#exchange-movement').textContent = movement?.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : '';
       $('#exchange-investments').innerHTML = game.exchange.investments.filter(item => !item.closed).map(item => {
         const investor = game.players.find(p => p.id === item.investorId), target = game.players.find(p => p.id === item.targetId);
         return `<li>${esc(t('exchange.investment_status', { name: investor?.name || '', target: target?.name || '', count: item.quantity,
@@ -99,7 +98,6 @@
         } finally { busy = false; if (getGame() === game) render(); }
       });
       $('#exchange-use-navigation').addEventListener('click', () => useNavigation(selectedId, Number($('#exchange-steps').value)));
-      $('#exchange-begin-dice').addEventListener('click', () => beginDice(selectedId));
     }
     return { bind, open, render, refresh, announce };
   }

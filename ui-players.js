@@ -7,7 +7,7 @@
     openSetup, hasActed, hasSkipped, comprehensiveScore, STATS,
     openOriginModal, openAdjustModal, toggleActed, toggleSkipped, requestRemovePlayer,
     renamePlayer, GRAD_THRESHOLD, MILESTONES, STAT_LABEL, closeOriginModal,
-    closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview, openExchange, beginDice,
+    closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview, openExchange,
   }) {
 
     function syncMultiplierBanner(el, playerId, endgameKey) {
@@ -115,7 +115,6 @@
           <span class="pc-exchange-stock">${escapeHtml(t('exchange.stock', { navigation: p.navigationTokens, shield: p.shieldTokens, investment: p.investmentTokens }))}</span>
           <span class="pc-exchange-movement"></span>
           <button class="btn btn-ghost" data-act="exchange">${t('exchange.title')}</button>
-          <button class="btn btn-ghost" data-act="dice" ${acted || skipped || getGame().exchange.movementThisTurn[p.id] ? 'disabled' : ''}>${t('exchange.begin_dice')}</button>
         </div>
 
         <div class="pc-actions">
@@ -138,8 +137,6 @@
         const el = e.target;
         if (el.closest('[data-act="exchange"]')) {
           openExchange(p.id);
-        } else if (el.closest('[data-act="dice"]')) {
-          beginDice(p.id);
         } else if (el.closest('[data-act="origin"]')) {
           openOriginModal(p.id);
         } else if (el.closest('[data-act="adjust"]')) {
@@ -168,8 +165,7 @@
       area.classList.toggle('hidden', !getGame().exchange.opened);
       card.querySelector('.pc-exchange-stock').textContent = t('exchange.stock', { navigation: p.navigationTokens, shield: p.shieldTokens, investment: p.investmentTokens });
       const movement = getGame().exchange.movementThisTurn[p.id];
-      card.querySelector('.pc-exchange-movement').textContent = movement ? (movement.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : t('exchange.moved_dice')) : '';
-      card.querySelector('[data-act="dice"]').disabled = hasActed(p.id) || hasSkipped(p.id) || !!movement;
+      card.querySelector('.pc-exchange-movement').textContent = movement?.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : '';
     }
 
     function statusHint(p) {

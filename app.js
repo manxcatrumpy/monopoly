@@ -1073,7 +1073,6 @@ function refreshTurnFlags(playerId) {
 }
 function markActed(playerId) {
   if (!getPlayer(playerId) || hasActed(playerId)) return;
-  state.currentGame.exchange.movementThisTurn[playerId] ||= { mode: 'dice', steps: null };
   delete skippedSet()[playerId];
   actedSet()[playerId] = true;
   refreshTurnFlags(playerId);
@@ -1467,16 +1466,6 @@ function useNavigation(playerId, steps) {
   return true;
 }
 
-function beginDice(playerId) {
-  const game = state.currentGame;
-  if (!getPlayer(playerId) || isResolved(playerId) || game.exchange.movementThisTurn[playerId] || pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
-  game.exchange.movementThisTurn[playerId] = { mode: 'dice', steps: null };
-  save();
-  modals.close('exchange-modal');
-  renderAll();
-  return true;
-}
-
 // ─────────── Render all ───────────
 function renderAll() {
   updateTopbar();
@@ -1702,12 +1691,12 @@ const playersUI = PlayersUI.create({
   MILESTONES,
   STAT_LABEL: (...args) => STAT_LABEL(...args),
   closeOriginModal, closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview,
-  openExchange: id => exchangeUI.open(id), beginDice
+  openExchange: id => exchangeUI.open(id)
 });
 
 const exchangeUI = ExchangeUI.create({ $, t: (...args) => t(...args), escapeHtml, modals, getGame: () => state.currentGame,
   canTrade: (game, id) => GameRules.canTrade(game, id), config: GAME_CONFIG.EXCHANGE,
-  purchase: purchaseExchange, activateInvestment, useNavigation, beginDice });
+  purchase: purchaseExchange, activateInvestment, useNavigation });
 
 const setupUI = SetupUI.create({
   $: (...args) => $(...args),

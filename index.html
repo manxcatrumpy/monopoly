@@ -522,7 +522,7 @@
         <button class="icon-btn" id="exchange-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
-        <p class="tool-hint" data-i18n="exchange.timing">自己的回合擲骰前，可購買多項、多組。購買只加入庫存，不會立即使用；可留到之後回合。</p>
+        <p class="tool-hint" data-i18n="exchange.timing">主持人確認在玩家自己的回合擲骰前交易。購買只加入庫存，可留到之後回合；格子效果結算後再按「本輪已行動」。</p>
         <label class="row"><span data-i18n="exchange.player">交易玩家</span><select id="exchange-player"></select></label>
         <p id="exchange-balance"></p>
         <p id="exchange-stock" class="exchange-stock"></p>
@@ -544,12 +544,11 @@
           <button id="exchange-activate-investment" class="btn" data-i18n="exchange.activate">啟用投資</button>
         </fieldset>
         <section class="exchange-motion">
-          <h3 data-i18n="exchange.move_title">開始本回合移動</h3>
-          <p class="tool-hint" data-i18n="exchange.move_hint">請先完成所有購買。選擇後由主持人移動實體棋子、處理格子效果，再標記已行動。</p>
+          <h3 data-i18n="exchange.move_title">使用導航（可略過）</h3>
+          <p class="tool-hint" data-i18n="exchange.move_hint">若不使用導航，請直接擲實體骰子，保留庫存。格子效果結算完成後，再按「本輪已行動」。</p>
           <div class="exchange-motion-controls">
             <label><span data-i18n="exchange.steps">導航步數</span><select id="exchange-steps"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
             <button id="exchange-use-navigation" class="btn" data-i18n="exchange.use_navigation">使用一組導航</button>
-            <button id="exchange-begin-dice" class="btn btn-ghost" data-i18n="exchange.begin_dice">開始擲骰</button>
           </div>
           <p id="exchange-movement"></p>
         </section>

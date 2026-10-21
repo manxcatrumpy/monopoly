@@ -28,7 +28,7 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   await page.locator('#exchange-store-close').click();
   await expect(page.locator('#exchange-modal')).toBeHidden();
   await expect(player(page, 'p1').locator('[data-act="acted"]')).toHaveAttribute('aria-pressed', 'false');
-  await player(page, 'p1').locator('[data-act="dice"]').click();
+  await expect(page.locator('[data-act="dice"]')).toHaveCount(0);
   await finishRound(page);
   await page.reload();
   await player(page, 'p1').locator('[data-act="exchange"]').click();
@@ -142,8 +142,9 @@ test.describe('平安符選擇', () => {
 test.describe('手機交易所', () => {
   const save = savedGame();
   save.currentGame.exchange.opened = true;
+  save.currentGame.players[0].navigationTokens = 1;
   test.use({ save });
-  test('窄螢幕可閱讀與操作，開始擲骰後禁止交易', async ({ page }, testInfo) => {
+  test('窄螢幕只需在結算後標記已行動，沒有額外的開始擲骰操作', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 393, height: 852 });
     await openGame(page);
     await player(page, 'p1').locator('[data-act="exchange"]').click();
@@ -151,11 +152,16 @@ test.describe('手機交易所', () => {
     await expect.poll(async () => (await page.locator('#exchange-player').boundingBox()).height).toBeGreaterThanOrEqual(44);
     expect(await page.locator('.exchange-panel').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
     await testInfo.attach('mobile-exchange', { body: await page.screenshot(), contentType: 'image/png' });
-    await page.locator('#exchange-begin-dice').click();
+    await expect(page.locator('#exchange-begin-dice')).toHaveCount(0);
+    await expect(page.locator('[data-act="dice"]')).toHaveCount(0);
+    await expect(page.locator('#exchange-use-navigation')).toBeEnabled();
+    await page.locator('#exchange-store-close').click();
+    await player(page, 'p1').locator('[data-act="acted"]').click();
+    await expect(page.locator('#turn-num-container')).toContainText('1');
     await player(page, 'p1').locator('[data-act="exchange"]').click();
     await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', true);
     await expect(page.locator('#exchange-navigation')).toBeDisabled();
     await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
-    await expect(page.locator('#exchange-movement')).toContainText('已開始擲骰');
+    await expect(page.locator('#exchange-movement')).toBeEmpty();
   });
 });
