@@ -20,11 +20,11 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   await page.locator('#exchange-investment').fill('1');
   await expect(page.locator('#exchange-cost')).toHaveText('本次花費：福報 6 · 智慧 6');
   await page.locator('#exchange-buy').click();
-  await expect(page.locator('#exchange-stock')).toContainText('導航 ×2 · 護盾 ×1');
+  await expect(page.locator('#exchange-stock')).toContainText('導航 ×2 · 平安符 ×1');
   await expect(score(page, 'fortune', 'p1')).toHaveText('14');
   await expect(score(page, 'wisdom', 'p2')).toHaveText('5');
   expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(0);
-  await expect(page.locator('#exchange-stock')).toContainText('微投 ×1');
+  await expect(page.locator('#exchange-stock')).toContainText('投資 ×1');
   await page.locator('#exchange-store-close').click();
   await expect(page.locator('#exchange-modal')).toBeHidden();
   await expect(player(page, 'p1').locator('[data-act="acted"]')).toHaveAttribute('aria-pressed', 'false');
@@ -32,7 +32,7 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   await finishRound(page);
   await page.reload();
   await player(page, 'p1').locator('[data-act="exchange"]').click();
-  await expect(page.locator('#exchange-stock')).toContainText('微投 ×1');
+  await expect(page.locator('#exchange-stock')).toContainText('投資 ×1');
   expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(0);
   await page.locator('#exchange-target').selectOption('p2');
   await page.locator('#exchange-activate-investment').click();
@@ -55,7 +55,7 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(1);
 });
 
-test.describe('逐輪微投結算', () => {
+test.describe('逐輪投資結算', () => {
   const save = savedGame();
   Object.assign(save.currentGame, { turnNum: 7, reliefSweepDone: true, civGoal: 999 });
   Object.assign(save.currentGame.exchange, { opened: true, nextInvestmentId: 3, investments: [
@@ -88,14 +88,14 @@ test.describe('逐輪微投結算', () => {
   });
 });
 
-test.describe('護盾選擇', () => {
+test.describe('平安符選擇', () => {
   const save = savedGame();
   save.currentGame.exchange.opened = true;
   save.currentGame.players[0].shieldTokens = 2;
   save.currentGame.players[0].civ = 3;
   save.settings.customDecks.boost = [{ name: '命運試煉', action: '遭遇事件', insight: '選擇是否防護', damageSource: 'fate', rewardText: '福 -2 慧 -2 文明 -1', reward: { fortune: -2, wisdom: -2, civ: -1 } }];
   test.use({ save });
-  test('保留護盾承受傷害，下一次使用一枚擋全部福慧而保留文明扣分', async ({ page }) => {
+  test('保留平安符承受傷害，下一次使用一枚擋全部福慧而保留文明扣分', async ({ page }) => {
     await openGame(page);
     for (const use of [false, true]) {
       await page.locator('#btn-draw-boost').click();
@@ -108,13 +108,13 @@ test.describe('護盾選擇', () => {
       await expect(score(page, 'fortune')).toHaveText('3');
       await expect(score(page, 'wisdom')).toHaveText('3');
       await expect(score(page, 'civ')).toHaveText(use ? '1' : '2');
-      await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText(use ? '護盾 ×1' : '護盾 ×2');
+      await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText(use ? '平安符 ×1' : '平安符 ×2');
       await expect(page.locator('#relief-modal')).toBeHidden();
     }
     await page.reload();
     expect((await readSave(page)).currentGame.players[0].shieldTokens).toBe(1);
   });
-  test('實體命運牌手動扣分可選護盾，分數更正不觸發護盾或救濟', async ({ page }) => {
+  test('實體命運牌手動扣分可選平安符，分數更正不觸發平安符或救濟', async ({ page }) => {
     await openGame(page);
     await player(page, 'p1').locator('[data-act="adjust"]').click();
     await page.locator('#adjust-source').selectOption('fate');
@@ -127,7 +127,7 @@ test.describe('護盾選擇', () => {
     await expect(score(page, 'fortune')).toHaveText('5');
     await expect(score(page, 'wisdom')).toHaveText('5');
     await expect(score(page, 'civ')).toHaveText('2');
-    await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText('護盾 ×1');
+    await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText('平安符 ×1');
     await player(page, 'p1').locator('[data-act="adjust"]').click();
     await page.locator('#adjust-source').selectOption('correction');
     await page.locator('#adjust-rows [data-stat="fortune"] input').fill('-5');
