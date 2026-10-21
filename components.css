@@ -1143,3 +1143,25 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
 #weather-adjust-total-cost { color: var(--danger-deep); }
 .weather-adjust-gain { margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--civ); }
 .weather-adjust-gap { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }
+/* 福慧交易所 */
+.exchange-panel { max-width: 680px; }
+.exchange-shop { border: 1px solid var(--border, #dce2d3); border-radius: 14px; padding: 16px; margin: 16px 0; min-width: 0; }
+.exchange-shop legend { font-weight: 700; padding: 0 8px; }
+.exchange-product { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.exchange-product > span { flex: 1; min-width: 0; }
+.exchange-product strong, .exchange-product small { display: block; }
+.exchange-product small { line-height: 1.6; margin-top: 4px; color: var(--muted, #59664f); }
+.exchange-product input { width: 76px; min-height: 44px; padding: 8px; border-radius: 8px; border: 1px solid var(--border, #dce2d3); font: inherit; }
+.exchange-motion-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.exchange-motion-controls label { display: grid; gap: 5px; }
+.exchange-panel .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.exchange-panel .row select { flex: 1; min-width: 120px; }
+.exchange-panel select, .exchange-source select { appearance: none; -webkit-appearance: none; height: 46px; min-height: 44px; max-width: 100%; padding: 9px 34px 9px 12px; border: 1px solid var(--line); border-radius: 10px; background-color: var(--surface); color: var(--ink); font: inherit; font-size: 16px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+.exchange-motion-controls select, .exchange-source select { min-height: 44px; }
+.exchange-stock { font-weight: 700; }
+.exchange-notice { color: #855722; }
+.exchange-investments { padding-left: 20px; line-height: 1.8; overflow-wrap: anywhere; }
+.exchange-investments li { margin-bottom: 8px; }
+.exchange-source { margin: 12px 0; }

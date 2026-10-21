@@ -164,6 +164,7 @@ test('returning to a notified endgame does not duplicate time or victory announc
     state.currentGame._timeUpNoticed=true;state.currentGame._sprintNoticed=true;
     state.currentGame.players.forEach(p=>{p.civ=20;p.graduated=true;p.fortune=30;p.wisdom=30;});
     state.currentGame._civGoalNoticed=true;state.currentGame._allGradNoticed=true;
+    state.currentGame.exchange.opened=true;
     state.history=[snapshotRound()];
     state.currentGame=GameState.createGame(stateModelOptions());
     state.currentGame.roundNum=2;state.currentGame.players=[makePlayer({fortune:5,wisdom:5})];

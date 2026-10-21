@@ -32,6 +32,7 @@ export default [
         PWA_RELEASE: 'readonly',
         FeedbackUI: 'readonly',
         PlayersUI: 'readonly',
+        ExchangeUI: 'readonly',
         SetupUI: 'readonly',
         HistoryUI: 'readonly',
         CardsUI: 'readonly',
@@ -72,7 +73,7 @@ export default [
       globals: Object.fromEntries([
         '$', '$$', 't', 'document', 'window', 'localStorage', 'GAME_CONFIG',
         'GameRules', 'GameState', 'GameStorage', 'DeckModel', 'ModalManager',
-        'FeedbackUI', 'PlayersUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI', 'PwaClient', 'PwaUI'
+        'FeedbackUI', 'PlayersUI', 'ExchangeUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI', 'PwaClient', 'PwaUI'
       ].map(name => [name, 'off']))
     }
   }

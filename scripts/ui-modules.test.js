@@ -13,7 +13,7 @@ test('UI modules can load before a document exists and expose factories without 
   const notReady = new Proxy({}, { get() { throw new Error('DOM is not ready'); } });
   const dependencies = new Proxy({}, { get: (_, key) => ['document', 'window'].includes(key) ? notReady
     : () => { throw new Error('Dependencies must not run before bind or render'); } });
-  for (const name of ['FeedbackUI', 'PlayersUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI', 'PwaUI']) {
+  for (const name of ['FeedbackUI', 'PlayersUI', 'ExchangeUI', 'SetupUI', 'HistoryUI', 'CardsUI', 'WeatherUI', 'HighlightUI', 'PwaUI']) {
     assert.equal(typeof context[name].create, 'function');
     assert.equal(typeof context[name].create(dependencies).bind, 'function');
   }
@@ -39,6 +39,7 @@ test('rendering feature UIs does not mutate a frozen game, history or shared set
     cardsUI.openCardDraw('boost'); cardsUI.renderCatalog('boost'); cardsUI.renderDeckManager();
     feedbackUI.renderLog(); feedbackUI.renderPendingDraws();
     weatherUI.openWeatherAdjustModal();
+    exchangeUI.open('p1'); exchangeUI.refresh();
   `);
   assert.deepEqual(app.read('state'), before);
   assert.deepEqual([...app.storage], persisted);

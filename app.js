@@ -90,6 +90,8 @@ const modalOptions = {
   'draw-modal': { initialFocus: '#draw-later' },
   'highlight-modal': { initialFocus: '#highlight-quote-input', closeOnBackdrop: true },
   'weather-adjust-modal': { initialFocus: '.adj-fortune', closeOnBackdrop: true },
+  'exchange-modal': { initialFocus: '#exchange-player', closeOnBackdrop: true },
+  'exchange-open-modal': { priority: 1, initialFocus: '#exchange-open-close' },
 };
 for (const [id, options] of Object.entries(modalOptions)) modals.register(id, options);
 
@@ -559,6 +561,7 @@ function presentGameEvents(events) {
 
 // 由操作流程與計時 tick 呼叫；renderAll / updateTopbar 只讀取狀態。
 async function processGameEvents() {
+  checkExchangeOpening();
   const result = GameRules.evaluateGameStatus(state.currentGame, {
     elapsed: elapsedSeconds(), maxSeconds: maxGameSeconds(), sprintSeconds: SPRINT_SECONDS(),
   });
@@ -700,7 +703,10 @@ function renderAdjustPreview() {
   const p = getPlayer(adjustTargetId); if (!p) return;
   const mult = scoreMultiplier(adjustTargetId);
   const raw = adjustInputs();
-  const scaled = scaleReward(raw, mult);
+  const fixed = ['correction', 'spending'].includes($('#adjust-source').value);
+  const scaled = fixed ? raw : scaleReward(raw, mult);
+  if (fixed) $('#adjust-sprint').classList.add('hidden');
+  else syncMultiplierBanner($('#adjust-sprint'), adjustTargetId, 'adjust.sprint');
   STATS.forEach(stat => {
     const row = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"]`);
     if (!row) return;
@@ -730,6 +736,7 @@ function syncAdjustAsTurn(playerId) {
 function openAdjustModal(id) {
   const p = getPlayer(id); if (!p) return;
   adjustTargetId = id;
+  $('#adjust-source').value = 'normal';
   $('#adjust-sub').textContent = p.name || t('common.player');
   STATS.forEach(stat => {
     const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
@@ -750,20 +757,24 @@ async function applyAdjust() {
   const pid = p.id;
   const name = p.name || t('common.player');
   const mult = scoreMultiplier(pid);
-  const scaled = scaleReward(adjustInputs(), mult);
+  const source = $('#adjust-source').value || 'normal';
+  const fixed = ['correction', 'spending'].includes(source);
+  const scaled = fixed ? adjustInputs() : scaleReward(adjustInputs(), mult);
   const hasChange = STATS.some(stat => scaled[stat]);
   if (!hasChange) { closeAdjustModal(); return; }
   const alreadyResolved = isResolved(pid);
   const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const old = snapshotFw(p);
-  await settleScoreChanges([{ playerId: pid, delta: scaled }]);
+  const changes = await settleScoreChanges([{ playerId: pid, delta: scaled }], { source, selfSelected: source === 'spending' });
+  if (!changes) return;
+  if (changes.shieldedPlayerIds.includes(pid)) ['fortune', 'wisdom'].forEach(stat => { if (scaled[stat] < 0) scaled[stat] = 0; });
   if (state.currentGame !== game) return;
-  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
+  const tag = !fixed && mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  await maybeCheckReliefAfterForcedLoss(pid, old);
+  if (['normal', 'fate', 'impermanence'].includes(source)) await maybeCheckReliefAfterForcedLoss(pid, old);
   if (state.currentGame !== game) return;
   if (markTurn) markActed(pid);
   if (alreadyResolved) await maybeOfferSkipLeftover(pid);
@@ -785,7 +796,7 @@ async function scoreOrigin(playerId, stop) {
   const p = getPlayer(playerId); if (!p) return;
   const mult = scoreMultiplier(playerId);
   const r = scaleReward(originReward(p, stop), mult);
-  await settleScoreChanges([{ playerId, delta: r }]);
+  await settleScoreChanges([{ playerId, delta: r }], { source: 'normal' });
   if (state.currentGame !== game) return;
   const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = stop
@@ -824,8 +835,47 @@ function pickOrigin(stop) {
   closeOriginModal();      // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   if (id != null) scoreOrigin(id, stop);
 }
-async function settleScoreChanges(operations, { selfSelected = false } = {}) {
-  const changes = GameRules.calculateScoreBatch(state.currentGame.players, operations);
+const pendingShieldGames = new WeakSet();
+async function settleScoreChanges(operations, { selfSelected = false, source = 'system' } = {}) {
+  const game = state.currentGame;
+  if (pendingShieldGames.has(game)) return null;
+  let changes = GameRules.calculateScoreBatch(game.players, operations);
+  const shieldedPlayerIds = [];
+  if (['fate', 'impermanence'].includes(source)) {
+    pendingShieldGames.add(game);
+    try {
+      for (const change of changes) {
+        const p = getPlayer(change.playerId);
+        if (!p.shieldTokens || !['fortune', 'wisdom'].some(stat => change.after[stat] < change.before[stat])) continue;
+        const damage = Object.fromEntries(['fortune', 'wisdom'].filter(stat => change.after[stat] < change.before[stat])
+          .map(stat => [stat, change.after[stat] - change.before[stat]]));
+        const use = await confirmModal({ title: t('exchange.shield_prompt_title'),
+          message: t('exchange.shield_prompt', { name: p.name, count: p.shieldTokens, reward: describeReward(damage) }),
+          confirmText: t('exchange.use_shield'), cancelText: t('exchange.keep_shield') });
+        if (state.currentGame !== game || getPlayer(p.id) !== p) return null;
+        if (use && p.shieldTokens > 0) shieldedPlayerIds.push(p.id);
+      }
+    } finally { pendingShieldGames.delete(game); }
+    operations = operations.map(op => {
+      if (!shieldedPlayerIds.includes(op.playerId)) return op;
+      const p = getPlayer(op.playerId);
+      const next = { ...op, delta: { ...op.delta }, values: { ...op.values } };
+      for (const stat of ['fortune', 'wisdom']) {
+        if (next.delta[stat] < 0) next.delta[stat] = 0;
+        if (next.values[stat] < p[stat]) next.values[stat] = p[stat];
+      }
+      return next;
+    });
+    changes = GameRules.calculateScoreBatch(game.players, operations);
+  }
+  const growth = source === 'normal' || source === 'fate' || source === 'impermanence'
+    ? GameRules.evaluateInvestmentGrowth(game, changes) : { investments: game.exchange.investments, operations: [], events: [] };
+  changes = GameRules.calculateScoreBatch(game.players, [...operations, ...growth.operations]);
+  game.exchange.investments = growth.investments;
+  for (const id of shieldedPlayerIds) {
+    getPlayer(id).shieldTokens--;
+    logEvent(t('exchange.shield_used', { name: getPlayer(id).name }), 'milestone');
+  }
   const events = [];
   // 全場所有分數先寫入，再檢查里程與集體勝利。
   for (const change of changes) {
@@ -849,15 +899,23 @@ async function settleScoreChanges(operations, { selfSelected = false } = {}) {
     }
   }
   save();
-  changes.forEach(change => updatePlayerCard(getPlayer(change.playerId)));
+  new Set([...changes.map(change => change.playerId), ...shieldedPlayerIds]).forEach(id => updatePlayerCard(getPlayer(id)));
+  for (const event of growth.events) logEvent(t('exchange.growth_log', { name: getPlayer(event.investorId).name, target: getPlayer(event.targetId).name, count: event.quantity, turn: event.turn }), 'milestone');
   presentGameEvents(events);
   const boundary = processGameEvents();
   updateTopbar();
+  exchangeUI.refresh();
   await boundary;
+  changes.shieldedPlayerIds = shieldedPlayerIds;
   return changes;
 }
 
 function removePlayer(id) {
+  if (state.currentGame.exchange.investments.some(item => !item.closed && [item.investorId, item.targetId].includes(id))) {
+    toast(t('exchange.active_player')); return;
+  }
+  state.currentGame.exchange.investments = state.currentGame.exchange.investments.filter(item => ![item.investorId, item.targetId].includes(id));
+  delete state.currentGame.exchange.movementThisTurn[id];
   state.currentGame.players = state.currentGame.players.filter(p => p.id !== id);
   delete actedSet()[id];
   delete skippedSet()[id];
@@ -1015,6 +1073,7 @@ function refreshTurnFlags(playerId) {
 }
 function markActed(playerId) {
   if (!getPlayer(playerId) || hasActed(playerId)) return;
+  state.currentGame.exchange.movementThisTurn[playerId] ||= { mode: 'dice', steps: null };
   delete skippedSet()[playerId];
   actedSet()[playerId] = true;
   refreshTurnFlags(playerId);
@@ -1045,6 +1104,15 @@ function toggleSkipped(playerId) {
 }
 async function nextTurn() {
   const game = state.currentGame;
+  if (pendingShieldGames.has(game)) return;
+  const closing = GameRules.closeInvestments(game, game.turnNum);
+  // Settle while still in the completed round; refunds never count as growth.
+  GameRules.calculateScoreBatch(game.players, closing.operations);
+  game.exchange.investments = closing.investments;
+  if (closing.operations.length) await settleScoreChanges(closing.operations);
+  if (state.currentGame !== game) return;
+  closing.events.filter(event => event.refund).forEach(event => logEvent(t('exchange.refund_log', { name: getPlayer(event.investorId).name, amount: event.refund }), 'milestone'));
+  game.exchange.movementThisTurn = {};
   state.currentGame.actedThisTurn = {};
   state.currentGame.skippedThisTurn = {};
   resetSkipLeftoverPrompt();
@@ -1082,6 +1150,7 @@ function bindEvents() {
   cardsUI.bind();
   weatherUI.bind();
   highlightUI.bind();
+  exchangeUI.bind();
   $('#btn-toggle-timer').addEventListener('click', toggleTimer);
   $('#btn-next-round').addEventListener('click', () => openSetup({ mode: 'next' }));
   // 遊戲說明 modal
@@ -1199,10 +1268,19 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   if (civAll) {
     state.currentGame.players.forEach(p => operations.push({ playerId: p.id, delta: { civ: civAll } }));
   }
-  const fx = describeChoiceOption(card, opt);
+  let fx = describeChoiceOption(card, opt);
   closeCard();
-  await settleScoreChanges(operations);
+  const changes = await settleScoreChanges(operations, { source: card.damageSource || 'normal' });
+  if (!changes) return;
   if (state.currentGame !== game) return;
+  if (changes.shieldedPlayerIds.length) {
+    fx = pending.map(item => {
+      const { each } = choiceEffects(opt, item.pid);
+      if (changes.shieldedPlayerIds.includes(item.pid)) for (const stat of ['fortune', 'wisdom']) if (each[stat] < 0) each[stat] = 0;
+      return getPlayer(item.pid).name + ' ' + (describeReward(each) || t('card.no_score_change'));
+    }).join('、');
+    if (civAll) fx += ' · ' + t('card.collective_civ', { delta: (civAll > 0 ? '+' : '') + civAll });
+  }
   const tag = table.mult.id !== null ? getWeatherLabel(table.mult.id) : '';
   const sideNote = opt.side ? '　※' + t('card.manual_side', { side: opt.side }) : '';
   const positive = describeReward(table.each).indexOf('-') === -1 && civAll >= 0;
@@ -1281,7 +1359,9 @@ async function applyCardReward(playerIds, card) {
   });
   if (!applied.length) return;
   closeCard();
-  await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })));
+  const changes = await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })), { source: card.damageSource || 'normal' });
+  if (!changes) return;
+  for (const a of applied) if (changes.shieldedPlayerIds.includes(a.pid)) ['fortune', 'wisdom'].forEach(stat => { if (a.r[stat] < 0) a.r[stat] = 0; });
   if (state.currentGame !== game) return;
   const names = applied.map(a => a.p.name || t('common.player'));
   const first = applied[0];
@@ -1292,9 +1372,9 @@ async function applyCardReward(playerIds, card) {
     rewardText = applied.map(a =>
       `${a.p.name || t('common.player')} ${describeReward(a.r) || card.rewardText || ''}`
     ).join('　');
-  } else if (first.mult.id !== null) {
+  } else if (first.mult.id !== null || changes.shieldedPlayerIds.length) {
     rewardText = describeReward(first.r);
-    tag = getWeatherLabel(first.mult.id);
+    tag = first.mult.id !== null ? getWeatherLabel(first.mult.id) : '';
   } else {
     rewardText = ids.length > 1 ? t('messages.both_receive', {reward: describeReward(first.r)}) : card.rewardText;
   }
@@ -1309,6 +1389,94 @@ async function applyCardReward(playerIds, card) {
   await markCardActor(ids[0]);
 }
 
+// ─────────── 福慧交易所 ───────────
+function checkExchangeOpening() {
+  const game = state.currentGame;
+  if (game.exchange.opened) return;
+  const threshold = GAME_CONFIG.EXCHANGE.OPEN_THRESHOLD;
+  const player = game.players.find(p => (p.fortune >= threshold && p.wisdom >= threshold) || p.notified['self' + threshold] === true);
+  if (!player) return;
+  Object.assign(game.exchange, { opened: true, openerId: player.id, openedTurn: game.turnNum });
+  save();
+  logEvent(t('exchange.open_message', { name: player.name }), 'milestone');
+  exchangeUI.announce(player);
+  renderPlayers();
+  exchangeUI.refresh();
+}
+
+const pendingPurchases = new WeakSet();
+async function purchaseExchange(playerId, cart) {
+  const game = state.currentGame, turn = game.turnNum;
+  if (pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
+  pendingPurchases.add(game);
+  try {
+    let plan = GameRules.planExchangePurchase(game, playerId, cart);
+    const p = getPlayer(playerId);
+    const low = ['fortune', 'wisdom'].filter(stat => plan.cost[stat] && p[stat] - plan.cost[stat] <= reliefCfg().THRESHOLD_LATE);
+    if (low.length && !await confirmModal({ title: t('confirm.title'), message: t('exchange.low_warning', { stats: low.map(STAT_LABEL).join('、') }), danger: true })) return false;
+    if (state.currentGame !== game || game.turnNum !== turn || pendingShieldGames.has(game)) return false;
+    // Revalidate after confirmation; commit inventory and score without an intervening await.
+    plan = GameRules.planExchangePurchase(game, playerId, cart);
+    p.navigationTokens += plan.navigation;
+    p.shieldTokens += plan.shield;
+    p.investmentTokens += plan.investment;
+    await settleScoreChanges(plan.operations, { selfSelected: true });
+    if (state.currentGame !== game) return false;
+    logEvent(t('exchange.purchase_log', { name: p.name, navigation: plan.navigation, shield: plan.shield, investment: plan.investment }), 'milestone');
+    renderAll();
+    return true;
+  } catch (error) {
+    if (!error.message.startsWith('exchange.')) throw error;
+    toast(t(error.message));
+    return false;
+  } finally { pendingPurchases.delete(game); }
+}
+
+async function activateInvestment(playerId, targetId, quantity) {
+  const game = state.currentGame;
+  if (pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
+  pendingPurchases.add(game);
+  try {
+    const plan = GameRules.planInvestmentActivation(game, playerId, targetId, quantity);
+    const p = getPlayer(playerId);
+    p.investmentTokens -= quantity;
+    game.exchange.investments.push({ id: game.exchange.nextInvestmentId++, investorId: playerId, targetId,
+      quantity, startTurn: game.turnNum, rewardedTurns: [], closed: false });
+    // The gift is a service effect, not normal game growth. The fee was paid when buying inventory.
+    await settleScoreChanges(plan.operations);
+    if (state.currentGame !== game) return false;
+    logEvent(t('exchange.activation_log', { name: p.name, target: getPlayer(targetId).name, count: quantity, turn: game.turnNum }), 'milestone');
+    renderAll();
+    return true;
+  } catch (error) {
+    if (!error.message.startsWith('exchange.')) throw error;
+    toast(t(error.message)); return false;
+  } finally { pendingPurchases.delete(game); }
+}
+
+function useNavigation(playerId, steps) {
+  const game = state.currentGame, p = getPlayer(playerId);
+  if (!GameRules.canTrade(game, playerId) || !p.navigationTokens || !Number.isInteger(steps) || steps < 1 || steps > 6 || pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
+  p.navigationTokens--;
+  game.exchange.movementThisTurn[playerId] = { mode: 'navigation', steps };
+  logEvent(t('exchange.navigation_log', { name: p.name, steps }), 'milestone');
+  save();
+  modals.close('exchange-modal');
+  renderAll();
+  toast(t('exchange.navigation_log', { name: p.name, steps }), 'grad');
+  return true;
+}
+
+function beginDice(playerId) {
+  const game = state.currentGame;
+  if (!getPlayer(playerId) || isResolved(playerId) || game.exchange.movementThisTurn[playerId] || pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
+  game.exchange.movementThisTurn[playerId] = { mode: 'dice', steps: null };
+  save();
+  modals.close('exchange-modal');
+  renderAll();
+  return true;
+}
+
 // ─────────── Render all ───────────
 function renderAll() {
   updateTopbar();
@@ -1316,6 +1484,7 @@ function renderAll() {
   renderPendingDraws();
   renderLog();
   refreshHistoryButton();
+  exchangeUI.refresh();
 }
 
 // ─────────── Timer loop ───────────
@@ -1532,8 +1701,13 @@ const playersUI = PlayersUI.create({
   GRAD_THRESHOLD,
   MILESTONES,
   STAT_LABEL: (...args) => STAT_LABEL(...args),
-  closeOriginModal, closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview
+  closeOriginModal, closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview,
+  openExchange: id => exchangeUI.open(id), beginDice
 });
+
+const exchangeUI = ExchangeUI.create({ $, t: (...args) => t(...args), escapeHtml, modals, getGame: () => state.currentGame,
+  canTrade: (game, id) => GameRules.canTrade(game, id), config: GAME_CONFIG.EXCHANGE,
+  purchase: purchaseExchange, activateInvestment, useNavigation, beginDice });
 
 const setupUI = SetupUI.create({
   $: (...args) => $(...args),

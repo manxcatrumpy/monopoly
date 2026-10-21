@@ -24,6 +24,15 @@
       modals.close('card-modal');
     }
 
+    function damageSourceHtml(card) {
+      return `<label class="row"><span>${t('exchange.source')}</span><select id="card-damage-source">` +
+        ['normal', 'fate', 'impermanence'].map(source => `<option value="${source}" ${(card.damageSource || 'normal') === source ? 'selected' : ''}>${t(`exchange.source_${source}`)}</option>`).join('') + '</select></label>';
+    }
+
+    function withDamageSource(card) {
+      return { ...card, damageSource: $('#card-damage-source').value || card.damageSource || 'normal' };
+    }
+
     function cardPlayersRefHtml() {
       if (!getGame().players.length) return '';
       const items = getGame().players.map(p => `
@@ -64,6 +73,7 @@
         ${cardPlayersRefHtml()}
         <div class="card-actions">
           ${recipientControls}
+          ${damageSourceHtml(c)}
           <div class="card-buttons">
             <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
             <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_reward')}</button>
@@ -82,9 +92,9 @@
           const pid2 = $('#card-recipient2').value;
           if (!pid2) { toast(t('messages.select_prev_player')); return; }
           if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
-          applyCardReward([pid, pid2], draft.currentCard);
+          applyCardReward([pid, pid2], withDamageSource(draft.currentCard));
         } else {
-          applyCardReward(pid, draft.currentCard);
+          applyCardReward(pid, withDamageSource(draft.currentCard));
         }
       });
     }
@@ -208,6 +218,7 @@
         ${cardPlayersRefHtml()}
         <div class="card-actions">
           ${recipientControls}
+          ${damageSourceHtml(c)}
           <div class="card-buttons">
             <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
             <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_dilemma')}</button>
@@ -237,9 +248,9 @@
           const pid2 = $('#card-recipient2').value;
           if (!pid2) { toast(t('messages.select_target')); return; }
           if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
-          applyChoiceCard([pid, pid2], c, draft.currentChoiceOpt);
+          applyChoiceCard([pid, pid2], withDamageSource(c), draft.currentChoiceOpt);
         } else {
-          applyChoiceCard([pid], c, draft.currentChoiceOpt);
+          applyChoiceCard([pid], withDamageSource(c), draft.currentChoiceOpt);
         }
       });
     }

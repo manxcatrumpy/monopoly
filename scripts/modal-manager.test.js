@@ -230,7 +230,7 @@ test('every page modal is registered and shown/hidden only by the manager', () =
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const ui = [app, ...uiFiles.map(file => fs.readFileSync(path.join(root, file), 'utf8'))].join('\n');
   const ids = Array.from(html.matchAll(/id="([\w-]+-modal)" class="modal hidden"/g), match => match[1]);
-  assert.equal(ids.length, 13);
+  assert.equal(ids.length, 15);
   for (const id of ids) assert.ok(app.includes("'" + id + "':"), id);
   assert.doesNotMatch(ui, /addEventListener\('keydown'/);
   assert.doesNotMatch(ui, /\$\('#[\w-]+-modal'\)\.classList\.(add|remove)\('hidden'\)/);

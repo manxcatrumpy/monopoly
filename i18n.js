@@ -18,6 +18,9 @@
       forecastTurn: Math.min(...config.WEATHER.SCHEDULE.map(ev => ev.targetRound - 2)),
       sprintMinutes: config.ENDGAME_MINUTES,
       exchangeRate: config.WEATHER.EXCHANGE_RATE_COST,
+      exchangeThreshold: config.EXCHANGE.OPEN_THRESHOLD,
+      navigationCost: config.EXCHANGE.NAVIGATION_COST, shieldCost: config.EXCHANGE.SHIELD_COST,
+      investmentCost: config.EXCHANGE.INVESTMENT_COST, investmentRefund: config.EXCHANGE.REFUND,
     };
   }
   window.i18n = {

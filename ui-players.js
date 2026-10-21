@@ -7,7 +7,7 @@
     openSetup, hasActed, hasSkipped, comprehensiveScore, STATS,
     openOriginModal, openAdjustModal, toggleActed, toggleSkipped, requestRemovePlayer,
     renamePlayer, GRAD_THRESHOLD, MILESTONES, STAT_LABEL, closeOriginModal,
-    closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview,
+    closeAdjustModal, pickOrigin, applyAdjust, renderAdjustPreview, openExchange, beginDice,
   }) {
 
     function syncMultiplierBanner(el, playerId, endgameKey) {
@@ -111,6 +111,12 @@
         ${STATS.map(stat => statRow(p, stat)).join('')}
 
         ${shelterBadgeHtml(p)}
+        <div class="pc-exchange ${getGame().exchange.opened ? '' : 'hidden'}">
+          <span class="pc-exchange-stock">${escapeHtml(t('exchange.stock', { navigation: p.navigationTokens, shield: p.shieldTokens, investment: p.investmentTokens }))}</span>
+          <span class="pc-exchange-movement"></span>
+          <button class="btn btn-ghost" data-act="exchange">${t('exchange.title')}</button>
+          <button class="btn btn-ghost" data-act="dice" ${acted || skipped || getGame().exchange.movementThisTurn[p.id] ? 'disabled' : ''}>${t('exchange.begin_dice')}</button>
+        </div>
 
         <div class="pc-actions">
           <button class="pc-origin-open" data-act="origin" title="${t('ui.origin_title')}">${t('ui.btn_origin')}</button>
@@ -130,7 +136,11 @@
       // Event delegation
       card.addEventListener('click', (e) => {
         const el = e.target;
-        if (el.closest('[data-act="origin"]')) {
+        if (el.closest('[data-act="exchange"]')) {
+          openExchange(p.id);
+        } else if (el.closest('[data-act="dice"]')) {
+          beginDice(p.id);
+        } else if (el.closest('[data-act="origin"]')) {
           openOriginModal(p.id);
         } else if (el.closest('[data-act="adjust"]')) {
           openAdjustModal(p.id);
@@ -148,7 +158,18 @@
         renamePlayer(p.id, nameInput.value.trim());
       });
 
+      syncExchangeUI(card, p);
       return card;
+    }
+
+    function syncExchangeUI(card, p) {
+      const area = card.querySelector('.pc-exchange');
+      if (!area) return;
+      area.classList.toggle('hidden', !getGame().exchange.opened);
+      card.querySelector('.pc-exchange-stock').textContent = t('exchange.stock', { navigation: p.navigationTokens, shield: p.shieldTokens, investment: p.investmentTokens });
+      const movement = getGame().exchange.movementThisTurn[p.id];
+      card.querySelector('.pc-exchange-movement').textContent = movement ? (movement.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : t('exchange.moved_dice')) : '';
+      card.querySelector('[data-act="dice"]').disabled = hasActed(p.id) || hasSkipped(p.id) || !!movement;
     }
 
     function statusHint(p) {
@@ -232,6 +253,8 @@
     }
 
     function applyTurnStatusUI(card, playerId) {
+      const player = getGame().players.find(p => p.id === playerId);
+      if (player) syncExchangeUI(card, player);
       const acted = hasActed(playerId);
       const skipped = hasSkipped(playerId);
       card.classList.toggle('acted', acted);
@@ -262,6 +285,7 @@
       $('#adjust-close').addEventListener('click', closeAdjustModal);
       $('#adjust-cancel').addEventListener('click', closeAdjustModal);
       $('#adjust-apply').addEventListener('click', applyAdjust);
+      $('#adjust-source').addEventListener('change', renderAdjustPreview);
       $('#adjust-rows').addEventListener('click', (e) => {
         const b = e.target.closest('.adjust-step'); if (!b) return;
         const inp = b.closest('.adjust-row').querySelector('.adjust-input');
