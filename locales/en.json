@@ -92,7 +92,7 @@
     "deck_title": "Deck Manager",
     "deck_hint": "Import custom JSON to overwrite default decks. Stored in localStorage.",
     "milestone_title": "Milestones",
-    "milestone_hint": "Single {graduation}: draw 1 card\nBoth {graduation}: graduate\nLeader: first to both {navigator}, draw 1 each\nBreakthrough: anyone reaching both {breakthrough}, draw 1 each",
+    "milestone_hint": "Single {graduation}: draw 1 card\nBoth {graduation}: graduate\nLeader: first to both {navigator}, draw 1 each\nBreakthrough: each player reaching both Fortune and Wisdom at {breakthrough} draws 1 card at each threshold",
     "pending_head": "Pending ",
     "pending_note": "Click 'Drawn' to clear",
     "log_empty": "No events",
