@@ -77,7 +77,9 @@ test('navigation is saved inventory: one use replaces rolling, never completes t
   assert.equal(app.read('hasActed("p1")'), false);
   assert.equal(app.read('state.currentGame.turnNum'), 5);
   assert.equal(app.run("useNavigation('p1',1)"), false);
-  assert.equal(app.run("beginDice('p1')"), false);
+  assert.equal(await app.run("purchaseExchange('p1',{shield:1})"), false);
+  app.run("markActed('p1'); toggleActed('p1');");
+  assert.equal(app.run("useNavigation('p1',1)"), false);
   assert.equal(await app.run("purchaseExchange('p1',{shield:1})"), false);
   app.run('saveNow();');
   const loaded = createApp({ storage: app.storage });
@@ -87,11 +89,12 @@ test('navigation is saved inventory: one use replaces rolling, never completes t
   assert.equal(loaded.run("useNavigation('p1',1)"), true);
 });
 
-test('rolling, completing and skipping close trading; undoing completion cannot reopen trading', async () => {
+test('completion and skipping close trading; undoing completion restores it without a navigation record', async () => {
   const app = game();
-  assert.equal(app.run("beginDice('p1')"), true);
-  app.run("markActed('p2'); toggleActed('p2'); markSkipped('p3');");
-  for (const id of ['p1', 'p2', 'p3']) assert.equal(await app.run(`purchaseExchange('${id}',{shield:1})`), false);
+  app.run("markActed('p1'); markActed('p2'); toggleActed('p2'); markSkipped('p3');");
+  for (const id of ['p1', 'p3']) assert.equal(await app.run(`purchaseExchange('${id}',{shield:1})`), false);
+  assert.equal(await app.run("purchaseExchange('p2',{shield:1})"), true);
+  assert.deepEqual(app.read('state.currentGame.exchange.movementThisTurn'), {});
 });
 
 test('investment pays each group once per observation round even when later losses erase the gains', async () => {
@@ -335,7 +338,7 @@ test('old rearmed breakthrough flags remain claimed after migration and still es
 test('all services can be bought and kept across rounds; investment observation starts only on later activation', async () => {
   const app = game();
   await app.run("purchaseExchange('p1',{navigation:2,shield:2,investment:2})");
-  assert.equal(app.run("beginDice('p1')"), true);
+  app.run("markActed('p1');");
   for (let i = 0; i < 3; i++) await app.run('nextTurn()');
   assert.equal(app.read('state.currentGame.exchange.investments.length'), 0);
   assert.equal(app.read('getPlayer("p2").wisdom'), 20);
@@ -361,7 +364,7 @@ test('activation validates quantity, recipient and turn before consuming any sto
     assert.equal(await app.run(command), false);
     assert.deepEqual(app.read('state.currentGame'), before);
   }
-  app.run("beginDice('p1');");
+  app.run("markActed('p1');");
   assert.equal(await app.run("activateInvestment('p1','p2',1)"), false);
   assert.equal(app.read('getPlayer("p1").investmentTokens'), 2);
 });
@@ -375,4 +378,30 @@ test('repeat activation clicks cannot consume or gift twice while one activation
   assert.equal(app.read('getPlayer("p1").investmentTokens'), 1);
   assert.equal(app.read('getPlayer("p2").wisdom'), 21);
   assert.equal(app.read('state.currentGame.exchange.investments.length'), 1);
+});
+
+test('legacy rolling markers are removed while navigation usage and completion flags survive loading', () => {
+  const save = model.createState();
+  save.currentGame.players = ['p1', 'p2'].map(id => model.createPlayer({ id, fortune: 12, wisdom: 12, navigationTokens: 2 }));
+  save.currentGame.exchange.opened = true;
+  save.currentGame.exchange.movementThisTurn = { p1: { mode: 'dice', steps: null }, p2: { mode: 'navigation', steps: 4 } };
+  const restored = model.decode(JSON.stringify(save)).state.currentGame;
+  assert.deepEqual(restored.exchange.movementThisTurn, { p2: { mode: 'navigation', steps: 4 } });
+  assert.equal(rules.canTrade(restored, 'p1'), true);
+  assert.equal(rules.canTrade(restored, 'p2'), false);
+  assert.equal(restored.players[1].navigationTokens, 2);
+  save.currentGame.actedThisTurn.p1 = true;
+  const completed = model.decode(JSON.stringify(save)).state.currentGame;
+  assert.equal(rules.canTrade(completed, 'p1'), false);
+  assert.equal(completed.actedThisTurn.p1, true);
+});
+
+test('a round advances only when every player has finished or skipped, without a rolling phase', async () => {
+  const app = game();
+  app.run("markActed('p1'); markActed('p2'); markSkipped('p3');");
+  assert.equal(app.read('state.currentGame.turnNum'), 5);
+  assert.deepEqual(app.read('state.currentGame.exchange.movementThisTurn'), {});
+  await app.run("markActed('p4'); Promise.resolve()");
+  assert.equal(app.read('state.currentGame.turnNum'), 6);
+  assert.deepEqual(app.read('state.currentGame.actedThisTurn'), {});
 });

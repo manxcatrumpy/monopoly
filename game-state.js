@@ -139,12 +139,14 @@
     game.exchange.openerId = present(exchange.openerId) ? text(exchange.openerId) : null;
     game.exchange.openedTurn = present(exchange.openedTurn) ? strictCount(exchange.openedTurn, null, 1) : null;
     game.exchange.nextInvestmentId = strictCount(exchange.nextInvestmentId, 1, 1);
-    game.exchange.movementThisTurn = Object.fromEntries(Object.entries(record(exchange.movementThisTurn, 'movement')).map(([id, value]) => {
+    game.exchange.movementThisTurn = Object.fromEntries(Object.entries(record(exchange.movementThisTurn, 'movement')).flatMap(([id, value]) => {
       playerId(id); record(value, 'movement');
       if (!['dice', 'navigation'].includes(value.mode)) throw new Error('Invalid movement mode');
-      const steps = value.mode === 'navigation' ? strictCount(value.steps, 0, 1) : null;
-      if (steps !== null && steps > 6) throw new Error('Invalid navigation steps');
-      return [id, { mode: value.mode, steps }];
+      // Legacy "start rolling" flags no longer restrict trading; navigation usage still does.
+      if (value.mode === 'dice') return [];
+      const steps = strictCount(value.steps, null, 1);
+      if (steps === null || steps > 6) throw new Error('Invalid navigation steps');
+      return [[id, { mode: 'navigation', steps }]];
     }));
     game.exchange.investments = array(exchange.investments, 'investments').map(value => {
       record(value, 'investment');

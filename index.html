@@ -484,8 +484,8 @@
         <label class="row exchange-source"><span data-i18n="exchange.source">加減分來源</span>
           <select id="adjust-source">
             <option value="normal" data-i18n="exchange.source_normal">正常遊戲</option>
-            <option value="fate" data-i18n="exchange.source_fate">命運牌（可用護盾）</option>
-            <option value="impermanence" data-i18n="exchange.source_impermanence">無常卡（可用護盾）</option>
+            <option value="fate" data-i18n="exchange.source_fate">命運牌（可用平安符）</option>
+            <option value="impermanence" data-i18n="exchange.source_impermanence">無常卡（可用平安符）</option>
             <option value="correction" data-i18n="exchange.source_correction">分數更正（不計成長）</option>
             <option value="spending" data-i18n="exchange.source_spending">自願支出（不計成長）</option>
           </select>
@@ -522,7 +522,7 @@
         <button class="icon-btn" id="exchange-close" aria-label="關閉">✕</button>
       </header>
       <div class="modal-body">
-        <p class="tool-hint" data-i18n="exchange.timing">自己的回合擲骰前，可購買多項、多組。購買只加入庫存，不會立即使用；可留到之後回合。</p>
+        <p class="tool-hint" data-i18n="exchange.timing">主持人確認在玩家自己的回合擲骰前交易。購買只加入庫存，可留到之後回合；格子效果結算後再按「本輪已行動」。</p>
         <label class="row"><span data-i18n="exchange.player">交易玩家</span><select id="exchange-player"></select></label>
         <p id="exchange-balance"></p>
         <p id="exchange-stock" class="exchange-stock"></p>
@@ -530,26 +530,25 @@
         <fieldset id="exchange-shop" class="exchange-shop">
           <legend data-i18n="exchange.buy_title">購買服務，存入庫存</legend>
           <label class="exchange-product"><span><strong data-i18n="exchange.navigation">精準導航</strong><small data-i18n="exchange.navigation_desc">每組 3 智慧，可保存；使用一組取代擲骰，前進 1～6 步。</small></span><input id="exchange-navigation" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="導航組數" /></label>
-          <label class="exchange-product"><span><strong data-i18n="exchange.shield">平安符</strong><small data-i18n="exchange.shield_desc">每枚 2 福報，可囤積；命運／無常卡扣福慧時，自選是否使用，不擋文明。</small></span><input id="exchange-shield" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="護盾枚數" /></label>
-          <label class="exchange-product"><span><strong data-i18n="exchange.investment">天使微投</strong><small data-i18n="exchange.investment_desc">每組 4 福報，先存入庫存。日後選擇對象啟用，才贈智慧 +1 並開始投資觀察。</small></span><input id="exchange-investment" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="微投組數" /></label>
+          <label class="exchange-product"><span><strong data-i18n="exchange.shield">平安符</strong><small data-i18n="exchange.shield_desc">每枚 2 福報，可囤積；命運／無常卡扣福慧時，自選是否使用，不擋文明。</small></span><input id="exchange-shield" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="平安符枚數" /></label>
+          <label class="exchange-product"><span><strong data-i18n="exchange.investment">天使投資</strong><small data-i18n="exchange.investment_desc">每組 4 福報，先存入庫存。日後選擇對象啟用，才贈智慧 +1 並開始投資觀察。</small></span><input id="exchange-investment" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="投資組數" /></label>
           <p id="exchange-cost" aria-live="polite"></p>
           <button id="exchange-buy" class="btn btn-primary" data-i18n="exchange.buy">確認購買</button>
         </fieldset>
         <button id="exchange-store-close" class="btn btn-ghost" data-i18n="exchange.store_close">關閉，留待之後使用</button>
         <fieldset id="exchange-activation" class="exchange-shop">
-          <legend data-i18n="exchange.activate_title">使用已購買的微投</legend>
+          <legend data-i18n="exchange.activate_title">使用已購買的投資</legend>
           <p class="tool-hint" data-i18n="exchange.activate_hint">可在之後自己回合擲骰前啟用，不再次扣福報。每組贈對方智慧 +1，觀察啟用後的兩個完整輪次。</p>
           <label class="row"><span data-i18n="exchange.target">被投資者</span><select id="exchange-target"></select></label>
           <label class="exchange-product"><span data-i18n="exchange.activate_quantity">本次使用組數</span><input id="exchange-activate-quantity" type="number" min="1" step="1" value="1" inputmode="numeric" /></label>
-          <button id="exchange-activate-investment" class="btn" data-i18n="exchange.activate">啟用微投</button>
+          <button id="exchange-activate-investment" class="btn" data-i18n="exchange.activate">啟用投資</button>
         </fieldset>
         <section class="exchange-motion">
-          <h3 data-i18n="exchange.move_title">開始本回合移動</h3>
-          <p class="tool-hint" data-i18n="exchange.move_hint">請先完成所有購買。選擇後由主持人移動實體棋子、處理格子效果，再標記已行動。</p>
+          <h3 data-i18n="exchange.move_title">使用導航（可略過）</h3>
+          <p class="tool-hint" data-i18n="exchange.move_hint">若不使用導航，請直接擲實體骰子，保留庫存。格子效果結算完成後，再按「本輪已行動」。</p>
           <div class="exchange-motion-controls">
             <label><span data-i18n="exchange.steps">導航步數</span><select id="exchange-steps"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
             <button id="exchange-use-navigation" class="btn" data-i18n="exchange.use_navigation">使用一組導航</button>
-            <button id="exchange-begin-dice" class="btn btn-ghost" data-i18n="exchange.begin_dice">開始擲骰</button>
           </div>
           <p id="exchange-movement"></p>
         </section>
