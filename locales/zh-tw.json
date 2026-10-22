@@ -563,6 +563,8 @@
     "investment_status": "{name} → {target} ×{count} 組｜第 {first} 輪：{firstResult}；第 {second} 輪：{secondResult}",
     "growth_log": "第 {turn} 輪，{target} 正常福慧成長，投資者 {name} 文明 +{count}。",
     "refund_log": "兩個觀察輪均無成長，{name} 回收 {amount} 福報。",
+    "shield_adjust_prompt": "{name} 本次將扣除 {reward}，持有 {count} 枚平安符。若為命運／無常卡扣分，可使用一枚抵銷全部福慧扣分；文明扣分照常。是否套用？",
+    "apply_loss": "直接扣分",
     "shield_prompt_title": "是否使用平安符？",
     "shield_prompt": "{name} 將遭受 {reward}，持有 {count} 枚平安符。是否消耗一枚，抵銷這次卡牌的全部福慧扣分？文明扣分仍照常套用。",
     "use_shield": "使用一枚平安符",

@@ -281,7 +281,6 @@
       $('#adjust-close').addEventListener('click', closeAdjustModal);
       $('#adjust-cancel').addEventListener('click', closeAdjustModal);
       $('#adjust-apply').addEventListener('click', applyAdjust);
-      $('#adjust-source').addEventListener('change', renderAdjustPreview);
       $('#adjust-rows').addEventListener('click', (e) => {
         const b = e.target.closest('.adjust-step'); if (!b) return;
         const inp = b.closest('.adjust-row').querySelector('.adjust-input');

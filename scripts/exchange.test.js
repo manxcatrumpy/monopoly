@@ -290,21 +290,58 @@ test('refunds cannot make another investment grow, including under endgame multi
   assert.equal(app.read('getPlayer("p3").fortune'), 18);
 });
 
-test('manual physical Fate card offers a shield while score corrections bypass multipliers, growth and relief', async () => {
+test('manual adjustment offers one charm after scaling and preserves gains, civilization losses and investment growth', async () => {
   const app = game();
   await app.run("buyAndActivate('p2',{investment:1},'p1').then(()=>nextTurn())");
-  app.run("Object.assign(getPlayer('p1'),{fortune:5,wisdom:5,shieldTokens:2}); state.currentGame.timer.accumulated=5100; adjustTargetId='p1';");
-  app.element('#adjust-source').value = 'correction';
-  app.element('#adjust-rows .adjust-row[data-stat="fortune"] .adjust-input').value = '-2';
-  await app.run('applyAdjust()');
-  assert.equal(app.read('getPlayer("p1").fortune'), 3);
-  assert.equal(app.read('reliefPrompts.length'), 0);
-  app.run("adjustTargetId='p1';");
-  app.element('#adjust-source').value = 'fate';
+  app.run(`
+    Object.assign(getPlayer('p1'),{fortune:5,wisdom:5,civ:4,shieldTokens:2});
+    state.currentGame.timer.accumulated=5100; adjustTargetId='p1';
+    var prompts=[]; confirmModal=async opts=>{prompts.push(opts);return true;};
+  `);
   app.element('#adjust-rows .adjust-row[data-stat="fortune"] .adjust-input').value = '-2';
   app.element('#adjust-rows .adjust-row[data-stat="wisdom"] .adjust-input').value = '1';
+  app.element('#adjust-rows .adjust-row[data-stat="civ"] .adjust-input').value = '-1';
   await app.run('applyAdjust()');
-  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").shieldTokens,getPlayer("p2").civ]'), [3, 7, 1, 1]);
+  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").civ,getPlayer("p1").shieldTokens,getPlayer("p2").civ]'), [5, 7, 3, 1, 1]);
+  assert.equal(app.read('prompts.length'), 1);
+  assert.equal(app.read('prompts[0].presentation'), 'toast');
+  assert.equal(app.read('reliefPrompts.length'), 0);
+});
+
+test('manual deduction waits for a decision before writing scores, using stock or marking the turn', async () => {
+  const app = game();
+  app.run(`
+    Object.assign(getPlayer('p1'),{fortune:10,wisdom:10,shieldTokens:2}); adjustTargetId='p1';
+    var answerShield; confirmModal=()=>new Promise(resolve=>{answerShield=resolve;});
+  `);
+  app.element('#adjust-as-turn').checked = true;
+  app.element('#adjust-rows .adjust-row[data-stat="fortune"] .adjust-input').value = '-2';
+  app.element('#adjust-rows .adjust-row[data-stat="wisdom"] .adjust-input').value = '-2';
+  const pending = app.run('applyAdjust()');
+  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").shieldTokens,hasActed("p1")]'), [10,10,2,false]);
+  app.run('answerShield(false);');
+  await pending;
+  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").shieldTokens,hasActed("p1")]'), [8,8,2,true]);
+});
+
+test('manual deduction skips charm prompts without stock or actual Fortune/Wisdom loss', async () => {
+  for (const [stock, fortune, delta] of [[0,10,{fortune:-1}], [2,10,{civ:-1}], [2,0,{fortune:-2}], [2,10,{wisdom:1}]]) {
+    const app = game();
+    app.run(`Object.assign(getPlayer('p1'),{fortune:${fortune},civ:3,shieldTokens:${stock}}); adjustTargetId='p1';
+      var prompts=0; confirmModal=async()=>{prompts++;return true;};`);
+    for (const [stat,value] of Object.entries(delta)) app.element(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`).value = String(value);
+    await app.run('applyAdjust()');
+    assert.equal(app.read('prompts'), 0);
+    assert.equal(app.read('getPlayer("p1").shieldTokens'), stock);
+  }
+});
+
+test('exchange spending with existing charms does not offer or consume a charm', async () => {
+  const app = game();
+  app.run('getPlayer("p1").shieldTokens=2; var prompts=0; confirmModal=async()=>{prompts++;return true;};');
+  assert.equal(await app.run("purchaseExchange('p1',{navigation:1,shield:1,investment:1})"), true);
+  assert.equal(app.read('prompts'), 0);
+  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").shieldTokens]'), [14,17,3]);
 });
 
 test('an overflowing activation gift leaves purchased inventory intact without charging again', async () => {

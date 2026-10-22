@@ -67,10 +67,16 @@
       toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
     }
 
-    function confirmModal({ title = t('confirm.title'), message = '', confirmText = t('confirm.btn_ok'), cancelText = t('confirm.btn_cancel'), danger = false } = {}) {
+    function confirmModal({ title = t('confirm.title'), message = '', confirmText = t('confirm.btn_ok'), cancelText = t('confirm.btn_cancel'), danger = false, presentation = 'dialog' } = {}) {
       if (!$('#confirm-modal')) return Promise.resolve(window.confirm(message || title));
+      const actionToast = presentation === 'toast';
       return modals.prompt('confirm-modal', {
+        // Actionable notifications wait for an explicit decision before applying scores.
+        closeOnEscape: !actionToast,
+        closeOnBackdrop: !actionToast,
+        initialFocus: actionToast ? '#confirm-cancel' : '#confirm-ok',
         prepare() {
+          $('#confirm-modal').classList.toggle('action-toast', actionToast);
           $('#confirm-title').textContent = title;
           $('#confirm-message').textContent = message;
           $('#confirm-ok').textContent = confirmText;
@@ -79,7 +85,7 @@
           $('#confirm-ok').classList.toggle('btn-primary', !danger);
           return true;
         },
-        onEnter: accept => accept(),
+        onEnter: actionToast ? undefined : accept => accept(),
         onOpen({ listen, close }) {
           listen($('#confirm-ok'), 'click', () => close(true));
           listen($('#confirm-cancel'), 'click', () => close(false));

@@ -98,6 +98,11 @@
 
 /* Confirm dialog — compact centered panel */
 .confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
+/* Persistent action toast: keep the affected scores visible until the host decides. */
+.modal.action-toast { align-items: end; justify-items: center; padding-bottom: max(22px, env(safe-area-inset-bottom)); }
+.action-toast .modal-backdrop { background: rgba(16, 24, 16, 0.18); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.action-toast .confirm-panel { width: min(540px, 100%); max-height: calc(100dvh - 44px); overflow-y: auto; border-top: 4px solid var(--fortune-ink); }
+.action-toast .confirm-actions { flex-wrap: wrap; }
 .relief-panel {
   width: min(480px, 100%);
   padding: 32px 30px 24px;
@@ -1156,12 +1161,11 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
 .exchange-motion-controls label { display: grid; gap: 5px; }
 .exchange-panel .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
 .exchange-panel .row select { flex: 1; min-width: 120px; }
-.exchange-panel select, .exchange-source select { appearance: none; -webkit-appearance: none; height: 46px; min-height: 44px; max-width: 100%; padding: 9px 34px 9px 12px; border: 1px solid var(--line); border-radius: 10px; background-color: var(--surface); color: var(--ink); font: inherit; font-size: 16px;
+.exchange-panel select { appearance: none; -webkit-appearance: none; height: 46px; min-height: 44px; max-width: 100%; padding: 9px 34px 9px 12px; border: 1px solid var(--line); border-radius: 10px; background-color: var(--surface); color: var(--ink); font: inherit; font-size: 16px;
   background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
   background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
-.exchange-motion-controls select, .exchange-source select { min-height: 44px; }
+.exchange-motion-controls select { min-height: 44px; }
 .exchange-stock { font-weight: 700; }
 .exchange-notice { color: #855722; }
 .exchange-investments { padding-left: 20px; line-height: 1.8; overflow-wrap: anywhere; }
 .exchange-investments li { margin-bottom: 8px; }
-.exchange-source { margin: 12px 0; }
