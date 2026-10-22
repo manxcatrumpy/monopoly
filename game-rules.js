@@ -136,7 +136,7 @@
 
   function canTrade(game, playerId) {
     return !!game.exchange?.opened && game.players.some(p => p.id === playerId) &&
-      !game.actedThisTurn?.[playerId] && !game.skippedThisTurn?.[playerId] && game.exchange.movementThisTurn[playerId]?.mode !== 'navigation';
+      !game.actedThisTurn?.[playerId] && !game.skippedThisTurn?.[playerId];
   }
 
   function planExchangePurchase(game, playerId, cart) {

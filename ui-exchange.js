@@ -37,8 +37,8 @@
       $('#exchange-activation').disabled = !available || busy || !p.investmentTokens;
       $('#exchange-activate-quantity').max = String(p?.investmentTokens || 0);
       $('#exchange-unavailable').hidden = available;
-      $('#exchange-use-navigation').disabled = !available || busy || !p.navigationTokens;
       const movement = game.exchange.movementThisTurn[selectedId];
+      $('#exchange-use-navigation').disabled = !available || busy || !p.navigationTokens || movement?.mode === 'navigation';
       $('#exchange-movement').textContent = movement?.mode === 'navigation' ? t('exchange.moved_navigation', { steps: movement.steps }) : '';
       $('#exchange-investments').innerHTML = game.exchange.investments.filter(item => !item.closed).map(item => {
         const investor = game.players.find(p => p.id === item.investorId), target = game.players.find(p => p.id === item.targetId);

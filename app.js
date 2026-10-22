@@ -1451,7 +1451,7 @@ async function activateInvestment(playerId, targetId, quantity) {
 
 function useNavigation(playerId, steps) {
   const game = state.currentGame, p = getPlayer(playerId);
-  if (!GameRules.canTrade(game, playerId) || !p.navigationTokens || !Number.isInteger(steps) || steps < 1 || steps > 6 || pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
+  if (!GameRules.canTrade(game, playerId) || game.exchange.movementThisTurn[playerId]?.mode === 'navigation' || !p.navigationTokens || !Number.isInteger(steps) || steps < 1 || steps > 6 || pendingPurchases.has(game) || pendingShieldGames.has(game)) return false;
   p.navigationTokens--;
   game.exchange.movementThisTurn[playerId] = { mode: 'navigation', steps };
   logEvent(t('exchange.navigation_log', { name: p.name, steps }), 'milestone');
