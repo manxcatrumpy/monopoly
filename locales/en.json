@@ -563,6 +563,8 @@
     "investment_status": "{name} → {target} ×{count}; Round {first}: {firstResult}; Round {second}: {secondResult}",
     "growth_log": "Round {turn}: {target} gained normal Fortune/Wisdom; investor {name} gains {count} Civilization.",
     "refund_log": "No growth in either observation round: {name} receives {amount} Fortune back.",
+    "shield_adjust_prompt": "{name} will lose {reward} and holds {count} protection charms. For a Fate or Impermanence card, use one charm to cancel all Fortune and Wisdom losses. Civilization losses still apply. Use a charm?",
+    "apply_loss": "Apply score loss",
     "shield_prompt_title": "Use a protection charm?",
     "shield_prompt": "{name} faces {reward} and holds {count} protection charms. Use one to cancel all Fortune and Wisdom losses from this card? Civilization losses still apply.",
     "use_shield": "Use one protection charm",

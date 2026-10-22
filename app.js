@@ -703,10 +703,8 @@ function renderAdjustPreview() {
   const p = getPlayer(adjustTargetId); if (!p) return;
   const mult = scoreMultiplier(adjustTargetId);
   const raw = adjustInputs();
-  const fixed = ['correction', 'spending'].includes($('#adjust-source').value);
-  const scaled = fixed ? raw : scaleReward(raw, mult);
-  if (fixed) $('#adjust-sprint').classList.add('hidden');
-  else syncMultiplierBanner($('#adjust-sprint'), adjustTargetId, 'adjust.sprint');
+  const scaled = scaleReward(raw, mult);
+  syncMultiplierBanner($('#adjust-sprint'), adjustTargetId, 'adjust.sprint');
   STATS.forEach(stat => {
     const row = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"]`);
     if (!row) return;
@@ -736,7 +734,6 @@ function syncAdjustAsTurn(playerId) {
 function openAdjustModal(id) {
   const p = getPlayer(id); if (!p) return;
   adjustTargetId = id;
-  $('#adjust-source').value = 'normal';
   $('#adjust-sub').textContent = p.name || t('common.player');
   STATS.forEach(stat => {
     const inp = document.querySelector(`#adjust-rows .adjust-row[data-stat="${stat}"] .adjust-input`);
@@ -757,24 +754,22 @@ async function applyAdjust() {
   const pid = p.id;
   const name = p.name || t('common.player');
   const mult = scoreMultiplier(pid);
-  const source = $('#adjust-source').value || 'normal';
-  const fixed = ['correction', 'spending'].includes(source);
-  const scaled = fixed ? adjustInputs() : scaleReward(adjustInputs(), mult);
+  const scaled = scaleReward(adjustInputs(), mult);
   const hasChange = STATS.some(stat => scaled[stat]);
   if (!hasChange) { closeAdjustModal(); return; }
   const alreadyResolved = isResolved(pid);
   const markTurn = !hasActed(pid) && !!($('#adjust-as-turn') && $('#adjust-as-turn').checked);
   closeAdjustModal();   // 先關閉，若跨里程讓待抽卡 modal 乾淨地彈出
   const old = snapshotFw(p);
-  const changes = await settleScoreChanges([{ playerId: pid, delta: scaled }], { source, selfSelected: source === 'spending' });
+  const changes = await settleScoreChanges([{ playerId: pid, delta: scaled }], { source: 'normal', offerShield: true });
   if (!changes) return;
   if (changes.shieldedPlayerIds.includes(pid)) ['fortune', 'wisdom'].forEach(stat => { if (scaled[stat] < 0) scaled[stat] = 0; });
   if (state.currentGame !== game) return;
-  const tag = !fixed && mult.id !== null ? getWeatherLabel(mult.id) : '';
+  const tag = mult.id !== null ? getWeatherLabel(mult.id) : '';
   const msg = t('messages.batch_adjust_msg', {name: name, reward: describeReward(scaled), tag: tag});
   toast(msg, 'grad');
   logEvent(msg, 'grad');
-  if (['normal', 'fate', 'impermanence'].includes(source)) await maybeCheckReliefAfterForcedLoss(pid, old);
+  await maybeCheckReliefAfterForcedLoss(pid, old);
   if (state.currentGame !== game) return;
   if (markTurn) markActed(pid);
   if (alreadyResolved) await maybeOfferSkipLeftover(pid);
@@ -836,12 +831,12 @@ function pickOrigin(stop) {
   if (id != null) scoreOrigin(id, stop);
 }
 const pendingShieldGames = new WeakSet();
-async function settleScoreChanges(operations, { selfSelected = false, source = 'system' } = {}) {
+async function settleScoreChanges(operations, { selfSelected = false, source = 'system', offerShield = false } = {}) {
   const game = state.currentGame;
   if (pendingShieldGames.has(game)) return null;
   let changes = GameRules.calculateScoreBatch(game.players, operations);
   const shieldedPlayerIds = [];
-  if (['fate', 'impermanence'].includes(source)) {
+  if (offerShield || ['fate', 'impermanence'].includes(source)) {
     pendingShieldGames.add(game);
     try {
       for (const change of changes) {
@@ -850,8 +845,9 @@ async function settleScoreChanges(operations, { selfSelected = false, source = '
         const damage = Object.fromEntries(['fortune', 'wisdom'].filter(stat => change.after[stat] < change.before[stat])
           .map(stat => [stat, change.after[stat] - change.before[stat]]));
         const use = await confirmModal({ title: t('exchange.shield_prompt_title'),
-          message: t('exchange.shield_prompt', { name: p.name, count: p.shieldTokens, reward: describeReward(damage) }),
-          confirmText: t('exchange.use_shield'), cancelText: t('exchange.keep_shield') });
+          message: t(offerShield ? 'exchange.shield_adjust_prompt' : 'exchange.shield_prompt', { name: p.name, count: p.shieldTokens, reward: describeReward(damage) }),
+          confirmText: t('exchange.use_shield'), cancelText: t(offerShield ? 'exchange.apply_loss' : 'exchange.keep_shield'),
+          presentation: offerShield ? 'toast' : 'dialog' });
         if (state.currentGame !== game || getPlayer(p.id) !== p) return null;
         if (use && p.shieldTokens > 0) shieldedPlayerIds.push(p.id);
       }
