@@ -50,9 +50,33 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   await expect(page.locator('#exchange-open-modal')).toBeHidden();
   await player(page, 'p1').locator('[data-act="exchange"]').click();
   await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
-  await expect(page.locator('#exchange-buy')).toBeDisabled();
+  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
+  await expect(page.locator('#exchange-unavailable')).toBeHidden();
+  await page.locator('#exchange-navigation').fill('1');
+  await page.locator('#exchange-shield').fill('1');
+  await page.locator('#exchange-investment').fill('1');
+  await expect(page.locator('#exchange-buy')).toBeEnabled();
+  await page.locator('#exchange-buy').click();
+  await expect(page.locator('#exchange-stock')).toContainText('導航 ×2');
+  await expect(score(page, 'fortune', 'p1')).toHaveText('8');
+  await expect(score(page, 'wisdom', 'p1')).toHaveText('11');
+  await page.locator('#exchange-target').selectOption('p3');
+  await expect(page.locator('#exchange-activate-investment')).toBeEnabled();
+  await page.locator('#exchange-activate-investment').click();
+  await expect(score(page, 'wisdom', 'p3')).toHaveText('6');
+  await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
   await expect(page.locator('#exchange-movement')).toContainText('前進 6 步');
-  expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(1);
+  expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(2);
+  await page.locator('#exchange-store-close').click();
+  await player(page, 'p1').locator('[data-act="acted"]').click();
+  await player(page, 'p1').locator('[data-act="exchange"]').click();
+  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', true);
+  await expect(page.locator('#exchange-activate-investment')).toBeDisabled();
+  await page.locator('#exchange-store-close').click();
+  await player(page, 'p1').locator('[data-act="acted"]').click();
+  await player(page, 'p1').locator('[data-act="exchange"]').click();
+  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
+  await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
 });
 
 test.describe('逐輪投資結算', () => {

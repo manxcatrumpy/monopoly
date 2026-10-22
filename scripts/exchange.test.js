@@ -68,7 +68,7 @@ test('invalid and unaffordable purchases leave inventory and balances unchanged'
   assert.deepEqual(app.read('state.currentGame'), before);
 });
 
-test('navigation is saved inventory: one use replaces rolling, never completes the turn early and cannot stack', async () => {
+test('navigation allows further trading until completion but cannot be reused, even after undo or reload', async () => {
   const app = game();
   await app.run("purchaseExchange('p1',{navigation:2})");
   assert.equal(app.run("useNavigation('p1',7)"), false);
@@ -77,14 +77,23 @@ test('navigation is saved inventory: one use replaces rolling, never completes t
   assert.equal(app.read('hasActed("p1")'), false);
   assert.equal(app.read('state.currentGame.turnNum'), 5);
   assert.equal(app.run("useNavigation('p1',1)"), false);
+  assert.equal(await app.run("purchaseExchange('p1',{navigation:1,shield:1,investment:2})"), true);
+  assert.equal(await app.run("activateInvestment('p1','p2',1)"), true);
+  assert.deepEqual(app.read('[getPlayer("p1").fortune,getPlayer("p1").wisdom,getPlayer("p1").navigationTokens,getPlayer("p2").wisdom]'), [10,11,2,21]);
+  app.run("markActed('p1');");
   assert.equal(await app.run("purchaseExchange('p1',{shield:1})"), false);
-  app.run("markActed('p1'); toggleActed('p1');");
+  assert.equal(await app.run("activateInvestment('p1','p2',1)"), false);
+  app.run("toggleActed('p1');");
   assert.equal(app.run("useNavigation('p1',1)"), false);
-  assert.equal(await app.run("purchaseExchange('p1',{shield:1})"), false);
+  assert.equal(await app.run("purchaseExchange('p1',{shield:1})"), true);
+  assert.equal(await app.run("activateInvestment('p1','p2',1)"), true);
   app.run('saveNow();');
   const loaded = createApp({ storage: app.storage });
   loaded.run('load();');
   assert.equal(loaded.run("useNavigation('p1',1)"), false);
+  assert.equal(await loaded.run("purchaseExchange('p1',{shield:1})"), true);
+  loaded.run("markSkipped('p1');");
+  assert.equal(await loaded.run("purchaseExchange('p1',{shield:1})"), false);
   await loaded.run('nextTurn()');
   assert.equal(loaded.run("useNavigation('p1',1)"), true);
 });
@@ -425,7 +434,7 @@ test('legacy rolling markers are removed while navigation usage and completion f
   const restored = model.decode(JSON.stringify(save)).state.currentGame;
   assert.deepEqual(restored.exchange.movementThisTurn, { p2: { mode: 'navigation', steps: 4 } });
   assert.equal(rules.canTrade(restored, 'p1'), true);
-  assert.equal(rules.canTrade(restored, 'p2'), false);
+  assert.equal(rules.canTrade(restored, 'p2'), true);
   assert.equal(restored.players[1].navigationTokens, 2);
   save.currentGame.actedThisTurn.p1 = true;
   const completed = model.decode(JSON.stringify(save)).state.currentGame;
