@@ -4,7 +4,7 @@ async function finishRound(page) {
   for (const id of ['p1', 'p2', 'p3', 'p4']) await player(page, id).locator('[data-act="acted"]').click();
 }
 
-test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存重新整理仍保留', async ({ page }, testInfo) => {
+test('首次雙達開市與里程彈窗共存，多組購買的庫存跨輪及重新整理仍保留', async ({ page }) => {
   test.setTimeout(60_000);
   await openGame(page);
   await expect(page.locator('#btn-exchange')).toBeDisabled();
@@ -20,63 +20,110 @@ test('首次雙達開市，與里程彈窗共存，多組購買與導航庫存�
   await page.locator('#exchange-investment').fill('1');
   await expect(page.locator('#exchange-cost')).toHaveText('本次花費：福報 6 · 智慧 6');
   await page.locator('#exchange-buy').click();
-  await expect(page.locator('#exchange-stock')).toContainText('導航 ×2 · 平安符 ×1');
+  await expect(page.locator('#exchange-stock')).toHaveText('導航 ×2 · 平安符 ×1 · 投資 ×1');
   await expect(score(page, 'fortune', 'p1')).toHaveText('14');
+  await expect(score(page, 'wisdom', 'p1')).toHaveText('14');
   await expect(score(page, 'wisdom', 'p2')).toHaveText('5');
   expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(0);
-  await expect(page.locator('#exchange-stock')).toContainText('投資 ×1');
   await page.locator('#exchange-store-close').click();
   await expect(page.locator('#exchange-modal')).toBeHidden();
   await expect(player(page, 'p1').locator('[data-act="acted"]')).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('[data-act="dice"]')).toHaveCount(0);
   await finishRound(page);
   await page.reload();
-  await player(page, 'p1').locator('[data-act="exchange"]').click();
-  await expect(page.locator('#exchange-stock')).toContainText('投資 ×1');
-  expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(0);
-  await page.locator('#exchange-target').selectOption('p2');
-  await page.locator('#exchange-activate-investment').click();
-  await expect(score(page, 'wisdom', 'p2')).toHaveText('6');
-  await expect(score(page, 'fortune', 'p1')).toHaveText('14');
-  await expect(page.locator('#exchange-investments')).toContainText('A → B ×1');
-  expect((await readSave(page)).currentGame.exchange.investments[0].startTurn).toBe(2);
-  await testInfo.attach('exchange', { body: await page.screenshot(), contentType: 'image/png' });
-  await page.locator('#exchange-steps').selectOption('6');
-  await page.locator('#exchange-use-navigation').click();
-  await expect(page.locator('#exchange-modal')).toBeHidden();
-  await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText('導航 ×1');
-  await expect(player(page, 'p1').locator('[data-act="acted"]')).toHaveAttribute('aria-pressed', 'false');
-  await page.reload();
   await expect(page.locator('#exchange-open-modal')).toBeHidden();
   await player(page, 'p1').locator('[data-act="exchange"]').click();
-  await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
-  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
-  await expect(page.locator('#exchange-unavailable')).toBeHidden();
-  await page.locator('#exchange-navigation').fill('1');
-  await page.locator('#exchange-shield').fill('1');
-  await page.locator('#exchange-investment').fill('1');
-  await expect(page.locator('#exchange-buy')).toBeEnabled();
-  await page.locator('#exchange-buy').click();
-  await expect(page.locator('#exchange-stock')).toContainText('導航 ×2');
-  await expect(score(page, 'fortune', 'p1')).toHaveText('8');
-  await expect(score(page, 'wisdom', 'p1')).toHaveText('11');
-  await page.locator('#exchange-target').selectOption('p3');
-  await expect(page.locator('#exchange-activate-investment')).toBeEnabled();
-  await page.locator('#exchange-activate-investment').click();
-  await expect(score(page, 'wisdom', 'p3')).toHaveText('6');
-  await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
-  await expect(page.locator('#exchange-movement')).toContainText('前進 6 步');
-  expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(2);
-  await page.locator('#exchange-store-close').click();
-  await player(page, 'p1').locator('[data-act="acted"]').click();
-  await player(page, 'p1').locator('[data-act="exchange"]').click();
-  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', true);
-  await expect(page.locator('#exchange-activate-investment')).toBeDisabled();
-  await page.locator('#exchange-store-close').click();
-  await player(page, 'p1').locator('[data-act="acted"]').click();
-  await player(page, 'p1').locator('[data-act="exchange"]').click();
-  await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
-  await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+  await expect(page.locator('#exchange-stock')).toHaveText('導航 ×2 · 平安符 ×1 · 投資 ×1');
+  const saved = (await readSave(page)).currentGame;
+  expect(saved.turnNum).toBe(2);
+  expect(saved.exchange.investments).toHaveLength(0);
+});
+
+// Seed completed purchase/navigation states so independent rules do not share one CI timeout budget.
+function exchangeSave({ navigationUsed = false } = {}) {
+  const save = savedGame();
+  save.currentGame.turnNum = 2;
+  save.currentGame.exchange.opened = true;
+  Object.assign(save.currentGame.players[0], {
+    fortune: 14, wisdom: 14, navigationTokens: navigationUsed ? 1 : 2,
+    shieldTokens: 1, investmentTokens: 1, notified: { self12: true },
+  });
+  if (navigationUsed) save.currentGame.exchange.movementThisTurn.p1 = { mode: 'navigation', steps: 6 };
+  return save;
+}
+
+test.describe('已購買的交易所庫存', () => {
+  test.use({ save: exchangeSave() });
+  test('投資另行啟用不重複扣費，導航使用紀錄重新整理後仍保留', async ({ page }, testInfo) => {
+    await openGame(page);
+    await player(page, 'p1').locator('[data-act="exchange"]').click();
+    await page.locator('#exchange-target').selectOption('p2');
+    await page.locator('#exchange-activate-investment').click();
+    await expect(score(page, 'wisdom', 'p2')).toHaveText('6');
+    await expect(score(page, 'fortune', 'p1')).toHaveText('14');
+    await expect(page.locator('#exchange-stock')).toContainText('投資 ×0');
+    await expect(page.locator('#exchange-investments')).toContainText('A → B ×1');
+    expect((await readSave(page)).currentGame.exchange.investments[0].startTurn).toBe(2);
+    await testInfo.attach('exchange', { body: await page.screenshot(), contentType: 'image/png' });
+    await page.locator('#exchange-steps').selectOption('6');
+    await page.locator('#exchange-use-navigation').click();
+    await expect(page.locator('#exchange-modal')).toBeHidden();
+    await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText('導航 ×1');
+    await expect(player(page, 'p1').locator('[data-act="acted"]')).toHaveAttribute('aria-pressed', 'false');
+    await page.reload();
+    await player(page, 'p1').locator('[data-act="exchange"]').click();
+    await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+    await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
+    await expect(page.locator('#exchange-movement')).toContainText('前進 6 步');
+    expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(1);
+  });
+});
+
+test.describe('本輪已使用導航', () => {
+  test.use({ save: exchangeSave({ navigationUsed: true }) });
+  test('仍可購買及啟用投資，但不能再次使用導航', async ({ page }) => {
+    await openGame(page);
+    await player(page, 'p1').locator('[data-act="exchange"]').click();
+    await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+    await expect(page.locator('#exchange-unavailable')).toBeHidden();
+    await page.locator('#exchange-navigation').fill('1');
+    await page.locator('#exchange-shield').fill('1');
+    await page.locator('#exchange-investment').fill('1');
+    await expect(page.locator('#exchange-buy')).toBeEnabled();
+    await page.locator('#exchange-buy').click();
+    await expect(page.locator('#exchange-stock')).toHaveText('導航 ×2 · 平安符 ×2 · 投資 ×2');
+    await expect(score(page, 'fortune', 'p1')).toHaveText('8');
+    await expect(score(page, 'wisdom', 'p1')).toHaveText('11');
+    await page.locator('#exchange-target').selectOption('p3');
+    await expect(page.locator('#exchange-activate-investment')).toBeEnabled();
+    await page.locator('#exchange-activate-investment').click();
+    await expect(score(page, 'wisdom', 'p3')).toHaveText('6');
+    await expect(page.locator('#exchange-stock')).toContainText('投資 ×1');
+    await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+    await expect(page.locator('#exchange-movement')).toContainText('前進 6 步');
+    expect((await readSave(page)).currentGame.exchange.investments).toHaveLength(1);
+  });
+
+  for (const [action, label] of [['acted', '已行動'], ['skip', '跳過']]) {
+    test(`標記${label}後停止交易，取消後恢復交易且不能再用導航`, async ({ page }) => {
+      await openGame(page);
+      await player(page, 'p1').locator(`[data-act="${action}"]`).click();
+      await player(page, 'p1').locator('[data-act="exchange"]').click();
+      await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', true);
+      await expect(page.locator('#exchange-activate-investment')).toBeDisabled();
+      await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+      await page.locator('#exchange-store-close').click();
+      await expect(page.locator('#exchange-modal')).toBeHidden();
+      await player(page, 'p1').locator(`[data-act="${action}"]`).click();
+      await player(page, 'p1').locator('[data-act="exchange"]').click();
+      await expect(page.locator('#exchange-shop')).toHaveJSProperty('disabled', false);
+      await expect(page.locator('#exchange-unavailable')).toBeHidden();
+      await page.locator('#exchange-target').selectOption('p2');
+      await expect(page.locator('#exchange-activate-investment')).toBeEnabled();
+      await expect(page.locator('#exchange-use-navigation')).toBeDisabled();
+      await expect(page.locator('#exchange-movement')).toContainText('前進 6 步');
+    });
+  }
 });
 
 test.describe('逐輪投資結算', () => {
