@@ -4,11 +4,8 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ───────────── Modal ───────────── */
-.modal { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 22px; }
-/* 確認視窗會由其他 modal 開啟，需顯示在來源視窗上方。 */
-#confirm-modal { z-index: var(--z-confirm); }
-/* 救濟可能與抽卡里程或計時中的其他視窗同時觸發。 */
-#relief-modal { z-index: var(--z-relief); }
+.modal { position: fixed; inset: 0; z-index: calc(var(--z-modal) + var(--modal-order, 0)); display: grid; place-items: center; padding: 22px; }
+/* 順序由 modal-manager 統一排序，一般視窗 < 救濟 < 確認。 */
 .modal.hidden { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;
@@ -101,6 +98,11 @@
 
 /* Confirm dialog — compact centered panel */
 .confirm-panel { width: min(400px, 100%); padding: 26px 28px; gap: 12px; }
+/* Persistent action toast: keep the affected scores visible until the host decides. */
+.modal.action-toast { align-items: end; justify-items: center; padding-bottom: max(22px, env(safe-area-inset-bottom)); }
+.action-toast .modal-backdrop { background: rgba(16, 24, 16, 0.18); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.action-toast .confirm-panel { width: min(540px, 100%); max-height: calc(100dvh - 44px); overflow-y: auto; border-top: 4px solid var(--fortune-ink); }
+.action-toast .confirm-actions { flex-wrap: wrap; }
 .relief-panel {
   width: min(480px, 100%);
   padding: 32px 30px 24px;
@@ -568,8 +570,11 @@
 }
 @media (max-width: 640px) {
   .topbar {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "brand actions" "meta meta";
+    /* A phone cannot fit the brand, controls and six counters side by side.
+       Let the header scroll away so it leaves room for player actions. */
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "brand" "actions" "meta";
     gap: 12px;
     padding:
       calc(12px + var(--sa-top))
@@ -577,25 +582,42 @@
       12px
       calc(16px + var(--sa-left));
   }
-  .brand   { grid-area: brand; gap: 10px; }
-  .actions { grid-area: actions; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .meta    { grid-area: meta; justify-content: space-between; }
-  .logo { width: 40px; height: 40px; }
+  .brand   { grid-area: brand; gap: 10px; min-width: 0; }
+  .actions {
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .actions .btn { min-width: 0; min-height: 44px; padding: 9px 6px; white-space: nowrap; }
+  .meta {
+    grid-area: meta;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    align-items: start;
+  }
+  .logo { width: 40px; height: 40px; flex-shrink: 0; }
   .logo svg { width: 30px; height: 30px; }
-  .brand-text .title    { font-size: 17px; letter-spacing: 0.08em; }
+  .brand-text .title    { font-size: 17px; letter-spacing: 0.08em; white-space: nowrap; }
   /* Hide only the descriptive text; keep the build version visible on mobile. */
-  .brand-text .subtitle      { margin-top: 2px; letter-spacing: 0.12em; }
+  .brand-text .subtitle      { margin-top: 2px; letter-spacing: 0.12em; white-space: nowrap; }
   .brand-text .subtitle-text { display: none; }
-  .meta-item { padding: 2px 4px; min-width: 0; flex: 1; }
+  .meta-item { padding: 4px 2px; min-width: 0; }
   .meta-item + .meta-item::before { display: none; }
-  .meta-item label { font-size: 9px; letter-spacing: 0.18em; margin-bottom: 2px; }
+  .meta-item label { font-size: 10px; letter-spacing: 0.08em; margin-bottom: 2px; }
   .meta-value { font-size: 17px; }
-  .meta-cap   { font-size: 10px; margin-left: 4px; }
+  .meta-sep { margin: 0 2px; }
+  .meta-cap { display: block; font-size: 10px; margin: 2px 0 0; text-align: center; }
+  .turn-acted { font-size: 10px; letter-spacing: 0; }
   .civ-progress { padding: 14px 16px 0; max-width: none; }
   .dashboard    { padding: 14px 16px 24px; gap: 16px; }
   .section-head { flex-wrap: wrap; gap: 8px; }
-  .stat-row { grid-template-columns: 48px 1fr 56px; gap: 8px; }
-  .stat-row .stat-num { font-size: 22px; min-width: 56px; }
+  .legend { gap: 6px; }
+  .legend .dot { margin-right: 0; flex-shrink: 0; }
+  .stat-row { grid-template-columns: 64px minmax(0, 1fr) 44px; gap: 10px; }
+  .stat-row .stat-label { gap: 6px; }
+  .stat-row .stat-num { font-size: 22px; min-width: 0; }
   .pc-name { font-size: 17px; }
   .player-card { padding: 20px 18px 14px; }
   .setup-player-row { grid-template-columns: 1fr; }
@@ -621,11 +643,10 @@
       10px
       calc(12px + var(--sa-left));
   }
-  .actions .btn { padding: 7px 11px; font-size: 11px; min-height: 36px; }
+  .actions .btn { padding: 9px 4px; font-size: 11px; }
   .meta-value { font-size: 16px; }
-  .meta-item label { font-size: 8.5px; }
-  .stat-row { grid-template-columns: 44px 1fr 50px; gap: 6px; }
-  .stat-row .stat-num { font-size: 20px; min-width: 50px; }
+  .stat-row { gap: 8px; }
+  .stat-row .stat-num { font-size: 20px; }
   .pc-name { font-size: 16px; }
   .player-card { padding: 18px 15px 12px; }
   .card-display { padding: 20px 15px; }
@@ -659,6 +680,33 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
   }
   /* keep the last row of cards / danger zone tappable above the bar */
   .dashboard { padding-bottom: 150px; }
+}
+@media (max-width: 640px) {
+  .quick-draw {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+    gap: 8px;
+    padding:
+      10px calc(12px + env(safe-area-inset-right))
+      calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -4px 18px rgba(90,104,84,0.08);
+  }
+  .quick-draw .btn {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 4px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+  }
+  /* Reserve the dock and home-indicator area after all dashboard content. */
+  .dashboard { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
 }
 .quick-draw.hidden { display: none; }
 
@@ -1100,3 +1148,24 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
 #weather-adjust-total-cost { color: var(--danger-deep); }
 .weather-adjust-gain { margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--civ); }
 .weather-adjust-gap { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }
+/* 福慧交易所 */
+.exchange-panel { max-width: 680px; }
+.exchange-shop { border: 1px solid var(--border, #dce2d3); border-radius: 14px; padding: 16px; margin: 16px 0; min-width: 0; }
+.exchange-shop legend { font-weight: 700; padding: 0 8px; }
+.exchange-product { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.exchange-product > span { flex: 1; min-width: 0; }
+.exchange-product strong, .exchange-product small { display: block; }
+.exchange-product small { line-height: 1.6; margin-top: 4px; color: var(--muted, #59664f); }
+.exchange-product input { width: 76px; min-height: 44px; padding: 8px; border-radius: 8px; border: 1px solid var(--border, #dce2d3); font: inherit; }
+.exchange-motion-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.exchange-motion-controls label { display: grid; gap: 5px; }
+.exchange-panel .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.exchange-panel .row select { flex: 1; min-width: 120px; }
+.exchange-panel select { appearance: none; -webkit-appearance: none; height: 46px; min-height: 44px; max-width: 100%; padding: 9px 34px 9px 12px; border: 1px solid var(--line); border-radius: 10px; background-color: var(--surface); color: var(--ink); font: inherit; font-size: 16px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+.exchange-motion-controls select { min-height: 44px; }
+.exchange-stock { font-weight: 700; }
+.exchange-notice { color: #855722; }
+.exchange-investments { padding-left: 20px; line-height: 1.8; overflow-wrap: anywhere; }
+.exchange-investments li { margin-bottom: 8px; }

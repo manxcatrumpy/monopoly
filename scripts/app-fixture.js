@@ -5,37 +5,20 @@ const GameRules = require('../game-rules.js');
 const GameState = require('../game-state.js');
 const DeckModel = require('../deck-model.js');
 const GameStorage = require('../storage.js');
+const ModalManager = require('../modal-manager.js');
+const { createDOM } = require('./dom-fixture.js');
+const { uiFiles } = require('./ui-sources.js');
 
 // 流程測試使用最小 UI adapter；純規則測試直接載入 game-rules.js。
 function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
   const clock = { now };
-  const elements = new Map();
+  const { document, element } = createDOM();
   const intervals = [];
   const noop = () => {};
-  function element(selector) {
-    if (elements.has(selector)) return elements.get(selector);
-    const node = {
-      value: '', checked: false, dataset: {}, listeners: {},
-      style: { setProperty: noop },
-      classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
-      addEventListener(type, handler) { this.listeners[type] = handler; },
-      removeEventListener(type, handler) { if (this.listeners[type] === handler) delete this.listeners[type]; },
-      focus: noop,
-      querySelector: child => element(selector + ' ' + child),
-      querySelectorAll: child => element(selector + ' ' + child).items || [],
-      setAttribute: noop, appendChild: noop,
-    };
-    elements.set(selector, node);
-    return node;
-  }
   const context = vm.createContext({
-    GameRules, GameState, GameStorage, DeckModel,
+    GameRules, GameState, GameStorage, DeckModel, ModalManager,
     window: { addEventListener: noop },
-    document: {
-      querySelector: element, querySelectorAll: selector => element(selector).items || [],
-      getElementById: id => element('#' + id),
-      createElement: tag => element(tag), addEventListener: noop, removeEventListener: noop,
-    },
+    document,
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     Date: class extends Date { static now() { return clock.now; } },
     setTimeout: noop, clearTimeout: noop,
@@ -43,11 +26,12 @@ function createApp({ storage = new Map(), now = 1700000000000 } = {}) {
     queueMicrotask,
     t: (key, params = {}) => key + ':' + JSON.stringify(params),
   });
-  for (const file of ['config.js', 'version.js', 'app.js']) {
+  for (const file of ['config.js', 'version.js', 'pwa-client.js', ...uiFiles, 'app.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
     if (file === 'config.js') context.GAME_CONFIG = context.window.GAME_CONFIG;
   }
   const run = code => vm.runInContext(code, context);
+  run('weatherUI.bind();');
   // Count presentation calls while retaining the actual event presenter and rules.
   run(`
     var uiCalls = { players: [], topbar: 0, draws: 0, log: 0 };

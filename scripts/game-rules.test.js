@@ -40,13 +40,13 @@ test('all effects for one player are merged before clamping to zero', () => {
   assert.equal(changes[0].after.civ, 0);
 });
 
-test('self-breakthrough re-arms after falling below but navigator stays claimed', () => {
+test('self-breakthrough and navigator stay claimed after falling below and regaining thresholds', () => {
   const p = player({ fortune: 11, wisdom: 11 });
   const claims = { 10: 'p1', 20: 'other', 30: null };
   const dropped = rules.evaluatePlayerProgress(p, { fortune: 22, wisdom: 22 }, claims, thresholds);
-  assert.equal(dropped.notified.self12, false);
+  assert.equal(dropped.notified.self12, true);
   const regained = rules.evaluatePlayerProgress({ ...p, fortune: 12, wisdom: 12, notified: dropped.notified }, p, dropped.navigatorClaimed, thresholds);
-  assert.deepEqual(regained.events.map(e => e.type), ['breakthrough']);
+  assert.deepEqual(regained.events.map(e => e.type), []);
   assert.equal(regained.navigatorClaimed[10], 'p1');
 });
 

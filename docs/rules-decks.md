@@ -47,8 +47,9 @@
 
 `styles.css` 管理全頁、導覽、玩家卡、天氣公告與設計變數；`components.css` 管理
 彈窗、起始點／調分控制、抽卡與抉擇、氣候調節及其響應式樣式。
-圖層集中為 `--z-modal`、`--z-relief`、`--z-confirm`、`--z-toast`，保持
-一般彈窗 < 救濟 < 確認 < 通知的順序。
+圖層保持一般彈窗 < 救濟 < 確認 < 通知的順序。
+[第四階段](modal-management.md) 將彈窗間的排序統一交給管理器；CSS 使用
+`--z-modal` 加上管理器設定的 `--modal-order`，通知仍使用 `--z-toast`。
 
 ## 驗證
 

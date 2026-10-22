@@ -28,6 +28,10 @@
     if (typeof value !== 'string') throw new Error('Invalid text');
     return value;
   }
+  function strictCount(value, fallback, minimum = 0) {
+    if (present(value) && !Number.isSafeInteger(value)) throw new Error('Invalid exchange integer');
+    return number(value, fallback, minimum);
+  }
   function boolean(value, fallback = false) {
     if (!present(value)) return fallback;
     if (typeof value !== 'boolean') throw new Error('Invalid flag');
@@ -49,6 +53,7 @@
       players: [], log: [], pendingDraws: [],
       navigatorClaimed: Object.fromEntries((options.navigatorThresholds || CONFIG.PROGRESSION.NAVIGATOR).map(n => [n, null])),
       actedThisTurn: {}, skippedThisTurn: {},
+      exchange: { opened: false, openerId: null, openedTurn: null, nextInvestmentId: 1, investments: [], movementThisTurn: {} },
       weatherEvents: (options.weatherSchedule || CONFIG.WEATHER.SCHEDULE).map(event => ({
         id: event.id, targetRound: event.targetRound, lockedWeather: null,
         upgraded: false, civAtLock: null, oldWeather: null,
@@ -67,12 +72,21 @@
     const relief = typeof p.reliefUsed === 'boolean'
       ? { fortune: p.reliefUsed, wisdom: p.reliefUsed } : record(p.reliefUsed, 'relief quota');
     const selected = record(p.selfSelectedLow, 'self-selected low');
+    const notified = flagMap(p.notified);
+    // Older saves reset a previously claimed breakthrough to false after a score drop.
+    // Presence of that flag still proves the threshold was claimed in this game.
+    for (const threshold of CONFIG.PROGRESSION.SELF) {
+      const key = 'self' + threshold;
+      if (Object.hasOwn(notified, key)) notified[key] = true;
+    }
     return {
       id, name: text(p.name), fortune, wisdom, civ: number(p.civ, 0),
       graduated: boolean(p.graduated, fortune >= (options.graduationThreshold ?? CONFIG.PROGRESSION.GRADUATION) && wisdom >= (options.graduationThreshold ?? CONFIG.PROGRESSION.GRADUATION)),
-      notified: flagMap(p.notified),
+      notified,
       reliefUsed: { fortune: boolean(relief.fortune), wisdom: boolean(relief.wisdom) },
       selfSelectedLow: { fortune: boolean(selected.fortune), wisdom: boolean(selected.wisdom) },
+      navigationTokens: strictCount(p.navigationTokens, 0), shieldTokens: strictCount(p.shieldTokens, 0),
+      investmentTokens: strictCount(p.investmentTokens, 0),
       shelterFromTurn: present(p.shelterFromTurn) ? number(p.shelterFromTurn, null, 1) : null,
       shelterToTurn: present(p.shelterToTurn) ? number(p.shelterToTurn, null, 1) : null,
     };
@@ -115,6 +129,37 @@
     }
     game.actedThisTurn = flagMap(raw.actedThisTurn);
     game.skippedThisTurn = flagMap(raw.skippedThisTurn);
+    const exchange = record(raw.exchange, 'exchange');
+    const playerId = value => {
+      const id = text(value);
+      if (!game.players.some(p => p.id === id)) throw new Error('Invalid exchange player');
+      return id;
+    };
+    game.exchange.opened = boolean(exchange.opened);
+    game.exchange.openerId = present(exchange.openerId) ? text(exchange.openerId) : null;
+    game.exchange.openedTurn = present(exchange.openedTurn) ? strictCount(exchange.openedTurn, null, 1) : null;
+    game.exchange.nextInvestmentId = strictCount(exchange.nextInvestmentId, 1, 1);
+    game.exchange.movementThisTurn = Object.fromEntries(Object.entries(record(exchange.movementThisTurn, 'movement')).flatMap(([id, value]) => {
+      playerId(id); record(value, 'movement');
+      if (!['dice', 'navigation'].includes(value.mode)) throw new Error('Invalid movement mode');
+      // Legacy "start rolling" flags no longer restrict trading; navigation usage still does.
+      if (value.mode === 'dice') return [];
+      const steps = strictCount(value.steps, null, 1);
+      if (steps === null || steps > 6) throw new Error('Invalid navigation steps');
+      return [[id, { mode: 'navigation', steps }]];
+    }));
+    game.exchange.investments = array(exchange.investments, 'investments').map(value => {
+      record(value, 'investment');
+      const startTurn = strictCount(value.startTurn, 0, 1);
+      const rewardedTurns = array(value.rewardedTurns, 'investment rewards').map(n => strictCount(n, 0, 1));
+      if (new Set(rewardedTurns).size !== rewardedTurns.length || rewardedTurns.some(n => n <= startTurn || n > startTurn + 2 || n > game.turnNum)) throw new Error('Invalid investment rewards');
+      const item = { id: strictCount(value.id, 0, 1), investorId: playerId(value.investorId), targetId: playerId(value.targetId),
+        quantity: strictCount(value.quantity, 0, 1), startTurn, rewardedTurns, closed: boolean(value.closed) };
+      if (item.investorId === item.targetId || startTurn > game.turnNum || !Number.isSafeInteger(item.quantity * CONFIG.EXCHANGE.INVESTMENT_COST)) throw new Error('Invalid investment');
+      return item;
+    });
+    const investmentIds = game.exchange.investments.map(item => item.id);
+    if (new Set(investmentIds).size !== investmentIds.length || investmentIds.some(id => id >= game.exchange.nextInvestmentId)) throw new Error('Invalid investment ids');
     if (present(raw.weatherEvents)) {
       game.weatherEvents = array(raw.weatherEvents, 'weather').map(event => {
         record(event, 'weather event');
