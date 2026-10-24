@@ -1265,7 +1265,7 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   }
   let fx = describeChoiceOption(card, opt);
   closeCard();
-  const changes = await settleScoreChanges(operations, { source: card.damageSource || 'normal' });
+  const changes = await settleScoreChanges(operations, { source: 'normal' });
   if (!changes) return;
   if (state.currentGame !== game) return;
   if (changes.shieldedPlayerIds.length) {
@@ -1354,7 +1354,7 @@ async function applyCardReward(playerIds, card) {
   });
   if (!applied.length) return;
   closeCard();
-  const changes = await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })), { source: card.damageSource || 'normal' });
+  const changes = await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })), { source: 'normal' });
   if (!changes) return;
   for (const a of applied) if (changes.shieldedPlayerIds.includes(a.pid)) ['fortune', 'wisdom'].forEach(stat => { if (a.r[stat] < 0) a.r[stat] = 0; });
   if (state.currentGame !== game) return;

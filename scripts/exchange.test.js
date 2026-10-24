@@ -158,22 +158,21 @@ test('gifts, relief, refunds and corrections do not count as growth; ordinary ca
   assert.equal(app.read('getPlayer("p1").civ'), 2);
 });
 
-test('shield is optional and consumes exactly one for all multiplied Fortune/Wisdom losses, not Civilization', async () => {
+test('shield is optional and consumes exactly one for all Fortune/Wisdom losses, not Civilization', async () => {
   const app = game();
   app.run("Object.assign(getPlayer('p1'),{shieldTokens:3,fortune:5,wisdom:5,civ:4}); state.currentGame.timer.accumulated=5100;");
-  await app.run("applyCardReward('p1',{name:'fate',damageSource:'fate',reward:{fortune:-3,wisdom:-2,civ:-1},rewardText:'loss'})");
+  await app.run("settleScoreChanges([{playerId:'p1',delta:{fortune:-6,wisdom:-4,civ:-1}}],{source:'fate'})");
   assert.deepEqual(balances(app)[0], [5, 5, 3, 0, 2]);
   assert.equal(app.read('reliefPrompts.length'), 0);
   app.run('confirmModal=async()=>false;');
-  await app.run("applyCardReward('p1',{name:'impermanence',damageSource:'impermanence',reward:{fortune:-1,wisdom:-1,civ:-1},rewardText:'loss'})");
+  await app.run("settleScoreChanges([{playerId:'p1',delta:{fortune:-2,wisdom:-2,civ:-1}}],{source:'impermanence'})");
   assert.deepEqual(balances(app)[0], [3, 3, 2, 0, 2]);
-  assert.equal(app.read('reliefPrompts.length'), 1);
 });
 
 test('shield preserves positive effects and does not intercept ordinary loss, civilization-only loss or spending', async () => {
   const app = game();
   app.run("getPlayer('p1').shieldTokens=3;");
-  await app.run("applyCardReward('p1',{name:'mixed',damageSource:'fate',reward:{fortune:2,wisdom:-3},rewardText:'mixed'})");
+  await app.run("settleScoreChanges([{playerId:'p1',delta:{fortune:2,wisdom:-3}}],{source:'fate'})");
   assert.deepEqual(balances(app)[0], [22, 20, 0, 0, 2]);
   await app.run("applyCardReward('p1',{name:'ordinary',reward:{wisdom:-1},rewardText:'loss'})");
   await app.run("applyCardReward('p1',{name:'civilization',damageSource:'fate',reward:{civ:-1},rewardText:'loss'})");
@@ -181,11 +180,11 @@ test('shield preserves positive effects and does not intercept ordinary loss, ci
   assert.equal(app.read('getPlayer("p1").wisdom'), 19);
 });
 
-test('both recipients independently choose shields and collective Civilization still applies to everyone', async () => {
+test('choice cards ignore legacy source tags for both recipients and keep collective Civilization effects', async () => {
   const app = game();
   app.run("state.currentGame.players.forEach(p=>{p.shieldTokens=2;p.civ=3;}); confirmModal=async ({message})=>message.includes('A');");
   await app.run("applyChoiceCard(['p1','p2'],{name:'choice',damageSource:'fate',options:[{label:'loss',each:{fortune:-2,wisdom:-1},civAll:-1}]},0)");
-  assert.deepEqual(balances(app)[0], [20, 20, 2, 0, 1]);
+  assert.deepEqual(balances(app)[0], [18, 19, 2, 0, 2]);
   assert.deepEqual(balances(app)[1], [18, 19, 2, 0, 2]);
   assert.equal(app.read('getPlayer("p3").civ'), 2);
 });
@@ -193,8 +192,8 @@ test('both recipients independently choose shields and collective Civilization s
 test('pending shield confirmation cannot double-consume, advance the round or apply to a replacement game', async () => {
   const app = game();
   app.run("getPlayer('p1').shieldTokens=2; var resolveShield; confirmModal=()=>new Promise(resolve=>{resolveShield=resolve;});");
-  const pending = app.run("applyCardReward('p1',{name:'fate',damageSource:'fate',reward:{fortune:-2},rewardText:'loss'})");
-  await app.run("applyCardReward('p1',{name:'fate',damageSource:'fate',reward:{fortune:-2},rewardText:'loss'})");
+  const pending = app.run("settleScoreChanges([{playerId:'p1',delta:{fortune:-2}}],{source:'fate'})");
+  await app.run("settleScoreChanges([{playerId:'p1',delta:{fortune:-2}}],{source:'fate'})");
   await app.run('nextTurn()');
   assert.equal(app.read('state.currentGame.turnNum'), 5);
   app.run("clearGameUi(); state=defaultState(); state.currentGame.players=[GameState.createPlayer({id:'p1',name:'New',fortune:10,wisdom:10,shieldTokens:5})]; resolveShield(true);");
@@ -259,10 +258,24 @@ test('old saves receive empty exchange defaults and corrupt inventory or investm
   assert.throws(() => model.serialize(bad));
 });
 
-test('imported Fate/Impermanence classification survives deck normalization and rejects unknown sources', () => {
-  const card = { name: 'Fate', action: '', insight: '', rewardText: '-1', reward: { fortune: -1 }, damageSource: 'fate' };
-  assert.equal(decks.normalize({ boostDeck: [card] }).boostDeck[0].damageSource, 'fate');
-  assert.equal(decks.inspect({ boostDeck: [{ ...card, damageSource: 'all-loss' }] }).ok, false);
+test('legacy source tags are removed from imported action and boost cards', () => {
+  for (const damageSource of ['normal', 'fate', 'impermanence']) {
+    const card = { name: 'Legacy', desc: '', action: '', insight: '', rewardText: '-1', reward: { fortune: -1 }, damageSource };
+    const normalized = decks.normalize({ actionDeck: { action: { cards: [card] } }, boostDeck: [card] });
+    assert.equal(normalized.actionDeck.action.cards[0].damageSource, undefined);
+    assert.equal(normalized.boostDeck[0].damageSource, undefined);
+  }
+});
+
+test('action and boost rewards ignore legacy source tags without prompting or consuming shields', async () => {
+  for (const type of ['action', 'boost']) {
+    for (const damageSource of ['fate', 'impermanence']) {
+      const app = game();
+      app.run("getPlayer('p1').shieldTokens=2; state.currentGame.timer.accumulated=5100; confirmModal=()=>{throw new Error('Unexpected shield prompt');};");
+      await app.run(`applyCardReward('p1',${JSON.stringify({ type, damageSource, name: 'Legacy', reward: { fortune: -2, wisdom: 1, civ: -1 }, rewardText: 'mixed' })})`);
+      assert.deepEqual(balances(app)[0], [16, 22, 0, 0, 2]);
+    }
+  }
 });
 
 test('investment Civilization joins the growth batch before collective victory is evaluated', async () => {
