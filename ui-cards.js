@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   function create({
-    getDecks, draft, drawFromDeck, $, t,
+    getDecks, draft, drawFromDeck, $, t, optionAvailable, previewOperations,
     modals, getGame, escapeHtml, comprehensiveScore, toast,
     applyCardReward, scoreMultiplier, describeReward, scaleReward, getWeatherLabel,
     choiceEffects, totalCiv, $$, applyChoiceCard, getActionDeck,
@@ -38,6 +38,58 @@
       </div>`;
     }
 
+    function updatePreview(c, choice = false) {
+      const output = $('#card-preview');
+      const index = choice ? draft.currentChoiceOpt : undefined;
+      const both = (choice ? c.options[index]?.both : undefined) ?? c.both;
+      const ids = [$('#card-recipient').value];
+      if (both) ids.push($('#card-recipient2').value);
+      const extraIds = c.extraReward?.role === 'answerer' ? [$('#card-answerer').value] :
+        c.extraReward?.role === 'participants' ? $$('.card-participant', $('#card-foot')).filter(input => input.checked).map(input => input.value) : [];
+      try {
+        const ops = previewOperations(c, ids, { optionIndex: index, extraIds });
+        const merged = new Map();
+        ops.forEach(op => {
+          const delta = merged.get(op.playerId) || {};
+          Object.entries(op.delta).forEach(([key, value]) => { delta[key] = (delta[key] || 0) + value; });
+          merged.set(op.playerId, delta);
+        });
+        output.textContent = t('card.preview') + ' ' + [...merged].map(([id, delta]) => {
+          const player = getGame().players.find(p => p.id === id);
+          const actual = Object.fromEntries(Object.entries(delta).map(([stat, amount]) => [stat, Math.max(0, player[stat] + amount) - player[stat]]));
+          return (player.name || t('common.player')) + '：' + (describeReward(actual) || t('card.no_score_change'));
+        }).join('；');
+      } catch (error) {
+        if (error.message !== 'card.invalid_selection') throw error;
+        output.textContent = '';
+      }
+    }
+
+    function bindPreview(c, choice = false) {
+      $$('select, input', $('#card-foot')).forEach(input => input.addEventListener('change', () => updatePreview(c, choice)));
+      updatePreview(c, choice);
+    }
+
+    function extraRewardHtml(c) {
+      if (!c.extraReward) return '';
+      const { role, reward } = c.extraReward;
+      return `<p class="card-side">${escapeHtml(t('card.' + role))}：${escapeHtml(describeReward(reward))}</p>`;
+    }
+
+    function roleControls(c, selectHtml) {
+      if (!c.extraReward) return '';
+      if (c.extraReward.role === 'answerer') return selectHtml('card-answerer', t('card.answerer'));
+      return `<fieldset class="card-participants"><legend>${t('card.participants')}</legend>` +
+        getGame().players.map(p => `<label><input type="checkbox" class="card-participant" value="${escapeHtml(p.id)}"> ${escapeHtml(p.name || t('common.player'))}</label>`).join('') + '</fieldset>';
+    }
+
+    async function submitCard(callback) {
+      const button = $('#card-apply');
+      if (button.disabled) return;
+      button.disabled = true;
+      try { await callback(); } finally { button.disabled = false; }
+    }
+
     function renderCard() {
       if (!draft.currentCard) return;
       const c = draft.currentCard;
@@ -64,6 +116,8 @@
         ${cardPlayersRefHtml()}
         <div class="card-actions">
           ${recipientControls}
+          ${roleControls(c, selectHtml)}
+          <p id="card-preview" class="card-preview" aria-live="polite"></p>
           <div class="card-buttons">
             <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
             <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_reward')}</button>
@@ -75,6 +129,15 @@
         draft.currentCard = drawFromDeck(draft.currentDeckKey);
         renderCard();
       });
+      if (c.extraReward?.role === 'participants') {
+        $('#card-recipient').addEventListener('change', () => {
+          $$('.card-participant', $('#card-foot')).forEach(input => {
+            input.disabled = input.value === $('#card-recipient').value;
+            if (input.disabled) input.checked = false;
+          });
+        });
+      }
+      bindPreview(c);
       $('#card-apply').addEventListener('click', () => {
         const pid = $('#card-recipient').value;
         if (!pid) { toast(t('messages.select_player')); return; }
@@ -82,9 +145,13 @@
           const pid2 = $('#card-recipient2').value;
           if (!pid2) { toast(t('messages.select_prev_player')); return; }
           if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
-          applyCardReward([pid, pid2], draft.currentCard);
+          submitCard(() => applyCardReward([pid, pid2], draft.currentCard));
         } else {
-          applyCardReward(pid, draft.currentCard);
+          const extraIds = c.extraReward?.role === 'answerer' ? [$('#card-answerer').value] :
+            c.extraReward?.role === 'participants' ? $$('.card-participant', $('#card-foot')).filter(input => input.checked).map(input => input.value) : [];
+          if (extraIds.includes('')) { toast(t('card.select_answerer')); return; }
+          if (extraIds.includes(pid)) { toast(t('messages.same_player_error')); return; }
+          submitCard(() => applyCardReward(pid, draft.currentCard, extraIds));
         }
       });
     }
@@ -115,6 +182,7 @@
           <h3 class="card-name">${escapeHtml(c.name)}</h3>
           <p class="card-desc">${escapeHtml(c.desc)}</p>
           ${sideLineHtml(c)}
+          ${extraRewardHtml(c)}
           ${rewardLineHtml(c)}
         </div>
       `;
@@ -134,6 +202,7 @@
             <p class="card-section-text">${escapeHtml(c.insight)}</p>
           </div>
           ${sideLineHtml(c)}
+          ${extraRewardHtml(c)}
           ${rewardLineHtml(c)}
         </div>
       `;
@@ -143,7 +212,10 @@
       const { each, civAll } = choiceEffects(opt);
       const parts = [];
       const eachTxt = describeReward(each);
-      if (eachTxt) parts.push((card.both ? t('card.each_prefix') : '') + eachTxt);
+      if (eachTxt) parts.push(((opt.both ?? card.both) ? t('card.each_prefix') : '') + eachTxt);
+      if (opt.actor) parts.push(t('card.actor_effect', { reward: describeReward(scaleReward(opt.actor, scoreMultiplier())) }));
+      if (opt.civAllExclude === 'actor') parts.push(t('card.except_actor'));
+      if (opt.availableWhen) parts.push(t('card.condition', { op: opt.availableWhen.civGte === undefined ? '<' : '≥', threshold: opt.availableWhen.civGte ?? opt.availableWhen.civLt }));
       if (civAll) parts.push(t('card.collective_civ', { delta: (civAll > 0 ? '+' : '') + civAll }));
       return parts.length ? parts.join('　·　') : t('card.no_score_change');
     }
@@ -152,19 +224,16 @@
       const mult = scoreMultiplier();
       const label = c.type === 'boost' ? (c.series || t('card.title_boost')) : (c.category || t('card.title_action'));
 
-      // 條件卡：適用分支由當前集體文明自動鎖定。
-      let forced = null, condHtml = '';
-      if (c.conditional && Number.isFinite(c.conditional.civGte)) {
-        const total = totalCiv();
-        const met = total >= c.conditional.civGte;
-        forced = met ? 0 : 1;
-        draft.currentChoiceOpt = forced;
-        condHtml = `<p class="dilemma-cond">${t('card.dilemma_cond_civ', { total, threshold: c.conditional.civGte, op: met ? '≥ ' : '< ' })}</p>`;
-      }
+      const total = totalCiv();
+      const available = c.options.map((_, index) => index).filter(index => optionAvailable(c, index, total));
+      if (!available.includes(draft.currentChoiceOpt)) draft.currentChoiceOpt = null;
+      if (available.length === 1) draft.currentChoiceOpt = available[0];
+      const condHtml = c.conditional || c.options.some(opt => opt.availableWhen)
+        ? `<p class="dilemma-cond">${t('card.current_civ', { total })}</p>` : '';
 
       const optionsHtml = (c.options || []).map((opt, i) => {
         const selected = draft.currentChoiceOpt === i;
-        const disabled = forced !== null && forced !== i;
+        const disabled = !available.includes(i);
         return `
           <button type="button" class="dilemma-opt${selected ? ' selected' : ''}${disabled ? ' disabled' : ''}"
                   data-opt="${i}" ${disabled ? 'disabled' : ''}>
@@ -186,7 +255,7 @@
           ${condHtml}
           <div class="dilemma-options">${optionsHtml}</div>
           ${sprintHtml}
-          <p class="dilemma-note">標示「全體文明」的增減會套用到場上每一位玩家的文明。</p>
+          <p class="dilemma-note">${t('card.table_note')}</p>
         </div>
       `;
 
@@ -208,6 +277,7 @@
         ${cardPlayersRefHtml()}
         <div class="card-actions">
           ${recipientControls}
+          <p id="card-preview" class="card-preview" aria-live="polite"></p>
           <div class="card-buttons">
             <button class="btn btn-ghost" id="card-redraw">${t('card.btn_redraw')}</button>
             <button class="btn btn-primary" id="card-apply">${t('card.btn_apply_dilemma')}</button>
@@ -229,17 +299,34 @@
         draft.currentChoiceOpt = null;
         renderCard();
       });
+      const syncPartner = () => {
+        if (!c.both) return;
+        const select = $('#card-recipient2');
+        const needed = draft.currentChoiceOpt == null || (c.options[draft.currentChoiceOpt].both ?? c.both);
+        select.disabled = !needed;
+        const row = select.closest?.('label');
+        if (row) row.hidden = !needed;
+      };
+      $$('.dilemma-opt', $('#card-body')).forEach(btn => btn.addEventListener('click', syncPartner));
+      syncPartner();
+      bindPreview(c, true);
+      $$('.dilemma-opt', $('#card-body')).forEach(btn => btn.addEventListener('click', () => updatePreview(c, true)));
       $('#card-apply').addEventListener('click', () => {
         if (draft.currentChoiceOpt == null) { toast(t('messages.select_choice')); return; }
         const pid = $('#card-recipient').value;
         if (!pid) { toast(t('messages.select_player')); return; }
-        if (c.both) {
+        if (!optionAvailable(c, draft.currentChoiceOpt, totalCiv())) {
+          toast(t('card.invalid_selection'));
+          renderChoiceCard(c);
+          return;
+        }
+        if (c.options[draft.currentChoiceOpt].both ?? c.both) {
           const pid2 = $('#card-recipient2').value;
           if (!pid2) { toast(t('messages.select_target')); return; }
           if (pid2 === pid) { toast(t('messages.same_player_error')); return; }
-          applyChoiceCard([pid, pid2], c, draft.currentChoiceOpt);
+          submitCard(() => applyChoiceCard([pid, pid2], c, draft.currentChoiceOpt));
         } else {
-          applyChoiceCard([pid], c, draft.currentChoiceOpt);
+          submitCard(() => applyChoiceCard([pid], c, draft.currentChoiceOpt));
         }
       });
     }
@@ -294,6 +381,7 @@
             <span class="cc-reward">${escapeHtml(rewardText)}</span>
           </header>
           <p class="cc-desc">${escapeHtml(c.desc)}</p>
+          ${extraRewardHtml(c)}
           ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
         </article>
       `;
@@ -303,8 +391,11 @@
       const opts = (c.options || []).map(o => {
         const parts = [];
         const eachTxt = describeReward(o.each || {});
-        if (eachTxt) parts.push((c.both ? '雙方各　' : '') + eachTxt);
-        if (o.civAll) parts.push(`全體文明 ${o.civAll > 0 ? '+' : ''}${o.civAll}`);
+        if (eachTxt) parts.push(((o.both ?? c.both) ? t('card.each_prefix') : '') + eachTxt);
+        if (o.actor) parts.push(t('card.actor_effect', { reward: describeReward(o.actor) }));
+        if (o.civAllExclude === 'actor') parts.push(t('card.except_actor'));
+        if (o.availableWhen) parts.push(t('card.condition', { op: o.availableWhen.civGte === undefined ? '<' : '≥', threshold: o.availableWhen.civGte ?? o.availableWhen.civLt }));
+        if (o.civAll) parts.push(t('card.collective_civ', { delta: (o.civAll > 0 ? '+' : '') + o.civAll }));
         const fx = parts.length ? parts.join('　·　') : t('card.no_score_change');
         return `
           <div class="cc-opt">
@@ -335,6 +426,7 @@
           </header>
           <p class="cc-line"><span class="cc-section-label">${t('card.lbl_instant_action')}</span>${escapeHtml(c.action)}</p>
           <p class="cc-line"><span class="cc-section-label">${t('card.lbl_insight')}</span>${escapeHtml(c.insight)}</p>
+          ${extraRewardHtml(c)}
           ${c.side ? `<p class="cc-side">附加：${escapeHtml(c.side)}</p>` : ''}
         </article>
       `;

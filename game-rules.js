@@ -3,6 +3,45 @@
   const CONFIG = typeof module === 'object' && module.exports ? require('./config.js') : GAME_CONFIG;
   const STATS = ['fortune', 'wisdom', 'civ'];
 
+  // Card effects stay data driven; old two-branch conditional cards remain supported.
+  function cardOptionAvailable(card, index, totalCiv) {
+    const option = card.options?.[index];
+    if (!option) return false;
+    if (card.conditional && index !== (totalCiv >= card.conditional.civGte ? 0 : 1)) return false;
+    const condition = option.availableWhen;
+    return !condition || (condition.civGte === undefined || totalCiv >= condition.civGte) &&
+      (condition.civLt === undefined || totalCiv < condition.civLt);
+  }
+
+  function planCardOperations(players, card, ids, { optionIndex, extraIds = [], multipliers = {} } = {}) {
+    const invalid = () => { throw new Error('card.invalid_selection'); };
+    const validIds = new Set(players.map(p => p.id));
+    if (!ids.length || new Set(ids).size !== ids.length || ids.some(id => !validIds.has(id))) invalid();
+    const option = card.options?.[optionIndex];
+    if (card.options && !cardOptionAvailable(card, optionIndex, players.reduce((sum, p) => sum + p.civ, 0))) invalid();
+    const both = option?.both ?? card.both;
+    // The public scoring API historically also accepts arrays without a both flag.
+    if (both !== undefined && ids.length !== (both ? 2 : 1)) invalid();
+    if (card.extraReward && ids.length !== 1) invalid();
+    const operations = [];
+    const add = (id, reward) => operations.push({ playerId: id, delta: Object.fromEntries(
+      Object.entries(reward || {}).map(([stat, amount]) => [stat, applyMultiplier(amount, stat, multipliers[id] || { gain: 1, loss: 1 })])) });
+    if (option) {
+      ids.forEach(id => add(id, option.each));
+      if (option.actor) add(ids[0], option.actor);
+      if (option.civAll) players.filter(p => option.civAllExclude !== 'actor' || p.id !== ids[0])
+        .forEach(p => operations.push({ playerId: p.id, delta: { civ: option.civAll } }));
+    } else {
+      ids.forEach(id => add(id, card.reward));
+      if (card.extraReward) {
+        if (new Set(extraIds).size !== extraIds.length || extraIds.some(id => !validIds.has(id) || ids.includes(id))) invalid();
+        if (card.extraReward.role === 'answerer' && extraIds.length !== 1) invalid();
+        extraIds.forEach(id => add(id, card.extraReward.reward));
+      } else if (extraIds.length) invalid();
+    }
+    return operations;
+  }
+
   function gameMinutes(count, config = CONFIG) {
     return config.TIME.BASE_MINUTES + Math.max(0, count - config.TIME.BASE_PLAYERS) * config.TIME.EXTRA_PLAYER_MINUTES;
   }
@@ -194,7 +233,7 @@
     return { investments, operations, events };
   }
 
-  const rules = { canTrade, planExchangePurchase, planInvestmentActivation, evaluateInvestmentGrowth, closeInvestments,
+  const rules = { cardOptionAvailable, planCardOperations, canTrade, planExchangePurchase, planInvestmentActivation, evaluateInvestmentGrowth, closeInvestments,
     calculateScoreBatch, evaluatePlayerProgress, evaluateGameStatus, applyMultiplier, qualifyingReliefStats,
     gameMinutes, expectedCiv, judgeWeather, weatherUpgradeTarget, weatherPhase };
   if (typeof module === 'object' && module.exports) module.exports = rules;
