@@ -1169,3 +1169,11 @@ input[type="number"], input[type="text"], select { font-size: 16px; }
 .exchange-notice { color: #855722; }
 .exchange-investments { padding-left: 20px; line-height: 1.8; overflow-wrap: anywhere; }
 .exchange-investments li { margin-bottom: 8px; }
+
+/* Card roles and per-player score preview. */
+.card-participants { border: 1px solid var(--border, #d4d4d4); border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; gap: 12px; }
+.card-participants label { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.card-participants input { width: 20px; height: 20px; }
+.card-preview { font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
+.card-preview:empty { display: none; }
+.card-actions .row[hidden] { display: none; }

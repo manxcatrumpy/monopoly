@@ -1,157 +1,856 @@
 {
   "actionDeck": {
-    "Merit Card": {
-      "reward": { "fortune": 10, "wisdom": 10 },
-      "rewardText": "Fortune +10 · Wisdom +10",
-      "cards": [
-        { "name": "Share good things", "desc": "You proactively shared something beneficial, brightening others' day." },
-        { "name": "Praise someone", "desc": "You offered genuine praise, warming someone's heart." },
-        { "name": "Give up a seat", "desc": "You gave up your seat on public transit, spreading kindness." },
-        { "name": "Donate invoices", "desc": "You donated winning invoices to charity." },
-        { "name": "Recycle", "desc": "You diligently sorted recycling, caring for the earth." },
-        { "name": "Help a colleague", "desc": "You helped a colleague resolve a tough issue, earning gratitude." },
-        { "name": "Vegetarian meal", "desc": "You enjoyed a vegetarian meal, reducing carbon footprint." },
-        { "name": "Volunteer", "desc": "You volunteered at a local community center." },
-        { "name": "Pick up trash", "desc": "You picked up litter in the park." }
-      ]
-    },
-    "Impermanence Card": {
-      "reward": { "fortune": -5, "wisdom": 5 },
-      "rewardText": "Fortune -5 · Wisdom +5",
-      "cards": [
-        { "name": "Missed the bus", "desc": "You were late for an important meeting." },
-        { "name": "Lost wallet", "desc": "You lost your wallet, feeling anxious." },
-        { "name": "Phone broke", "desc": "Your phone suddenly died, causing inconvenience." },
-        { "name": "Sudden rain", "desc": "You got caught in a downpour without an umbrella." },
-        { "name": "Misunderstanding", "desc": "You had a misunderstanding with a friend, causing sadness." }
-      ]
-    },
-    "Fate Card": {
+    "Fortune and Wisdom": {
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 2
+      },
+      "rewardText": "Fortune +2 · Wisdom +2 · Civilization +2",
       "cards": [
         {
-          "name": "Unexpected Bonus",
-          "desc": "You received an unexpected bonus at work.",
-          "reward": { "fortune": 15 },
-          "rewardText": "Fortune +15"
+          "name": "Sincere Listening",
+          "desc": "Ask the player with the lowest fortune to share something happy. Listen attentively without interrupting. Caring for others builds fortune; resisting the urge to interrupt develops wisdom."
         },
         {
-          "name": "Read a good book",
-          "desc": "You read an inspiring book that opened your mind.",
-          "reward": { "wisdom": 15 },
-          "rewardText": "Wisdom +15"
+          "name": "Passing on Experience",
+          "desc": "Share a mistake you learned from and what it taught you. Learning from a fall builds wisdom; helping others avoid it shares fortune."
         },
         {
-          "name": "Traffic fine",
-          "desc": "You received a speeding ticket.",
-          "reward": { "fortune": -10 },
-          "rewardText": "Fortune -10"
+          "name": "Challenging Assumptions",
+          "desc": "Share a belief you once held strongly but later discovered was wrong. Recognizing our limits builds wisdom; embracing differences creates good relationships."
         },
         {
-          "name": "Impulsive purchase",
-          "desc": "You bought something you didn't need on impulse.",
-          "reward": { "wisdom": -10 },
-          "rewardText": "Wisdom -10"
+          "name": "Emotional Awareness",
+          "desc": "Describe a recent frustrating moment and how you processed it. Accepting emotions builds wisdom; preventing them from spreading protects fortune."
         },
         {
-          "name": "Meditate",
-          "desc": "You meditated for 20 minutes, finding inner peace.",
-          "reward": { "fortune": 5, "wisdom": 10 },
-          "rewardText": "Fortune +5 · Wisdom +10"
+          "name": "Moving through Emotions",
+          "desc": "Lead the table through your personal emotional first aid method, such as drinking warm water, washing your face, or scrubbing a toilet. Finding calm develops wisdom; sharing calm builds fortune."
         },
         {
-          "name": "Argument",
-          "desc": "You argued with a family member over a trivial matter.",
-          "reward": { "fortune": -5, "wisdom": -5 },
-          "rewardText": "Fortune -5 · Wisdom -5"
+          "name": "Warm Encouragement",
+          "desc": "Sincerely praise and encourage a player who is behind or has just lost points. Thoughtful support develops wisdom and fortune."
+        },
+        {
+          "name": "Everyday Ingenuity",
+          "desc": "Share how you repurposed something old or extended its useful life. Resourcefulness builds wisdom; caring for possessions preserves fortune."
+        },
+        {
+          "name": "Making Room",
+          "desc": "Declare: “Next round I will give up my dice roll to the player on my left!” Generosity builds fortune and wisdom."
+        },
+        {
+          "name": "Learning across Fields",
+          "desc": "Ask any other player a question you want answered. Give them one minute to explain.",
+          "extraReward": {
+            "role": "answerer",
+            "reward": {
+              "civ": 1
+            }
+          }
+        },
+        {
+          "name": "Noticing Quiet Kindness",
+          "desc": "Think of a place on your daily route. Describe someone whose quiet contribution others may miss, such as a shop worker neatly lining up carts. Noticing and naming kindness grows wisdom, fortune, and civilization."
+        },
+        {
+          "name": "Spotlight on Strengths",
+          "desc": "Name a quality or habit you admire in your parent or child. Recognizing strengths builds wisdom; sincere praise creates trust and civilization."
         }
       ]
     },
-    "Action Card": {
+    "Fortune Focus": {
+      "reward": {
+        "fortune": 3,
+        "wisdom": 0,
+        "civ": 1
+      },
+      "rewardText": "Fortune +3 · Civilization +1",
       "cards": [
         {
-          "name": "Take a deep breath",
-          "desc": "Take 3 deep breaths and relax your shoulders.",
-          "reward": { "wisdom": 5 },
-          "rewardText": "Wisdom +5"
+          "name": "A Small Kindness",
+          "desc": "Promise a small act of kindness within 24 hours after the game and seal it with a high five. Turn goodwill into action."
         },
         {
-          "name": "Compliment the player on your left",
-          "desc": "Say one nice thing about the player on your left.",
-          "reward": { "fortune": 5 },
-          "rewardText": "Fortune +5"
+          "name": "Giving Freely",
+          "desc": "Give 2 of your own fortune to the player with the least fortune. Overcoming scarcity develops wisdom; lifting others up builds fortune."
         },
         {
-          "name": "Stretch",
-          "desc": "Stand up and stretch for 10 seconds.",
-          "reward": { "fortune": 2, "wisdom": 2 },
-          "rewardText": "Fortune +2 · Wisdom +2"
+          "name": "Taking Responsibility",
+          "desc": "Volunteer for a cleanup task after this gathering. Notice what others need and act on it."
         },
         {
-          "name": "Share a gratitude",
-          "desc": "Share one thing you are grateful for today.",
-          "reward": { "fortune": 5, "wisdom": 5 },
-          "rewardText": "Fortune +5 · Wisdom +5"
+          "name": "Helping Others Shine",
+          "desc": "Share a time you let someone else take the spotlight or receive recognition. Generosity develops wisdom and fortune."
+        },
+        {
+          "name": "Grateful Connection",
+          "desc": "Send a caring message to a family member you have not contacted recently. Alternatively, contact a close friend who feels like family. Genuine care creates connection and fortune."
+        },
+        {
+          "name": "Random Acts of Sharing",
+          "desc": "Pick a photo on your phone and tell its story. Sincere sharing creates connections, good relationships, and fortune.",
+          "reward": {
+            "fortune": 2
+          },
+          "rewardText": "Fortune +2"
+        }
+      ]
+    },
+    "Shared Progress": {
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 2
+      },
+      "rewardText": "Fortune +2 · Wisdom +2 · Civilization +2",
+      "cards": [
+        {
+          "name": "A Proposal for Everyone",
+          "desc": "Suggest a small improvement, such as adjusting the lighting, changing seats, or agreeing to put phones away. Put it into practice if at least half the table agrees. A better shared environment builds fortune and wisdom."
+        },
+        {
+          "name": "Standing with the Disadvantaged",
+          "desc": "Ally with the player with the lowest total score so they also receive your next fortune and wisdom gain. Empathy and generosity help civilization grow."
+        },
+        {
+          "name": "Open Knowledge",
+          "desc": "Explain a useful tool, method, or app that improves efficiency, quality, or wellbeing. Sharing useful knowledge builds wisdom and fortune."
+        },
+        {
+          "name": "Learning across Generations",
+          "desc": "Share a valuable lesson learned from someone of a different age or field. Humility develops wisdom; appreciation builds fortune."
+        },
+        {
+          "name": "An Environmental Pledge",
+          "desc": "Propose an environmental action you can take now, such as carrying a reusable cup or raising the air conditioner setting by one degree. Seeing our connections develops wisdom; caring for the environment preserves fortune.",
+          "side": "The first player to join receives Fortune +1."
+        }
+      ]
+    },
+    "Wisdom Focus": {
+      "reward": {
+        "fortune": 1,
+        "wisdom": 3,
+        "civ": 2
+      },
+      "rewardText": "Fortune +1 · Wisdom +3 · Civilization +2",
+      "cards": [
+        {
+          "name": "Accepting Change",
+          "desc": "Share a time plans fell apart and you quickly let go and adapted without complaint. Flexibility develops wisdom and preserves fortune."
+        },
+        {
+          "name": "Looking Inward",
+          "desc": "Describe a conflict in which you realized you also bore responsibility. Reflection develops wisdom and helps preserve goodwill."
+        },
+        {
+          "name": "Words to Live By",
+          "desc": "Share an encouraging quotation or something powerful you recently heard. Learning from others builds wisdom; passing it on shares fortune."
+        },
+        {
+          "name": "Reviewing the Game",
+          "desc": "Objectively analyze the current game and suggest how everyone could achieve a higher combined score. Completion adds 1 civilization to the category reward.",
+          "reward": {
+            "fortune": 1,
+            "wisdom": 3,
+            "civ": 3
+          },
+          "rewardText": "Fortune +1 · Wisdom +3 · Civilization +3"
+        },
+        {
+          "name": "Anchoring Attention",
+          "desc": "Lead the table to close their eyes and remain completely silent for 10 seconds. Ask everyone to distinguish three sounds in the environment.",
+          "extraReward": {
+            "role": "participants",
+            "reward": {
+              "wisdom": 1
+            }
+          }
+        }
+      ]
+    },
+    "Harmonious Relationships": {
+      "reward": {
+        "fortune": 3,
+        "wisdom": 3,
+        "civ": 1
+      },
+      "rewardText": "Fortune +3 · Wisdom +3 · Civilization +1",
+      "cards": [
+        {
+          "name": "Gentle Boundaries",
+          "desc": "Share a family conflict in which you stayed calm and avoided hurtful words. Alternatively, rehearse a gentle refusal of an unreasonable request from an elder. Care and clear boundaries build wisdom and fortune."
+        },
+        {
+          "name": "Staying Clear of Gossip",
+          "desc": "Share how you stayed neutral around workplace gossip or complaints. Alternatively, describe how you protect your energy in a group full of complaints. Awareness and restraint preserve fortune."
+        },
+        {
+          "name": "Seeing Another Perspective",
+          "desc": "Share a moment you understood a parent’s or elder’s difficulties. Alternatively, explain a family disagreement from their generation’s perspective for one minute. Understanding differences builds wisdom and harmony."
+        },
+        {
+          "name": "Grace under Pressure",
+          "desc": "Share how you calmly handled unfair treatment or someone taking credit at work or school. Alternatively, take a breath and share a phrase that helps you reframe injustice. Composure builds wisdom and fortune."
+        },
+        {
+          "name": "The Bad Luck Reframing Contest",
+          "desc": "Ask the table for an everyday mishap, such as rain after washing a car or an item selling out just before your turn. Invent an absurd but positive explanation: perhaps the sky thought the car still needed rinsing! Reframing builds wisdom; humor eases shared anxiety and strengthens civilization."
+        },
+        {
+          "name": "Endearing Quirks",
+          "desc": "Share a small quirk of a partner, relative, or close friend that can be exasperating but also feels real and endearing. Letting go of the urge to change others builds wisdom; acceptance brings harmonious fortune."
+        }
+      ]
+    },
+    "Civilization Consequences": {
+      "reward": {
+        "fortune": 0,
+        "wisdom": 0,
+        "civ": 0
+      },
+      "rewardText": "",
+      "cards": [
+        {
+          "name": "The Anonymous Dishes",
+          "scene": "You leave used dishes in the sink for someone kind to wash.",
+          "options": [
+            {
+              "label": "Leave them for someone else",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Wash the accumulated cups too",
+              "each": {
+                "fortune": -2,
+                "wisdom": 1,
+                "civ": 1
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            }
+          ]
+        },
+        {
+          "name": "Read and Ignored",
+          "scene": "You see an important question from a supervisor or family member but pretend not to notice because answering takes effort.",
+          "options": [
+            {
+              "label": "Pretend not to notice",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Reply promptly and offer useful help",
+              "each": {
+                "fortune": -1,
+                "wisdom": -2
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            }
+          ]
+        },
+        {
+          "name": "The Righteous Critic",
+          "scene": "You publicly point out a colleague’s mistake without considering their dignity.",
+          "options": [
+            {
+              "label": "Publicly shame the colleague",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Discuss it privately and preserve their dignity",
+              "each": {
+                "wisdom": -2
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            }
+          ]
+        },
+        {
+          "name": "Oops, Left It On",
+          "scene": "In a rush, you forget to turn off the air conditioner and all the lights.",
+          "options": [
+            {
+              "label": "Leave directly",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Return, turn everything off, and make amends; only you avoid the civilization loss",
+              "each": {
+                "fortune": -2,
+                "wisdom": -1
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group.",
+              "civAll": -1,
+              "civAllExclude": "actor"
+            }
+          ]
+        },
+        {
+          "name": "The Trash Tower",
+          "scene": "The shared bin is overflowing, but you balance your rubbish on top.",
+          "options": [
+            {
+              "label": "Pile it on and leave",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Empty the bin and promise to minimize your rubbish",
+              "each": {
+                "fortune": -1,
+                "civ": 1
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            }
+          ]
+        },
+        {
+          "name": "The Fridge Landlord",
+          "scene": "Your purchases occupy the shared fridge and often expire, wasting food, energy, and space.",
+          "options": [
+            {
+              "label": "Keep hoarding until it expires",
+              "each": {
+                "fortune": -2
+              },
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Admit it to the group and promise to replace a bottle, easing the awkwardness with humor",
+              "each": {
+                "wisdom": -1
+              },
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            }
+          ]
+        },
+        {
+          "name": "Maybe Next Time",
+          "scene": "You do not want to attend an invitation but keep saying “I will see” or “next time” to avoid refusing, leaving the organizer waiting.",
+          "options": [
+            {
+              "label": "Keep giving vague replies",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Rehearse a gentle but clear refusal with a partner; only you avoid the civilization loss",
+              "each": {
+                "wisdom": -2
+              },
+              "civAll": -1,
+              "civAllExclude": "actor",
+              "insight": "Spend Wisdom -2 and practice a gentle but clear refusal with a partner: “I want to keep this week for myself. I would be happy to join another time.” Transparent communication exempts only you from the civilization loss."
+            }
+          ]
+        },
+        {
+          "name": "The Invisible Space Hog",
+          "scene": "In a crowded cafe or on public transport, your bag occupies the next seat. You ignore people looking for space unless they ask.",
+          "options": [
+            {
+              "label": "Keep occupying the seat",
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Promise to put your bag on your lap or the floor when seated; only you avoid the civilization loss",
+              "each": {
+                "fortune": -1,
+                "wisdom": -1
+              },
+              "civAll": -1,
+              "civAllExclude": "actor",
+              "insight": "Spend Fortune -1 and Wisdom -1. Promise to move your bag to your lap or the floor as soon as you sit down. Awareness and action restore shared space; only you avoid the civilization loss."
+            }
+          ]
+        },
+        {
+          "name": "The Emotional Garbage Truck",
+          "both": true,
+          "scene": "A group conversation is filling with complaints and gossip, and the atmosphere is becoming increasingly negative.",
+          "options": [
+            {
+              "label": "Join in the complaints",
+              "each": {
+                "fortune": -1
+              },
+              "civAll": -1,
+              "insight": "Every choice shapes the trust and wellbeing of the group."
+            },
+            {
+              "label": "Successfully redirect the conversation to a positive or neutral subject",
+              "both": false,
+              "actor": {
+                "wisdom": -1
+              },
+              "civAll": 1,
+              "insight": "Successfully guide the conversation to a positive or neutral topic. Only the actor spends Wisdom -1; every player gains Civilization +1."
+            }
+          ]
         }
       ]
     }
   },
   "boostDeck": [
     {
-      "name": "Collaborative Brainstorming",
-      "action": "Select a player. Both of you share an idea to improve the game.",
-      "insight": "Wisdom grows through sharing.",
-      "reward": { "fortune": 5, "wisdom": 10 },
-      "rewardText": "Both: Fortune +5 · Wisdom +10",
-      "dual": true
+      "name": "An Energy Stop",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 0,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +1 · Civilization +1",
+      "both": true,
+      "action": "High five your partner and say, “You are amazing!”",
+      "insight": "Encouraging others also recharges you."
     },
     {
-      "name": "Mutual Encouragement",
-      "action": "Select a player. Exchange words of encouragement.",
-      "insight": "Supporting others brings good fortune.",
-      "reward": { "fortune": 15 },
-      "rewardText": "Both: Fortune +15",
-      "dual": true
+      "name": "A Small Service",
+      "reward": {
+        "fortune": 3,
+        "wisdom": 0,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +3",
+      "both": true,
+      "action": "Do a small service for your partner: pour water, pass a tissue, or tidy their space.",
+      "insight": "Turn care into action."
     },
     {
-      "name": "Civic Contribution",
-      "action": "Propose a rule that benefits everyone.",
-      "insight": "Great civilizations are built on collective well-being.",
-      "reward": { "civ": 2 },
-      "rewardText": "Civ +2 (Self)"
-    }
-  ],
-  "choiceCards": [
+      "name": "A Silent Blessing",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 1,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +1",
+      "both": true,
+      "action": "Offer your partner a sincere, bright smile.",
+      "insight": "Simple goodwill can convey warmth without words."
+    },
     {
-      "group": "Life Crossroads",
-      "name": "Career Choice",
-      "scene": "You receive two job offers. One pays extremely well but requires 80 hours a week and involves borderline unethical practices. The other pays an average salary but is for an NGO helping underprivileged children.",
+      "name": "Sharing Good Fortune",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 0,
+        "civ": 0
+      },
+      "rewardText": "Fortune +2",
+      "action": "Share 1 fortune or wisdom with your partner and say, “This good luck is for you too.”",
+      "insight": "Generosity breaks the sense of scarcity and brings fortune back."
+    },
+    {
+      "name": "Resonating Gratitude",
+      "reward": {
+        "fortune": 3,
+        "wisdom": 2,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +3 · Wisdom +2 · Civilization +1",
+      "both": true,
+      "action": "Take turns sharing a small thing from today for which you are grateful.",
+      "insight": "Gratitude helps create harmony around you."
+    },
+    {
+      "name": "Mindfulness in Sync",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2",
+      "both": true,
+      "action": "Close your eyes together and take three synchronized deep breaths, with you setting the rhythm.",
+      "insight": "Bring attention back to the body and find calm."
+    },
+    {
+      "name": "Recycling Worries",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +2 · Wisdom +2 · Civilization +1",
+      "both": true,
+      "action": "Each share a recent small worry, then laugh three times together to let it go.",
+      "insight": "Humor and reframing strengthen resilience."
+    },
+    {
+      "name": "Practicing Listening",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2",
+      "both": true,
+      "action": "Ask your partner how they feel right now. Look at them and listen with full attention.",
+      "insight": "Real listening means setting aside the urge to advise."
+    },
+    {
+      "name": "Stretching with Awareness",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2",
+      "both": true,
+      "action": "Follow your partner’s simple shoulder or neck stretch for 10 seconds.",
+      "insight": "Notice and care for tension in your body."
+    },
+    {
+      "name": "Declaring an Intention",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Fortune +2 · Wisdom +2",
+      "both": true,
+      "action": "Take turns declaring a small goal to achieve before the game ends, such as smiling more or complaining less.",
+      "insight": "A clear intention starts conscious living."
+    },
+    {
+      "name": "Translating Concern",
+      "reward": {
+        "fortune": 1,
+        "wisdom": 2,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2 · Civilization +1",
+      "both": true,
+      "action": "An elder says, “Still working so late? You never look after yourself!” Together, design a gentle reply that reassures them and protects your boundaries.",
+      "insight": "Recognizing care behind criticism develops wisdom; expressing it warmly builds fortune."
+    },
+    {
+      "name": "A Welcoming Blueprint",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +2 · Wisdom +2 · Civilization +1",
+      "both": true,
+      "action": "A newcomer seems lost. Together, design guidance and companionship that help them feel comfortable and show their strengths.",
+      "insight": "An inclusive environment builds fortune and shared civilization."
+    },
+    {
+      "name": "The Holiday Defense Alliance",
+      "reward": {
+        "fortune": 0,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Wisdom +2",
+      "both": true,
+      "action": "Pick an intrusive question relatives often ask during holidays. Together, invent three gentle but polite replies.",
+      "insight": "Calm responses to difficult relationships develop wisdom."
+    },
+    {
+      "name": "A Teammate to the Rescue",
+      "reward": {
+        "fortune": 0,
+        "wisdom": 2,
+        "civ": 0
+      },
+      "rewardText": "Each: Wisdom +2",
+      "both": true,
+      "action": "You discover a colleague booked the wrong hotel on a business trip. Discuss a clear, constructive response without blame.",
+      "insight": "Accepting reality and offering trust develops wisdom."
+    },
+    {
+      "name": "Pruning Emotions",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "A project disagreement is about to become an argument and damage team cooperation.",
       "options": [
         {
-          "label": "Choose the high-paying corporate job.",
-          "each": { "fortune": 20, "wisdom": -10 },
-          "civAll": -2
+          "label": "Insist on your positions and vent",
+          "each": {
+            "fortune": -1,
+            "wisdom": -1
+          },
+          "civAll": -2,
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
         },
         {
-          "label": "Choose the NGO job.",
-          "each": { "fortune": -5, "wisdom": 20 },
-          "civAll": 3
+          "label": "Pause the conversation and calm down",
+          "each": {
+            "fortune": -1,
+            "wisdom": -3
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
         }
       ]
     },
     {
-      "group": "Ethical Dilemmas",
-      "name": "Found Wallet",
-      "scene": "You find a wallet on the street with $1000 cash and an ID.",
+      "name": "The Workplace Shield",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "The team made a mistake and the supervisor is angry. As two experienced colleagues, decide whether to step forward.",
       "options": [
         {
-          "label": "Take the cash and throw the wallet away.",
-          "each": { "fortune": 20, "wisdom": -20 },
-          "civAll": -5
+          "label": "Leave the newcomer to face it alone",
+          "civAll": -1,
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
         },
         {
-          "label": "Turn it in to the police station immediately.",
-          "each": { "fortune": 5, "wisdom": 15 },
-          "civAll": 2
+          "label": "Step forward together and help absorb the pressure",
+          "each": {
+            "fortune": -1
+          },
+          "civAll": 1,
+          "side": "The newcomer (lowest combined fortune and wisdom) receives Wisdom +1.",
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        }
+      ]
+    },
+    {
+      "name": "Stopping a Rumor",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "Gossip about another person’s private life reaches you. Everyone waits for your reaction.",
+      "options": [
+        {
+          "label": "Join the gossip",
+          "civAll": -1,
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        },
+        {
+          "label": "Use humor to change the subject",
+          "each": {
+            "wisdom": -2
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        }
+      ]
+    },
+    {
+      "name": "Making Peace over Chores",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "You are both exhausted and household chores are piling up. Tension rises as each hopes the other will do them.",
+      "options": [
+        {
+          "label": "Argue about who does more",
+          "each": {
+            "fortune": -1
+          },
+          "civAll": -1,
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        },
+        {
+          "label": "Divide the work or order food and relax",
+          "each": {
+            "fortune": -3
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        }
+      ]
+    },
+    {
+      "name": "The Ecological Dividend",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "Your fortunes are linked: the group’s current civilization determines whether kindness can flourish here.",
+      "options": [
+        {
+          "label": "Civilization ≥ 20: a warm, trusting environment",
+          "each": {
+            "fortune": 2
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment.",
+          "availableWhen": {
+            "civGte": 20
+          }
+        },
+        {
+          "label": "Civilization < 20 — A: go along with the indifference",
+          "each": {
+            "fortune": -1,
+            "wisdom": -1
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment.",
+          "availableWhen": {
+            "civLt": 20
+          }
+        },
+        {
+          "label": "Civilization < 20 — B: start a small act of light",
+          "each": {
+            "fortune": -2
+          },
+          "civAll": 1,
+          "availableWhen": {
+            "civLt": 20
+          },
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        }
+      ]
+    },
+    {
+      "name": "Cross-Team Firefighters",
+      "series": "Civilization Reflection",
+      "both": true,
+      "scene": "Another department asks for help. Their delay is not part of your targets, and helping will use your break time.",
+      "options": [
+        {
+          "label": "Politely decline and preserve your resources",
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        },
+        {
+          "label": "Use your break to help them find a way forward",
+          "each": {
+            "fortune": -2,
+            "wisdom": -2
+          },
+          "civAll": 1,
+          "insight": "Personal choices shape the trust and resilience of the shared environment."
+        }
+      ]
+    },
+    {
+      "name": "A Thoughtful Shared Meal",
+      "both": true,
+      "action": "You are ordering food together. Some people avoid meat, some have egg or dairy allergies, and others are vegan. Discuss how to order and communicate so everyone feels cared for without making anyone feel like a burden.",
+      "insight": "Respecting different choices develops wisdom; attentive care builds fortune and civilization.",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 2
+      },
+      "rewardText": "Each: Fortune +2 · Wisdom +2 · Civilization +2"
+    },
+    {
+      "name": "Humor to the Rescue",
+      "both": true,
+      "action": "Share a recent embarrassing mistake, such as forgetting your keys or spilling water in public. Take turns offering a self-deprecating line that instantly eases the awkwardness.",
+      "insight": "Accepting imperfection and reframing builds wisdom; shared laughter brings fortune.",
+      "reward": {
+        "fortune": 2,
+        "wisdom": 2,
+        "civ": 2
+      },
+      "rewardText": "Each: Fortune +2 · Wisdom +2 · Civilization +2"
+    },
+    {
+      "name": "Translating the Warmth of Text",
+      "both": true,
+      "action": "Choose a cold message you dread receiving, such as “Oh,” “Whatever,” or “Anything.” Together, invent two warmer replies that keep goodwill flowing, and share them with the table.",
+      "insight": "Recognizing emotional blind spots develops wisdom; warmer language reduces friction and builds civilization.",
+      "reward": {
+        "wisdom": 3,
+        "civ": 1
+      },
+      "rewardText": "Each: Wisdom +3 · Civilization +1"
+    },
+    {
+      "name": "The Five-Second Start",
+      "both": true,
+      "action": "Each name something you keep putting off, such as answering a difficult email or tidying a desk. Help your partner find a first step that takes only five seconds, such as opening the computer or picking up a rubbish bag. Agree to check on each other.",
+      "insight": "Breaking a difficult task into a tiny step develops wisdom and overcomes anxiety.",
+      "reward": {
+        "wisdom": 3,
+        "civ": 1
+      },
+      "rewardText": "Each: Wisdom +3 · Civilization +1"
+    },
+    {
+      "name": "Breaking Self-Doubt",
+      "both": true,
+      "action": "Share a harsh phrase you often tell yourself, such as “I am useless.” Ask your partner to rewrite it with a growth mindset, such as “I am still learning how to do this well,” then read it aloud.",
+      "insight": "Recognizing inner criticism develops wisdom; kind language creates a more accepting civilization.",
+      "reward": {
+        "wisdom": 3,
+        "civ": 1
+      },
+      "rewardText": "Each: Wisdom +3 · Civilization +1"
+    },
+    {
+      "name": "The Perspective Translator",
+      "both": true,
+      "action": "A family member speaks sharply during a disagreement. How could you translate the words into an underlying need? For example, “You never help” might mean “I am tired and need your company.”",
+      "insight": "Seeing vulnerability behind anger develops wisdom and makes room for compassion.",
+      "reward": {
+        "wisdom": 2,
+        "fortune": 1,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2 · Civilization +1"
+    },
+    {
+      "name": "Guarding Digital Boundaries",
+      "both": true,
+      "action": "Discuss the digital habits that consume your time without your noticing. Agree on a small boundary you can practice within 24 hours, such as leaving your phone outside the bedroom for the last half hour before sleep. Seal it with a high five.",
+      "insight": "Awareness develops wisdom; protecting rest builds fortune; resisting constant availability protects civilization.",
+      "reward": {
+        "wisdom": 2,
+        "fortune": 1,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2 · Civilization +1"
+    },
+    {
+      "name": "Redeeming the Fridge and Wardrobe",
+      "both": true,
+      "action": "Admit to an impulse purchase left unused: expired food or clothing with the tag still attached. Together, find a way to put it to useful work.",
+      "insight": "Recognizing consumption habits builds wisdom; putting resources back into circulation builds fortune and reduces waste.",
+      "reward": {
+        "wisdom": 2,
+        "fortune": 1,
+        "civ": 1
+      },
+      "rewardText": "Each: Fortune +1 · Wisdom +2 · Civilization +1"
+    },
+    {
+      "name": "Taking Care for Granted",
+      "both": true,
+      "series": "Civilization Reflection",
+      "scene": "A daily shared chore, such as taking out the rubbish or ordering lunch, always falls to the same agreeable person because you both pretend to be busy.",
+      "options": [
+        {
+          "label": "Keep pretending to be busy",
+          "civAll": -1,
+          "insight": "Sharing responsibility and caring for public space sustain civilization."
+        },
+        {
+          "label": "Propose a fair rotation and commit to taking on the task for the next week",
+          "each": {
+            "fortune": -1,
+            "wisdom": -1
+          },
+          "civAll": 2,
+          "insight": "Sharing responsibility and caring for public space sustain civilization."
+        }
+      ]
+    },
+    {
+      "name": "Leaving No Trace",
+      "both": true,
+      "series": "Civilization Reflection",
+      "scene": "After eating at a convenience store or food court, you leave drink spills or food scraps on the table.",
+      "options": [
+        {
+          "label": "Walk away and leave the cleanup to someone else",
+          "civAll": -2,
+          "insight": "Sharing responsibility and caring for public space sustain civilization."
+        },
+        {
+          "label": "Wipe the table and restore it to its original state",
+          "each": {
+            "fortune": -1
+          },
+          "civAll": 1,
+          "insight": "Sharing responsibility and caring for public space sustain civilization."
         }
       ]
     }

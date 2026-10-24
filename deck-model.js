@@ -33,6 +33,13 @@
       if (value[field] !== undefined && typeof value[field] !== 'boolean') fail('boolean', path + '.' + field);
     }
     if (value.reward !== undefined) reward(value.reward, path + '.reward');
+    if (value.extraReward !== undefined) {
+      record(value.extraReward, path + '.extraReward');
+      if (value.both || value.dual) fail('options', path + '.extraReward');
+      if (!['answerer', 'participants'].includes(value.extraReward.role)) fail('text', path + '.extraReward.role');
+      reward(value.extraReward.reward, path + '.extraReward.reward');
+      if (value.options !== undefined) fail('options', path + '.extraReward');
+    }
     if (value.options !== undefined) {
       text(value.scene, path + '.scene');
       if (!Array.isArray(value.options) || value.options.length < 2) fail('options', path + '.options');
@@ -40,6 +47,20 @@
         const optPath = path + '.options[' + index + ']';
         record(option, optPath);
         text(option.label, optPath + '.label', true);
+        if (option.actor !== undefined) reward(option.actor, optPath + '.actor');
+        if (option.both !== undefined && typeof option.both !== 'boolean') fail('boolean', optPath + '.both');
+        if (option.both === true && !(value.both ?? value.dual)) fail('options', optPath + '.both');
+        if (option.civAllExclude !== undefined && option.civAllExclude !== 'actor') fail('text', optPath + '.civAllExclude');
+        if (option.availableWhen !== undefined) {
+          record(option.availableWhen, optPath + '.availableWhen');
+          const entries = Object.entries(option.availableWhen);
+          if (value.conditional != null || entries.length !== 1) fail('conditional', optPath + '.availableWhen');
+          for (const [key, amount] of entries) {
+            if (!['civGte', 'civLt'].includes(key)) fail('conditional', optPath + '.availableWhen');
+            points(amount, optPath + '.availableWhen.' + key);
+            if (amount < 0) fail('conditional', optPath + '.availableWhen.' + key);
+          }
+        }
         if (option.each !== undefined) reward(option.each, optPath + '.each');
         if (option.civAll !== undefined) points(option.civAll, optPath + '.civAll');
         for (const field of ['side', 'insight']) {

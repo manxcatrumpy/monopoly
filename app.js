@@ -1228,9 +1228,9 @@ function drawFromDeck(deckKey) {
 }
 
 // ─────────── 抉擇卡（文明反思／文明扣分）渲染與套用 ───────────
-// 每張卡兩個選項；主持人依玩家實際抉擇點選其一再套用。`each` 套到每位收受者
+// 主持人依玩家實際抉擇點選有效選項再套用。`each` 套到每位收受者
 // （含個人文明 each.civ），`civAll` 為套用到場上所有玩家的文明增減。條件卡（生態紅利）
-// 依當前集體文明自動鎖定分支。衝刺階段所有增減自動 ×2。
+// 依當前集體文明限制分支；福慧依既有倍率計算，文明不受倍率影響。
 
 // 一個選項在目前衝刺倍率下的實際效果。civAll＝套用到「場上所有玩家」的文明增減。
 function choiceEffects(opt, playerId) {
@@ -1240,7 +1240,22 @@ function choiceEffects(opt, playerId) {
 }
 // 套用抉擇：`each`（含個人文明 each.civ）給每位收受者；`civAll` 套用到場上所有玩家的文明。
 // 全部變更合併後夾到零。
-async function applyChoiceCard(playerIds, card, optIdx) {
+// Prevent duplicate card settlements while asynchronous confirmation/relief is open.
+const pendingCardGames = new WeakSet();
+async function settleCardOnce(callback) {
+  const game = state.currentGame;
+  if (pendingCardGames.has(game)) return false;
+  pendingCardGames.add(game);
+  try { await callback(); return true; }
+  catch (error) {
+    if (error.message !== 'card.invalid_selection') throw error;
+    toast(t(error.message)); return false;
+  } finally { pendingCardGames.delete(game); }
+}
+function applyChoiceCard(...args) { return settleCardOnce(() => applyChoiceCardImpl(...args)); }
+function applyCardReward(...args) { return settleCardOnce(() => applyCardRewardImpl(...args)); }
+
+async function applyChoiceCardImpl(playerIds, card, optIdx) {
   const game = state.currentGame;
   const opt = (card.options || [])[optIdx];
   if (!opt) return;
@@ -1248,37 +1263,23 @@ async function applyChoiceCard(playerIds, card, optIdx) {
   const table = choiceEffects(opt);
   const names = [];
   const pending = [];
-  const operations = [];
+  const operations = GameRules.planCardOperations(game.players, card, ids, {
+    optionIndex: optIdx, multipliers: Object.fromEntries(game.players.map(p => [p.id, scoreMultiplier(p.id)]))
+  });
   ids.forEach(pid => {
     const p = getPlayer(pid);
-    if (!p) return;
-    const old = snapshotFw(p);
-    const { each } = choiceEffects(opt, pid);
-    operations.push({ playerId: pid, delta: each });
     names.push(p.name || t('common.player'));
-    pending.push({ pid, old });
+    pending.push({ pid, old: snapshotFw(p) });
   });
-  if (!names.length) return;
-  const civAll = table.civAll;
-  if (civAll) {
-    state.currentGame.players.forEach(p => operations.push({ playerId: p.id, delta: { civ: civAll } }));
-  }
-  let fx = describeChoiceOption(card, opt);
   closeCard();
   const changes = await settleScoreChanges(operations, { source: 'normal' });
   if (!changes) return;
   if (state.currentGame !== game) return;
-  if (changes.shieldedPlayerIds.length) {
-    fx = pending.map(item => {
-      const { each } = choiceEffects(opt, item.pid);
-      if (changes.shieldedPlayerIds.includes(item.pid)) for (const stat of ['fortune', 'wisdom']) if (each[stat] < 0) each[stat] = 0;
-      return getPlayer(item.pid).name + ' ' + (describeReward(each) || t('card.no_score_change'));
-    }).join('、');
-    if (civAll) fx += ' · ' + t('card.collective_civ', { delta: (civAll > 0 ? '+' : '') + civAll });
-  }
+  const fx = changes.map(change => getPlayer(change.playerId).name + ' ' +
+    (describeReward(Object.fromEntries(STATS.map(stat => [stat, change.after[stat] - change.before[stat]]))) || t('card.no_score_change'))).join('、');
   const tag = table.mult.id !== null ? getWeatherLabel(table.mult.id) : '';
   const sideNote = opt.side ? '　※' + t('card.manual_side', { side: opt.side }) : '';
-  const positive = describeReward(table.each).indexOf('-') === -1 && civAll >= 0;
+  const positive = changes.every(change => STATS.every(stat => change.after[stat] >= change.before[stat]));
   const msg = `${names.join('、')}「${card.name}」→ ${opt.label}　${fx}${tag}${sideNote}`;
   toast(msg, positive ? 'grad' : '');
   logEvent(msg, 'milestone');
@@ -1339,22 +1340,24 @@ async function resetDecksToDefault() {
 
 // Apply a card's reward to one player, or — for 「雙方」boost cards — to several
 // at once (each recipient gets the full per-player reward).
-async function applyCardReward(playerIds, card) {
+async function applyCardRewardImpl(playerIds, card, extraIds = []) {
   const game = state.currentGame;
   if (!card) return;
   const ids = Array.isArray(playerIds) ? playerIds : [playerIds];
+  const operations = GameRules.planCardOperations(game.players, card, ids, {
+    extraIds, multipliers: Object.fromEntries(game.players.map(p => [p.id, scoreMultiplier(p.id)]))
+  });
   const applied = [];
-  ids.forEach(pid => {
+  [...ids, ...extraIds].forEach(pid => {
     const p = getPlayer(pid);
-    if (!p) return;
     const old = snapshotFw(p);
     const mult = scoreMultiplier(pid);
-    const r = scaleReward(card.reward || {}, mult);
+    const r = scaleReward(ids.includes(pid) ? card.reward || {} : card.extraReward.reward, mult);
     applied.push({ p, r, mult, old, pid });
   });
   if (!applied.length) return;
   closeCard();
-  const changes = await settleScoreChanges(applied.map(a => ({ playerId: a.pid, delta: a.r })), { source: 'normal' });
+  const changes = await settleScoreChanges(operations, { source: 'normal' });
   if (!changes) return;
   for (const a of applied) if (changes.shieldedPlayerIds.includes(a.pid)) ['fortune', 'wisdom'].forEach(stat => { if (a.r[stat] < 0) a.r[stat] = 0; });
   if (state.currentGame !== game) return;
@@ -1639,7 +1642,6 @@ function closeSetup(...args) { return setupUI.closeSetup(...args); }
 function refreshHistoryButton(...args) { return historyUI.refreshHistoryButton(...args); }
 function closeHistory(...args) { return historyUI.closeHistory(...args); }
 function closeCard(...args) { return cardsUI.closeCard(...args); }
-function describeChoiceOption(...args) { return cardsUI.describeChoiceOption(...args); }
 function renderDeckManager(...args) { return cardsUI.renderDeckManager(...args); }
 function readWeatherAdjustInputs(...args) { return weatherUI.readWeatherAdjustInputs(...args); }
 function openWeatherAdjustModal(...args) { return weatherUI.openWeatherAdjustModal(...args); }
@@ -1725,6 +1727,9 @@ const historyUI = HistoryUI.create({
 });
 
 const cardsUI = CardsUI.create({
+  optionAvailable: (...args) => GameRules.cardOptionAvailable(...args),
+  previewOperations: (card, ids, options) => GameRules.planCardOperations(state.currentGame.players, card, ids,
+    { ...options, multipliers: Object.fromEntries(state.currentGame.players.map(p => [p.id, scoreMultiplier(p.id)])) }),
   getDecks: () => DECKS,
   draft: cardDraft,
   drawFromDeck: (...args) => drawFromDeck(...args),
