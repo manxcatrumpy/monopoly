@@ -26,7 +26,6 @@
   function card(value, path, kind, base) {
     record(value, path);
     text(value.name, path + '.name', true);
-    if (value.damageSource !== undefined && !['normal', 'fate', 'impermanence'].includes(value.damageSource)) fail('text', path + '.damageSource');
     for (const field of ['desc', 'side', 'scene', 'series', 'action', 'insight', 'rewardText']) {
       if (value[field] !== undefined) text(value[field], path + '.' + field);
     }
@@ -60,6 +59,8 @@
       text(value.rewardText ?? base?.rewardText, path + '.rewardText');
     }
     const normalized = clone(value);
+    // 行動指令與共好加速卡皆為一般遊戲；忽略舊版的命運／無常來源標記。
+    delete normalized.damageSource;
     // 相容早期英文牌組的 dual 欄位，執行時統一使用 both。
     if (normalized.both === undefined && normalized.dual !== undefined) normalized.both = normalized.dual;
     delete normalized.dual;

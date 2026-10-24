@@ -165,25 +165,36 @@ test.describe('平安符選擇', () => {
   save.currentGame.players[0].shieldTokens = 2;
   save.currentGame.players[0].civ = 3;
   save.settings.customDecks.boost = [{ name: '命運試煉', action: '遭遇事件', insight: '選擇是否防護', damageSource: 'fate', rewardText: '福 -2 慧 -2 文明 -1', reward: { fortune: -2, wisdom: -2, civ: -1 } }];
+  save.settings.customDecks.action = { choice: { cards: [{ name: '行動抉擇', scene: '選擇行動', damageSource: 'impermanence', options: [{ label: '承擔', each: { fortune: -2, wisdom: -1 }, civAll: -1 }, { label: '維持', each: {} }] }] } };
   test.use({ save });
-  test('保留平安符承受傷害，下一次使用一枚擋全部福慧而保留文明扣分', async ({ page }) => {
+  test('共好加速卡沒有來源選單，舊命運標記不會觸發平安符', async ({ page }) => {
     await openGame(page);
-    for (const use of [false, true]) {
-      await page.locator('#btn-draw-boost').click();
-      await expect(page.locator('#card-damage-source')).toHaveValue('fate');
-      await page.locator('#card-recipient').selectOption('p1');
-      await page.locator('#card-apply').click();
-      await expect(page.locator('#confirm-title')).toHaveText('是否使用平安符？');
-      await page.locator(use ? '#confirm-ok' : '#confirm-cancel').click();
-      await expect(page.locator('#confirm-modal')).toBeHidden();
-      await expect(score(page, 'fortune')).toHaveText('3');
-      await expect(score(page, 'wisdom')).toHaveText('3');
-      await expect(score(page, 'civ')).toHaveText(use ? '1' : '2');
-      await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText(use ? '平安符 ×1' : '平安符 ×2');
-      await expect(page.locator('#relief-modal')).toBeHidden();
-    }
+    await page.locator('#btn-draw-boost').click();
+    await expect(page.locator('#card-damage-source')).toHaveCount(0);
+    await page.locator('#card-recipient').selectOption('p1');
+    await page.locator('#card-apply').click();
+    await expect(page.locator('#card-modal')).toBeHidden();
+    await expect(page.locator('#confirm-modal')).toBeHidden();
+    await expect(score(page, 'fortune')).toHaveText('3');
+    await expect(score(page, 'wisdom')).toHaveText('3');
+    await expect(score(page, 'civ')).toHaveText('2');
+    await expect(player(page, 'p1').locator('.pc-exchange-stock')).toContainText('平安符 ×2');
     await page.reload();
-    expect((await readSave(page)).currentGame.players[0].shieldTokens).toBe(1);
+    expect((await readSave(page)).currentGame.players[0].shieldTokens).toBe(2);
+  });
+  test('行動指令抉擇卡沒有來源選單，扣分與全體文明照常結算', async ({ page }) => {
+    await openGame(page);
+    await page.locator('#btn-draw-action').click();
+    await expect(page.locator('#card-damage-source')).toHaveCount(0);
+    await page.locator('.dilemma-opt').first().click();
+    await page.locator('#card-recipient').selectOption('p1');
+    await page.locator('#card-apply').click();
+    await expect(page.locator('#card-modal')).toBeHidden();
+    await expect(page.locator('#confirm-modal')).toBeHidden();
+    await expect(score(page, 'fortune')).toHaveText('3');
+    await expect(score(page, 'wisdom')).toHaveText('4');
+    await expect(score(page, 'civ')).toHaveText('2');
+    expect((await readSave(page)).currentGame.players[0].shieldTokens).toBe(2);
   });
   test('手動扣分依庫存提示，明確選擇後才扣分或使用平安符', async ({ page }, testInfo) => {
     await openGame(page);
